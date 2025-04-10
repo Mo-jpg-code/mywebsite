@@ -1,15 +1,24 @@
-/* Bestehende Styles von oben hier einfügen... */
 :root {
-    --primary-color: #ff6f61; /* Lebhaftes Korall */
-    --secondary-color: #ffcc5c; /* Sonnengelb */
-    --background-color: #f9f9f9;
-    --text-color: #333;
+    --primary-color: #e15f41; /* Warmer Rostorange */
+    --secondary-color: #f7b731; /* Sonniges Gelb-Orange */
+    --accent-color: #4a90e2; /* Kühles Blau für Akzente/Links */
+    --background-color-start: #fdfbfb; /* Sehr helles Grau */
+    --background-color-end: #ebedee;   /* Etwas dunkleres Grau */
     --card-background: #ffffff;
-    --border-radius: 15px;
-    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    --error-bg: #ffebee;
-    --error-text: #c62828;
-    --error-border: #ef9a9a;
+    --text-color: #333;
+    --text-color-light: #555;
+    --text-color-lighter: #777;
+    --border-color: #e0e0e0;
+    --error-bg: #fce4e4;
+    --error-text: #c0392b;
+    --error-border: #f4a9a9;
+    --success-bg: #e4fcef;
+    --success-text: #27ae60;
+    --border-radius: 12px; /* Etwas runder */
+    --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); /* Weicher Schatten */
+    --box-shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.12);
+    --font-primary: 'Poppins', sans-serif;
+    --font-logo: 'Pacifico', cursive; /* Für die Überschrift */
 }
 
 * {
@@ -19,10 +28,10 @@
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    font-family: var(--font-primary);
+    background: linear-gradient(135deg, var(--background-color-start), var(--background-color-end));
     color: var(--text-color);
-    line-height: 1.6;
+    line-height: 1.7; /* Mehr Zeilenabstand */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -34,218 +43,215 @@ body {
     background-color: var(--card-background);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-    padding: 30px 40px; /* Etwas mehr Padding */
-    max-width: 600px;
+    padding: 40px 50px;
+    max-width: 650px; /* Etwas breiter */
     width: 100%;
     text-align: center;
-    overflow: hidden; /* Wichtig für Animationen */
-    transition: all 0.3s ease-in-out;
-    position: relative; /* Für Logout-Button Positionierung */
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Sanftere Transition */
+    position: relative;
 }
 
-/* --- Login Styles --- */
-#loginSection {
-    animation: fadeIn 0.5s ease-out;
-}
-
-#loginSection h2 {
+/* Logo Font */
+.logo-font {
+    font-family: var(--font-logo);
     color: var(--primary-color);
-    margin-bottom: 15px;
+    font-size: 2.8em; /* Größer */
+    margin-bottom: 10px;
+    font-weight: 400; /* Pacifico hat nur 400 */
 }
 
-.info-text {
-    color: #666;
-    margin-bottom: 25px;
-    font-size: 0.95em;
+.subtitle {
+    color: var(--text-color-light);
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+/* --- API Key Entry Styles --- */
+#apiKeyEntrySection {
+    animation: fadeIn 0.6s ease-out;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     text-align: left;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-weight: 600;
-    color: #555;
-    font-size: 0.9em;
+    color: var(--text-color);
+    font-size: 1em;
 }
 
-.form-group input[type="text"],
-.form-group input[type="password"] {
+.form-group input[type="password"],
+.form-group input[type="text"] /* Falls doch mal Text gebraucht wird */
+{
     width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
+    padding: 14px 18px; /* Mehr Padding */
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 1em;
-    transition: border-color 0.3s ease;
+    font-family: var(--font-primary);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.form-group input[type="text"]:focus,
 .form-group input[type="password"]:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(255, 111, 97, 0.2);
+    box-shadow: 0 0 0 4px rgba(225, 95, 65, 0.15); /* Fokus-Schatten */
 }
 
 .form-group small {
     display: block;
-    margin-top: 5px;
-    font-size: 0.8em;
-    color: #777;
-}
-
-#loginBtn {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    font-size: 1.05em;
-    font-weight: 600;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%; /* Volle Breite */
-    margin-top: 10px;
-    box-shadow: 0 4px 10px rgba(255, 111, 97, 0.3);
-}
-
-#loginBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(255, 111, 97, 0.5);
-}
-
-#loginError {
-    margin-top: 15px;
-}
-
-
-/* --- Main Content Styles --- */
-#mainContent header {
-    position: relative; /* Für Logout Button */
-    margin-bottom: 20px; /* Platz für Logout */
-}
-
-#mainContent header h1 {
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-#mainContent header p {
-    color: #666;
-    margin-bottom: 30px;
-    font-weight: 300;
-}
-
-#logoutBtn {
-    position: absolute;
-    top: -15px; /* Leicht nach oben versetzt */
-    right: -20px; /* Leicht nach rechts versetzt */
-    background-color: #eee;
-    color: #555;
-    border: none;
-    padding: 6px 12px;
+    margin-top: 8px;
     font-size: 0.85em;
-    border-radius: 20px;
+    color: var(--text-color-lighter);
+}
+
+.api-info {
+    margin-top: 25px;
+    font-size: 0.9em;
+    color: var(--text-color-light);
+}
+.api-info a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+.api-info a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* --- Button Styles (Allgemein) --- */
+button {
+    font-family: var(--font-primary);
     cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    border: none;
+    border-radius: 50px; /* Pillenform */
+    padding: 12px 25px;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex; /* Für Icons */
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Abstand zwischen Text und Icon */
+}
+button .icon {
+    display: inline-block;
+    /* font-size: 1.1em; */ /* Optional: Icongröße anpassen */
 }
 
-#logoutBtn:hover {
-    background-color: #ddd;
-    color: #333;
-}
-
-
-button#generateBtn {
+.button-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.1em;
-    font-weight: 600;
-    border-radius: 50px; /* Pillenform */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(255, 111, 97, 0.4);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(225, 95, 65, 0.3);
 }
-
-button#generateBtn span {
-    position: relative;
-    z-index: 1;
-}
-
-button#generateBtn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 70%);
-    transform: translate(-50%, -50%) scale(0);
-    transition: transform 0.5s ease;
-    opacity: 0;
-    z-index: 0;
-}
-
-button#generateBtn:hover::before {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-}
-
-button#generateBtn:hover {
+.button-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(255, 111, 97, 0.6);
+    box-shadow: 0 7px 20px rgba(225, 95, 65, 0.45);
 }
-
-button#generateBtn:active {
+.button-primary:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(255, 111, 97, 0.5);
+    box-shadow: 0 3px 10px rgba(225, 95, 65, 0.4);
 }
-
-button#generateBtn:disabled {
+.button-primary:disabled {
     background: #ccc;
-    cursor: not-allowed;
     box-shadow: none;
+    cursor: not-allowed;
     transform: none;
-}
-button#generateBtn:disabled::before {
-    display: none;
+    opacity: 0.7;
 }
 
+.button-secondary {
+    background-color: #f0f0f0;
+    color: var(--text-color-light);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+.button-secondary:hover {
+    background-color: #e8e8e8;
+    border-color: #ccc;
+    color: var(--text-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+.button-secondary:active {
+     transform: translateY(0);
+     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+button.small {
+    padding: 8px 18px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+button.large {
+    padding: 16px 35px;
+    font-size: 1.15em;
+}
+
+
+/* Button Puls Animation */
 @keyframes pulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-    100% { transform: scale(1); }
+    50% { transform: scale(1.03); box-shadow: 0 8px 22px rgba(225, 95, 65, 0.5); }
+    100% { transform: scale(1); box-shadow: 0 4px 15px rgba(225, 95, 65, 0.3); }
 }
 .button-pulse {
+    /* Startet die Animation nur wenn nicht :hover */
     animation: pulse 2s infinite ease-in-out;
 }
-button#generateBtn:hover {
-     animation-play-state: paused;
+button.button-pulse:hover {
+     /* Stoppt Animation bei Hover, übernimmt Hover-Style */
+     animation: none;
+     transform: translateY(-3px);
+     box-shadow: 0 7px 20px rgba(225, 95, 65, 0.45);
+}
+
+/* --- Main Content Styles --- */
+#mainContent {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+.main-header h1 {
+    margin-bottom: 0; /* Entfernt Standard-Margin von h1 */
+    font-size: 2.5em; /* Etwas kleiner im Header */
+}
+
+.main-intro {
+    font-size: 1.1em;
+    color: var(--text-color-light);
+    margin-bottom: 30px;
 }
 
 /* Ladeanzeige */
-#loading {
-    margin: 30px auto;
+.loading-indicator {
+    margin: 40px auto;
     text-align: center;
-    color: #555;
+    color: var(--text-color-light);
 }
 
 .spinner {
     border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border-left-color: var(--primary-color);
-    margin: 0 auto 10px auto;
-    animation: spin 1s ease infinite;
+    margin: 0 auto 15px auto;
+    animation: spin 1s linear infinite; /* Linear für gleichmäßige Drehung */
 }
 
 @keyframes spin {
@@ -254,57 +260,73 @@ button#generateBtn:hover {
 }
 
 /* Rezeptanzeige */
-#recipeOutput {
-    /* Style umbenannt zu recipe-card für Klarheit */
+.recipe-card {
     background-color: #fff;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    padding: 25px;
-    margin-top: 20px;
+    padding: 30px 35px;
+    margin-top: 30px;
     text-align: left;
-    min-height: 100px;
-    white-space: pre-wrap;
+    min-height: 150px;
+    white-space: pre-wrap; /* Wichtig für Zeilenumbrüche aus der API */
     opacity: 0;
     transform: translateY(20px);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out; /* Für Animation */
 }
 
-#recipeOutput.visible {
-    animation: fadeInSlideUp 0.6s ease-out forwards;
+.recipe-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+    /* animation: fadeInSlideUp 0.6s ease-out forwards; /* Alternative */
 }
 
-@keyframes fadeInSlideUp {
+/* Fade-In und Slide-Up Animation (Alternative zur Transition) */
+/* @keyframes fadeInSlideUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-}
+} */
 
-#recipeOutput h2 {
+.recipe-card h2 {
+    font-family: var(--font-logo); /* Auch Logo Font für Rezepttitel */
+    font-size: 2em;
     color: var(--primary-color);
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
     border-bottom: 2px solid var(--secondary-color);
-    padding-bottom: 5px;
-    display: inline-block;
+    display: inline-block; /* Damit Border nur unter Text ist */
+    font-weight: 400;
 }
 
-#recipeOutput h3 {
-    color: #444;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-#recipeOutput ul, #recipeOutput ol {
-    margin-left: 20px;
+.recipe-card h3 {
+    color: var(--text-color);
+    margin-top: 25px;
     margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 1.2em;
+    border-bottom: 1px solid #eee; /* Leichte Trennlinie */
+    padding-bottom: 5px;
 }
 
-#recipeOutput li {
-    margin-bottom: 8px;
+.recipe-card ul, .recipe-card ol {
+    margin-left: 25px;
+    margin-bottom: 20px;
+    padding-left: 0; /* Standard-Padding entfernen, da wir margin-left nutzen */
+}
+
+.recipe-card li {
+    margin-bottom: 10px;
+    line-height: 1.6;
+    color: var(--text-color-light);
+}
+.recipe-card li::marker { /* Styling für Listenpunkte */
+    color: var(--primary-color);
+    font-weight: bold;
 }
 
 /* Hilfsklasse zum Verstecken/Zeigen */
 .hidden {
-    display: none !important; /* Wichtig, um sicherzustellen, dass es versteckt ist */
+    display: none !important;
 }
 
 /* Fehlermeldung (Allgemein) */
@@ -312,28 +334,33 @@ button#generateBtn:hover {
     background-color: var(--error-bg);
     color: var(--error-text);
     border: 1px solid var(--error-border);
-    padding: 12px 15px; /* Etwas kompakter */
+    padding: 12px 20px;
     border-radius: 8px;
-    /* margin-top: 20px; Wird bei Bedarf gesetzt */
+    margin-top: 20px;
     text-align: center;
-    font-size: 0.9em;
+    font-size: 0.95em;
     animation: fadeIn 0.5s ease-out;
+    display: flex; /* Für Icon (optional) */
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.error-message::before { /* Optional: Warn-Icon */
+    content: '⚠️';
+    font-size: 1.1em;
 }
 
+/* Allgemeine Fade-In Animation */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
-/* Warnhinweis im Footer */
+/* Footer */
 footer {
-    margin-top: 30px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
     font-size: 0.9em;
-    color: #777;
-}
-footer .warning {
-    color: #e65100; /* Orange Warnfarbe */
-    font-weight: bold;
-    margin-top: 10px;
-    font-size: 0.8em;
+    color: var(--text-color-lighter);
 }
