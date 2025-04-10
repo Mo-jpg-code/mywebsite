@@ -3,57 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KI Rezept Generator</title>
+    <title>KI Rezept Generator Deluxe</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <!-- Einfaches Icon für den Tab (optional) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
 </head>
 <body>
 
     <div class="container">
 
-        <!-- Login Bereich (Initial sichtbar) -->
-        <div id="loginSection">
-            <h2>Anmelden & API Key eingeben</h2>
-            <p class="info-text">Bitte gib deine Zugangsdaten und deinen Google AI API Key ein, um den Rezept-Generator zu nutzen.</p>
+        <!-- API Key Eingabe Bereich (Initial sichtbar) -->
+        <div id="apiKeyEntrySection">
+            <h2 class="logo-font">Koch-KI Deluxe</h2>
+            <p class="subtitle">Gib deinen Google AI API Key ein, um loszulegen.</p>
             <div class="form-group">
-                <label for="username">Benutzername:</label>
-                <input type="text" id="username" placeholder="z.B. user">
+                <label for="apiKey">Dein Google AI API Key:</label>
+                <input type="password" id="apiKey" placeholder="Beginnt mit AIzaSy...">
+                 <small>Dein Key wird nur für diese Browser-Sitzung gespeichert.</small>
             </div>
-            <div class="form-group">
-                <label for="password">Passwort:</label>
-                <input type="password" id="password" placeholder="z.B. pass123">
-            </div>
-            <div class="form-group">
-                <label for="apiKey">Google AI API Key:</label>
-                <input type="password" id="apiKey" placeholder="Dein AIzaSy... Key">
-                 <small>Dein Key wird nur im Browser für diese Sitzung gespeichert.</small>
-            </div>
-            <button id="loginBtn">Anmelden & Starten</button>
-            <div id="loginError" class="error-message hidden"></div>
+            <button id="submitApiKeyBtn" class="button-primary">
+                <span class="icon">🔑</span> Generator starten
+            </button>
+            <div id="apiKeyError" class="error-message hidden"></div>
+             <p class="api-info">Brauchst du einen Key? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Hier erstellen</a>.</p>
         </div>
 
         <!-- Hauptbereich (Initial versteckt) -->
         <div id="mainContent" class="hidden">
-            <header>
-                 <button id="logoutBtn" class="logout-button">Abmelden</button>
-                <h1>Lust auf was Neues?</h1>
-                <p>Lass dir ein cooles, zufälliges Rezept von der KI vorschlagen!</p>
+            <header class="main-header">
+                 <h1 class="logo-font">Koch-KI Deluxe</h1>
+                 <button id="logoutBtn" class="button-secondary small">
+                     <span class="icon">🔄</span> Key ändern
+                 </button>
             </header>
 
             <main>
-                <button id="generateBtn" class="button-pulse">
-                    <span>✨ Rezept generieren ✨</span>
+                <p class="main-intro">Bereit für eine kulinarische Überraschung?</p>
+                <button id="generateBtn" class="button-primary button-pulse large">
+                    <span>✨ Neues Rezept generieren ✨</span>
                 </button>
 
-                <div id="loading" class="hidden">
+                <div id="loading" class="hidden loading-indicator">
                     <div class="spinner"></div>
-                    <p>KI denkt nach...</p>
+                    <p>Die KI zaubert etwas Leckeres...</p>
                 </div>
 
                 <div id="recipeOutput" class="hidden recipe-card">
-                    <!-- Hier wird das Rezept angezeigt -->
+                    <!-- Rezept wird hier angezeigt -->
                 </div>
 
                  <div id="error" class="hidden error-message">
@@ -63,7 +62,6 @@
 
             <footer>
                 <p>Powered by Google Gemini AI</p>
-                <p class="warning">Hinweis: Der API Key wird vom Benutzer bereitgestellt.</p>
             </footer>
         </div>
 
