@@ -3,68 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KI Rezept Generator Deluxe</title>
+    <title>Emoji Arena</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Pacifico&display=swap" rel="stylesheet">
-    <!-- Einfaches Icon für den Tab (optional) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
 </head>
 <body>
-
-    <div class="container">
-
-        <!-- API Key Eingabe Bereich (Initial sichtbar) -->
-        <div id="apiKeyEntrySection">
-            <h2 class="logo-font">Koch-KI Deluxe</h2>
-            <p class="subtitle">Gib deinen Google AI API Key ein, um loszulegen.</p>
-            <div class="form-group">
-                <label for="apiKey">Dein Google AI API Key:</label>
-                <input type="password" id="apiKey" placeholder="Beginnt mit AIzaSy...">
-                 <small>Dein Key wird nur für diese Browser-Sitzung gespeichert.</small>
-            </div>
-            <button id="submitApiKeyBtn" class="button-primary">
-                <span class="icon">🔑</span> Generator starten
-            </button>
-            <div id="apiKeyError" class="error-message hidden"></div>
-             <p class="api-info">Brauchst du einen Key? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Hier erstellen</a>.</p>
+    <!-- Username Eingabe Overlay -->
+    <div id="username-overlay">
+        <div class="overlay-content">
+            <h1>Wähle deinen Namen</h1>
+            <input type="text" id="username-input" placeholder="Dein Username" maxlength="12">
+            <button id="start-game-button">Spiel starten!</button>
         </div>
+    </div>
 
-        <!-- Hauptbereich (Initial versteckt) -->
-        <div id="mainContent" class="hidden">
-            <header class="main-header">
-                 <h1 class="logo-font">Koch-KI Deluxe</h1>
-                 <button id="logoutBtn" class="button-secondary small">
-                     <span class="icon">🔄</span> Key ändern
-                 </button>
-            </header>
+    <!-- Spielbereich -->
+    <div id="game-container">
+        <!-- Spieler werden hier per JS hinzugefügt -->
+    </div>
 
-            <main>
-                <p class="main-intro">Bereit für eine kulinarische Überraschung?</p>
-                <button id="generateBtn" class="button-primary button-pulse large">
-                    <span>✨ Neues Rezept generieren ✨</span>
-                </button>
-
-                <div id="loading" class="hidden loading-indicator">
-                    <div class="spinner"></div>
-                    <p>Die KI zaubert etwas Leckeres...</p>
-                </div>
-
-                <div id="recipeOutput" class="hidden recipe-card">
-                    <!-- Rezept wird hier angezeigt -->
-                </div>
-
-                 <div id="error" class="hidden error-message">
-                    <!-- Fehlermeldungen für Rezepte -->
-                </div>
-            </main>
-
-            <footer>
-                <p>Powered by Google Gemini AI</p>
-            </footer>
+    <!-- Chat -->
+    <div id="chat-container">
+        <div id="chat-messages">
+            <p><i>Willkommen im Emoji Arena Chat!</i></p>
         </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Nachricht tippen..." maxlength="100">
+            <button id="chat-send-button">Senden</button>
+        </div>
+    </div>
 
+    <!-- Kill Counter -->
+    <div id="kill-counter">
+        Kills: <span id="kill-count">0</span>
     </div>
 
     <script src="script.js"></script>
