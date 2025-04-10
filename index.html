@@ -3,841 +3,455 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emoji Arena (Single File)</title>
+    <title>Wengpeng - Gipfel des Luxuswassers</title>
     <style>
-        /* --- CSS Code --- */
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Verhindert Scrollbalken */
-            font-family: sans-serif;
-            background-color: #f0f0f0; /* Leicht grauer Hintergrund außerhalb des Spiels */
+        /* ----- CSS Reset & Grundstile ----- */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400&display=swap');
+
+        :root {
+            --bg-color: #0a0a0a; /* Sehr dunkles Grau / Schwarz */
+            --text-color: #e0e0e0; /* Helles Grau */
+            --accent-color: #daa520; /* Gold */
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Roboto', sans-serif;
         }
 
-        #username-overlay {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px; /* Basis-Schriftgröße */
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden; /* Verhindert horizontales Scrollen */
+            line-height: 1.6;
+        }
+
+        /* ----- Ladebildschirm (extrem clean) ----- */
+        .loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: var(--bg-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 100;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 1.5s ease-out, visibility 1.5s ease-out;
+            visibility: visible;
         }
 
-        .overlay-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
 
-        .overlay-content h1 {
-            margin-bottom: 20px;
+        .loading-logo {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            color: var(--accent-color);
+            opacity: 0;
+            animation: pulse 2s infinite ease-in-out, fadeIn 1s 0.5s ease-out forwards;
         }
 
-        .overlay-content input {
-            padding: 10px;
-            margin-bottom: 15px;
-            width: 80%;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
         }
 
-        .overlay-content button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
 
-        .overlay-content button:hover {
-            background-color: #45a049;
-        }
-
-
-        #game-container {
-            position: relative; /* Wichtig für absolute Positionierung der Spieler */
-            width: 100vw;     /* Volle Breite des Viewports */
-            height: 100vh;    /* Volle Höhe des Viewports */
-            background-color: white;
-            cursor: crosshair; /* Ändert den Mauszeiger im Spielbereich */
-        }
-
-        .player {
-            position: absolute;
-            font-size: 30px; /* Größe des Emojis */
-            transition: transform 0.1s ease-out; /* Kleine Animation beim Schlagen */
-            user-select: none; /* Verhindert Textauswahl */
-            display: flex; /* Für Zentrierung von Name/Emoji */
-            flex-direction: column;
+        /* ----- Header (minimalistisch) ----- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 2rem 5%;
+            display: flex;
+            justify-content: center; /* Logo zentriert */
             align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference; /* Cooler Effekt auf Hintergründen */
         }
 
-        .player-emoji {
-            line-height: 1; /* Verhindert zusätzlichen Leerraum */
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--text-color); /* Wird durch mix-blend-mode angepasst */
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
-        .player-name {
-            font-size: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 1px 4px;
-            border-radius: 3px;
-            white-space: nowrap; /* Verhindert Umbruch */
-            margin-top: 2px;
-        }
-
-        .player.hit {
-            transform: scale(1.3); /* Vergrößert beim Schlagen */
-        }
-
-        .cursor {
-            position: absolute;
-            font-size: 20px; /* Größe des Maus-Emojis */
-            pointer-events: none; /* Damit man durch den Cursor klicken kann */
-            user-select: none;
-            z-index: 10; /* Über anderen Spielern */
-        }
-
-        #chat-container {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            width: 300px;
-            height: 200px;
-            background-color: rgba(240, 240, 240, 0.8);
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        /* ----- Hero Section (dramatisch) ----- */
+        .hero {
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            z-index: 50;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 5%;
+            position: relative;
+            overflow: hidden; /* Für Hintergrundanimation */
+            background: linear-gradient(45deg, #050505, #1a1a1a, #050505);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
         }
 
-        #chat-messages {
-            flex-grow: 1;
-            overflow-y: auto; /* Scrollbar wenn nötig */
-            padding: 5px;
-            font-size: 12px;
-            word-wrap: break-word; /* Lange Wörter umbrechen */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        #chat-messages p {
-            margin: 3px 0;
+        .hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(3rem, 10vw, 8rem); /* Responsive Schriftgröße */
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1.5s 1.8s ease-out forwards; /* Start nach Ladebildschirm */
         }
-        #chat-messages i {
-            color: #555;
-        }
-        #chat-messages b {
-             color: #333;
-         }
 
-        #chat-input-area {
+        .hero h2 {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--accent-color);
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1.5s 2.1s ease-out forwards; /* Start etwas später */
+        }
+
+        /* Animation für Einblendung von unten */
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ----- Content Sections ----- */
+        .content-section {
+            padding: 10rem 5%; /* Viel vertikaler Abstand */
+            max-width: 900px; /* Maximale Breite für Lesbarkeit */
+            margin: 0 auto;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(80px);
+            transition: opacity 1.2s cubic-bezier(0.165, 0.84, 0.44, 1), transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .content-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .content-section h3 {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            color: var(--text-color);
+            margin-bottom: 2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Unterstrich-Animation */
+        .content-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background-color: var(--accent-color);
+            transition: width 1s 0.5s ease-out; /* Startet nach Sichtbarkeit */
+        }
+
+        .content-section.visible h3::after {
+            width: 100%;
+        }
+
+        .content-section p {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            color: var(--text-color);
+            line-height: 1.8;
+            margin-bottom: 3rem;
+        }
+
+        .origins-list {
             display: flex;
-            border-top: 1px solid #ccc;
+            justify-content: center;
+            flex-wrap: wrap; /* Umbruch bei kleineren Bildschirmen */
+            gap: 1rem 3rem; /* Abstand zwischen Elementen */
+            margin-top: 3rem;
         }
 
-        #chat-input {
-            flex-grow: 1;
-            padding: 5px;
-            border: none;
-            border-radius: 0 0 0 5px; /* Rundung unten links */
-            outline: none;
+        .origin {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            color: var(--text-color);
+            font-weight: 400;
+            letter-spacing: 1px;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(224, 224, 224, 0.2); /* Dezenter Rand */
+            border-radius: 20px; /* Abgerundete Ecken */
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
 
-        #chat-send-button {
-            padding: 5px 10px;
-            background-color: #5c8dff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 0 0 5px 0; /* Rundung unten rechts */
+        /* Staffelte Animation für Herkunftsorte */
+        .content-section.visible .origin:nth-child(1) { transition-delay: 0.8s; }
+        .content-section.visible .origin:nth-child(2) { transition-delay: 1.0s; }
+        .content-section.visible .origin:nth-child(3) { transition-delay: 1.2s; }
+        .content-section.visible .origin:nth-child(4) { transition-delay: 1.4s; }
+
+        .content-section.visible .origin {
+            opacity: 0.8;
+            transform: scale(1);
         }
-        #chat-send-button:hover {
-            background-color: #4a7bde;
+
+        .origin:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            transform: scale(1.05); /* Leichter Hover-Effekt */
+        }
+
+        .highlight {
+            color: var(--accent-color);
+            font-weight: 400;
+        }
+
+        /* ----- Bottle Showcase (optional, clean) ----- */
+        .bottle-section {
+            /* Ähnlich wie content-section, evtl. anderer Hintergrund oder Layout */
+            padding: 8rem 5%;
+            background-color: #111; /* Leicht anderer Hintergrund zur Abgrenzung */
+        }
+
+        .bottle-image {
+             /* Hier könnte ein extrem hochwertiges Bild der Flasche platziert werden */
+             /* Beispiel: background: url('wengpeng-bottle.png') no-repeat center center; background-size: contain; */
+            width: 100%;
+            max-width: 400px; /* Beispielgröße */
+            height: 60vh; /* Beispielhöhe */
+            margin: 3rem auto 0;
+            background-color: rgba(255, 255, 255, 0.05); /* Platzhalter-Farbe */
+            border-radius: 10px;
+             /* Add subtle animation if desired */
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 1.2s cubic-bezier(0.165, 0.84, 0.44, 1), transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transition-delay: 0.3s; /* Startet nach Sichtbarkeit der Sektion */
+        }
+        .content-section.visible .bottle-image {
+             opacity: 1;
+             transform: scale(1);
         }
 
 
-        #kill-counter {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(255, 0, 0, 0.7);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 16px;
-            z-index: 50;
+        /* ----- Footer ----- */
+        footer {
+            padding: 4rem 5%;
+            text-align: center;
+            margin-top: 8rem;
+            border-top: 1px solid rgba(224, 224, 224, 0.1);
         }
+
+        footer p {
+            font-size: 0.9rem;
+            color: rgba(224, 224, 224, 0.6);
+            letter-spacing: 0.5px;
+        }
+
+        /* ----- Responsive Design ----- */
+        @media (max-width: 768px) {
+            html { font-size: 14px; } /* Kleinere Basisschrift */
+            header { padding: 1.5rem 5%; }
+            .logo { font-size: 1.5rem; }
+            .content-section { padding: 6rem 5%; }
+            .origins-list { gap: 0.5rem 1.5rem; }
+            .bottle-image { height: 50vh; }
+            footer { margin-top: 5rem; padding: 3rem 5%; }
+        }
+
+        @media (max-width: 480px) {
+            html { font-size: 13px; }
+             /* Weitere Anpassungen für sehr kleine Bildschirme */
+            .hero h1 { font-size: 3rem; } /* Feste Größe für sehr kleine Screens */
+            .hero h2 { font-size: 1rem; }
+            .content-section h3 { font-size: 2rem; }
+        }
+
     </style>
 </head>
 <body>
-    <!-- HTML Struktur -->
-    <div id="username-overlay">
-        <div class="overlay-content">
-            <h1>Wähle deinen Namen</h1>
-            <input type="text" id="username-input" placeholder="Dein Username" maxlength="12">
-            <button id="start-game-button">Spiel starten!</button>
-        </div>
+
+    <!-- Ladebildschirm -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">W</div>
     </div>
 
-    <div id="game-container">
-        <!-- Spieler werden hier per JS hinzugefügt -->
-    </div>
+    <!-- Header -->
+    <header>
+        <div class="logo">WENPENG</div>
+    </header>
 
-    <div id="chat-container">
-        <div id="chat-messages">
-            <p><i>Willkommen im Emoji Arena Chat! (Lokal)</i></p>
-        </div>
-        <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Nachricht tippen..." maxlength="100">
-            <button id="chat-send-button">Senden</button>
-        </div>
-    </div>
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>WENPENG</h1>
+            <h2>Die Essenz reinen Luxus.</h2>
+            <!-- Hier könnte optional ein sehr subtiles Hintergrundvideo oder Canvas-Animation laufen -->
+        </section>
 
-    <div id="kill-counter">
-        Kills: <span id="kill-count">0</span>
-    </div>
+        <!-- Philosophie Section -->
+        <section class="content-section" id="philosophy">
+            <h3>Die Fusion der Welten</h3>
+            <p>
+                Wengpeng ist nicht nur Wasser. Es ist eine Symphonie der reinsten Quellen,
+                eine kühne Komposition für den anspruchsvollsten Gaumen. Wir vereinen die
+                kristallklare <span class="highlight">Frische der Alpen</span>, die opulente
+                Reinheit aus <span class="highlight">Dubai</span>, die dynamische Klarheit
+                <span class="highlight">Hongkongs</span> und die stille Perfektion
+                <span class="highlight">Japans</span> zu einem unvergleichlichen Elixier.
+            </p>
+            <div class="origins-list">
+                <span class="origin">Alpine Majestät</span>
+                <span class="origin">Dubais Oase</span>
+                <span class="origin">Hongkongs Dynamik</span>
+                <span class="origin">Japans Harmonie</span>
+            </div>
+        </section>
+
+        <!-- Reinheit Section -->
+        <section class="content-section" id="purity">
+            <h3>Unvergleichliche Reinheit</h3>
+            <p>
+                Jeder Tropfen Wengpeng durchläuft einen proprietären Veredelungsprozess,
+                der die einzigartigen Charakteristika jeder Quelle bewahrt und gleichzeitig
+                eine absolute Reinheit garantiert. Das Ergebnis ist ein Wasser von
+                samtweicher Textur und subtiler Mineralität – ein Erlebnis, das alle Sinne belebt.
+            </p>
+             <!-- Hier könnte ein abstraktes Visual (z.B. SVG Animation von Wassertropfen) platziert werden -->
+        </section>
+
+         <!-- Flaschen-Showcase Section -->
+        <section class="content-section bottle-section" id="bottle">
+             <h3>Das Gefäß</h3>
+             <p>
+                 Unser Anspruch an Perfektion spiegelt sich auch im Design wider. Jede Wengpeng-Flasche
+                 ist ein Meisterwerk minimalistischer Eleganz, geschaffen, um den kostbaren Inhalt
+                 gebührend zu präsentieren und zu schützen.
+             </p>
+             <div class="bottle-image">
+                 <!-- Hier idealerweise das Bild der Flasche einfügen -->
+                 <!-- z.B. <img src="link/zum/wengpeng-flasche.png" alt="Wengpeng Flasche"> -->
+             </div>
+        </section>
+
+        <!-- Erlebnis Section -->
+        <section class="content-section" id="experience">
+            <h3>Definieren Sie Luxus neu</h3>
+            <p>
+                Wengpeng ist mehr als ein Getränk – es ist ein Statement. Ein Bekenntnis zu
+                kompromissloser Qualität und exquisitem Geschmack. Entdecken Sie Wasser,
+                wie Sie es noch nie erlebt haben. Erleben Sie Wengpeng.
+            </p>
+             <!-- Evtl. Call to Action oder Link zu Kontakt/Bestellung -->
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2023 Wengpeng. Alle Rechte vorbehalten. Pure Exklusivität.</p>
+    </footer>
 
     <script>
-        // --- JavaScript Code ---
+        // ----- JavaScript für Animationen -----
 
-        // --- DOM Elemente ---
-        const usernameOverlay = document.getElementById('username-overlay');
-        const usernameInput = document.getElementById('username-input');
-        const startGameButton = document.getElementById('start-game-button');
-        const gameContainer = document.getElementById('game-container');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        const chatSendButton = document.getElementById('chat-send-button');
-        const killCounterDisplay = document.getElementById('kill-count');
-
-        // --- Spiel Zustand ---
-        let localPlayerId = null;
-        let username = "Anon";
-        let players = {}; // Speichert alle Spieler { id: { x, y, mx, my, kills, emoji, name, element, cursorElement, nameElement, isHitting, isBot } }
-        let keysPressed = {}; // Hält gedrückte Tasten
-        let localKills = 0;
-        const playerSpeed = 5;
-        const hitDistance = 50; // Wie nah man sein muss, um zu treffen (Pixel)
-        const hitCooldown = 500; // Millisekunden zwischen Schlägen
-        let canHit = true;
-
-        const possibleEmojis = ["😀", "😎", "🥳", "👽", "🤖", "👻", "👾", "🦊", "🐻", "🐼", "👑", " V "];
-        const cursorEmoji = "🖱️"; // Oder ein anderes Emoji für den Cursor
-
-        // --- WebSocket Simulation ---
-        // ECHTE WebSocket-Verbindung würde hier initialisiert werden
-        // const socket = new WebSocket('ws://dein-echter-server.de');
-        // socket.onmessage = handleServerMessage;
-        // function sendMessageToServer(type, data) { socket.send(JSON.stringify({ type, ...data })); }
-
-        // --- Hilfsfunktionen ---
-        function generateUniqueId() {
-            return Math.random().toString(36).substring(2, 15);
-        }
-
-        function getRandomElement(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-
-        function distance(x1, y1, x2, y2) {
-            return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-        }
-
-        // --- Spieler Erstellung / Entfernung ---
-        function createPlayerElement(id, data) {
-            const playerDiv = document.createElement('div');
-            playerDiv.classList.add('player');
-            playerDiv.id = `player-${id}`;
-            playerDiv.style.left = `${data.x}px`;
-            playerDiv.style.top = `${data.y}px`;
-
-            const emojiSpan = document.createElement('span');
-            emojiSpan.classList.add('player-emoji');
-            emojiSpan.textContent = data.emoji;
-
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('player-name');
-            nameSpan.textContent = data.name;
-
-            playerDiv.appendChild(emojiSpan);
-            playerDiv.appendChild(nameSpan);
-            gameContainer.appendChild(playerDiv);
-
-            const cursorDiv = document.createElement('div');
-            cursorDiv.classList.add('cursor');
-            cursorDiv.id = `cursor-${id}`;
-            cursorDiv.textContent = cursorEmoji;
-            cursorDiv.style.left = `${data.mx}px`;
-            cursorDiv.style.top = `${data.my}px`;
-            // Eigenen Cursor nicht anzeigen, Bot-Cursor auch nicht (könnte man ändern)
-            cursorDiv.style.display = (id === localPlayerId || data.isBot) ? 'none' : 'block';
-            gameContainer.appendChild(cursorDiv);
-
-            return { element: playerDiv, cursorElement: cursorDiv, nameElement: nameSpan };
-        }
-
-        function removePlayerElement(id) {
-            const playerData = players[id];
-            if (playerData) {
-                playerData.element?.remove();
-                playerData.cursorElement?.remove();
-            }
-        }
-
-        // --- Spiel Logik ---
-        function updatePlayerPosition(id, x, y) {
-            const player = players[id];
-            if (!player || !player.element) return;
-
-            // Grenzen des Spielbereichs
-            const containerRect = gameContainer.getBoundingClientRect();
-            // Ungefähre Größe des Emojis für Kollisionserkennung am Rand
-            const approxPlayerWidth = player.element.offsetWidth || 30;
-            const approxPlayerHeight = player.element.offsetHeight || 30;
-
-
-            player.x = Math.max(0, Math.min(containerRect.width - approxPlayerWidth, x));
-            player.y = Math.max(0, Math.min(containerRect.height - approxPlayerHeight, y));
-
-            player.element.style.left = `${player.x}px`;
-            player.element.style.top = `${player.y}px`;
-        }
-
-        function updatePlayerCursor(id, mx, my) {
-            const player = players[id];
-            // Zeige Cursor nur für nicht-lokale, nicht-Bot Spieler an
-            if (!player || !player.cursorElement || id === localPlayerId || player.isBot) return;
-
-            player.mx = mx;
-            player.my = my;
-            player.cursorElement.style.left = `${mx}px`;
-            player.cursorElement.style.top = `${my}px`;
-        }
-
-        function updatePlayerName(id, name) {
-             const player = players[id];
-             if (!player || !player.nameElement) return;
-             player.name = name;
-             player.nameElement.textContent = name;
-        }
-
-        function updateKillCounter() {
-            killCounterDisplay.textContent = localKills;
-        }
-
-        function handleMovement() {
-            if (!players[localPlayerId]) return;
-
-            let dx = 0;
-            let dy = 0;
-
-            if (keysPressed['w'] || keysPressed['ArrowUp']) dy -= playerSpeed;
-            if (keysPressed['s'] || keysPressed['ArrowDown']) dy += playerSpeed;
-            if (keysPressed['a'] || keysPressed['ArrowLeft']) dx -= playerSpeed;
-            if (keysPressed['d'] || keysPressed['ArrowRight']) dx += playerSpeed;
-
-            // Diagonale Bewegung normalisieren (optional, verhindert schnelleres Laufen diagonal)
-            if (dx !== 0 && dy !== 0) {
-                const length = Math.sqrt(dx * dx + dy * dy);
-                dx = (dx / length) * playerSpeed;
-                dy = (dy / length) * playerSpeed;
-            }
-
-            if (dx !== 0 || dy !== 0) {
-                const currentX = players[localPlayerId].x;
-                const currentY = players[localPlayerId].y;
-                updatePlayerPosition(localPlayerId, currentX + dx, currentY + dy);
-                // --- SIMULATION: Sende Update an Server ---
-                sendMyUpdate();
-            }
-        }
-
-        function handleHit() {
-            if (!canHit || !players[localPlayerId]) return;
-
-            canHit = false;
-            players[localPlayerId].element.classList.add('hit');
-            players[localPlayerId].isHitting = true; // Zustand setzen
-
-            const localPlayer = players[localPlayerId];
-            let hitSomeone = false;
-
-            // --- SIMULATION: Sende Schlag-Aktion (auch wenn nichts getroffen) ---
-             sendMyUpdate(true); // 'true' signalisiert Schlag-Aktion
-
-            for (const id in players) {
-                if (id === localPlayerId) continue; // Sich selbst nicht treffen
-
-                const targetPlayer = players[id];
-                if(!targetPlayer.element) continue; // Überspringe, wenn Element noch nicht da
-
-                const dist = distance(localPlayer.x, localPlayer.y, targetPlayer.x, targetPlayer.y);
-
-                if (dist < hitDistance) {
-                    console.log(`Hitting player ${targetPlayer.name} (ID: ${id})`);
-                    // --- SIMULATION: Sende Hit an Server ---
-                    // sendMessageToServer('hit', { targetId: id });
-                    // --- Direkte Simulation für Demo ---
-                    // Serverseitige Logik simulieren:
-                    handleServerHitConfirmation({ attackerId: localPlayerId, victimId: id });
-                    hitSomeone = true;
-                    // break; // Nur einen pro Klick treffen (optional)
-                }
-            }
-
-            // Cooldown und Animation zurücksetzen
+        // 1. Ladebildschirm ausblenden
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            // Kurze Verzögerung, damit man die Animation sieht
             setTimeout(() => {
-                canHit = true;
-                if (players[localPlayerId]) {
-                     players[localPlayerId].element.classList.remove('hit');
-                     players[localPlayerId].isHitting = false; // Zustand zurücksetzen
-                     // --- SIMULATION: Sende Update nach Schlag-Animation ---
-                     sendMyUpdate(false); // 'false' oder weglassen
+                loadingScreen.classList.add('hidden');
+            }, 1500); // Zeit muss zur CSS Transition passen
+        });
+
+        // 2. Scroll-Animationen (Einblenden beim Scrollen)
+        const sections = document.querySelectorAll('.content-section');
+
+        const revealSection = (entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Optional: Animation nur einmal auslösen
+                    // observer.unobserve(entry.target);
                 }
-            }, hitCooldown);
-        }
-
-        // --- Chat Logik ---
-        function addChatMessage(sender, message, isSystem = false) {
-            const messageElement = document.createElement('p');
-            if (isSystem) {
-                messageElement.innerHTML = `<i>${message}</i>`;
-            } else {
-                // Sanitize message to prevent HTML injection
-                const senderSpan = document.createElement('b');
-                senderSpan.textContent = sender + ': ';
-                messageElement.appendChild(senderSpan);
-                messageElement.appendChild(document.createTextNode(message)); // Use textNode to avoid HTML parsing
-            }
-            chatMessages.appendChild(messageElement);
-            // Auto-scroll nach unten
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function sendChatMessage() {
-            const message = chatInput.value.trim();
-            if (message && localPlayerId && players[localPlayerId]) {
-                // --- SIMULATION: Sende Chat an Server ---
-                // sendMessageToServer('chat', { message: message });
-
-                // --- Direkte Anzeige für Demo (LOKALER Chat) ---
-                addChatMessage(players[localPlayerId].name, message);
-
-                // --- SIMULATION: Sende Nachricht an alle (Bots ignorieren Chat hier) ---
-                // handleServerMessage({type: 'chat', senderId: localPlayerId, message: message });
-
-                chatInput.value = '';
-            }
-        }
-
-        // Basic HTML escaping (though using textContent is safer for messages)
-        function escapeHtml(unsafe) {
-            if (!unsafe) return "";
-            return unsafe
-                 .replace(/&/g, "&")
-                 .replace(/</g, "<")
-                 .replace(/>/g, ">")
-                 .replace(/"/g, """)
-                 .replace(/'/g, "'");
-        }
-
-        // --- Event Listener ---
-        function setupEventListeners() {
-            // Tastatur
-            window.addEventListener('keydown', (e) => {
-                 // Verhindern, dass Chat-Eingabe die Bewegung auslöst
-                 if (document.activeElement !== chatInput) {
-                    keysPressed[e.key.toLowerCase()] = true;
-                 }
+                // Optional: Elemente wieder ausblenden, wenn sie aus dem Viewport scrollen
+                // else {
+                //     entry.target.classList.remove('visible');
+                // }
             });
-            window.addEventListener('keyup', (e) => {
-                 keysPressed[e.key.toLowerCase()] = false;
-            });
+        };
 
-            // Maus Bewegung
-            gameContainer.addEventListener('mousemove', (e) => {
-                if (!players[localPlayerId]) return;
-                const rect = gameContainer.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                updatePlayerCursor(localPlayerId, mouseX, mouseY); // Eigener Cursor wird nicht angezeigt, aber Position gespeichert
-                // --- SIMULATION: Sende Update an Server ---
-                 sendMyUpdate();
-            });
+        // Intersection Observer Optionen
+        const options = {
+            root: null, // Beobachtet den Viewport
+            rootMargin: '0px',
+            threshold: 0.15 // Element muss zu 15% sichtbar sein
+        };
 
-            // Maus Klick (Schlagen)
-            gameContainer.addEventListener('click', (e) => {
-                // Verhindern, dass Klick auf Chat/Overlay schlägt
-                if (e.target === gameContainer || e.target.classList.contains('player') || e.target.classList.contains('player-emoji')) {
-                     handleHit();
-                }
-            });
+        const observer = new IntersectionObserver(revealSection, options);
 
-            // Chat Senden
-            chatSendButton.addEventListener('click', sendChatMessage);
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendChatMessage();
-                    // Verhindern, dass Enter im Chat eine neue Zeile macht (Standardverhalten)
-                    e.preventDefault();
-                    // Fokus vom Input nehmen, damit WASD wieder geht (optional)
-                    // chatInput.blur();
-                }
-            });
+        sections.forEach(section => {
+            observer.observe(section);
+        });
 
-             // Verhindern, dass Leertaste beim Chatten scrollt
-             chatInput.addEventListener('keydown', (e) => {
-                 if (e.key === ' ') {
-                    e.stopPropagation();
-                 }
-             });
+        // Optional: Weitere "krasse" JS-Animationen könnten hier hinzugefügt werden,
+        // z.B. Parallax-Scrolling für den Hintergrund, Maus-Effekte etc.
+        // Für extreme Effekte bräuchte man ggf. Bibliotheken wie GSAP oder Three.js,
+        // aber das würde den Rahmen einer einzelnen HTML-Datei sprengen.
 
+        // Kleiner Maus-Folge-Effekt (sehr subtil)
+        // const cursorDot = document.createElement('div');
+        // cursorDot.style.position = 'fixed';
+        // cursorDot.style.width = '8px';
+        // cursorDot.style.height = '8px';
+        // cursorDot.style.backgroundColor = 'var(--accent-color)';
+        // cursorDot.style.borderRadius = '50%';
+        // cursorDot.style.pointerEvents = 'none';
+        // cursorDot.style.zIndex = '1001';
+        // cursorDot.style.opacity = '0.7';
+        // cursorDot.style.transition = 'transform 0.1s ease-out';
+        // document.body.appendChild(cursorDot);
 
-            // Spiel Start
-            startGameButton.addEventListener('click', startGame);
-            usernameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    startGame();
-                }
-            });
-        }
+        // window.addEventListener('mousemove', (e) => {
+        //    cursorDot.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`;
+        // });
 
-        // --- Spiel Start ---
-        function startGame() {
-            // Sanitize username input slightly
-            username = escapeHtml(usernameInput.value.trim()) || `Anon${Math.floor(Math.random() * 100)}`;
-            username = username.substring(0, 12); // Namen kürzen
-            if (!username) username = "Spieler"; // Fallback falls leer nach escape
-
-            usernameOverlay.style.display = 'none'; // Overlay ausblenden
-
-            localPlayerId = generateUniqueId();
-            const startX = Math.random() * (gameContainer.clientWidth - 50);
-            const startY = Math.random() * (gameContainer.clientHeight - 50);
-            const startEmoji = getRandomElement(possibleEmojis);
-
-            players[localPlayerId] = {
-                x: startX,
-                y: startY,
-                mx: startX, // Maus startet beim Spieler
-                my: startY,
-                kills: 0,
-                emoji: startEmoji,
-                name: username,
-                element: null,
-                cursorElement: null,
-                nameElement: null,
-                isHitting: false,
-                isBot: false
-            };
-
-            const elements = createPlayerElement(localPlayerId, players[localPlayerId]);
-            players[localPlayerId].element = elements.element;
-            players[localPlayerId].cursorElement = elements.cursorElement;
-            players[localPlayerId].nameElement = elements.nameElement;
-            // players[localPlayerId].cursorElement.style.display = 'none'; // Wird in createPlayerElement gehandhabt
-
-            localKills = 0;
-            updateKillCounter();
-            addChatMessage(null, `Du bist als ${username} (${startEmoji}) beigetreten! Steuerung: WASD, Klick zum Schlagen.`, true);
-
-            // --- SIMULATION: Sende "Join" Nachricht an Server ---
-            // sendMessageToServer('join', { id: localPlayerId, ...players[localPlayerId] });
-             // --- SIMULATION: Sende eigene Join-Nachricht lokal (für Konsistenz) ---
-             // handleServerMessage({ type: 'playerJoined', id: localPlayerId, ...players[localPlayerId] }); // Nicht nötig, da wir den Spieler schon erstellt haben
-
-            // --- SIMULATION: Füge ein paar Dummy-Bots hinzu ---
-            setTimeout(() => simulateAddBot("Bot_Alpha", "🤖"), 1000);
-            setTimeout(() => simulateAddBot("Bot_Beta", "👻"), 2000);
-            setTimeout(() => simulateAddBot("Guard", " V "), 3000); // Ein Wächter-Bot
-
-            // Starte den Game Loop
-            requestAnimationFrame(gameLoop);
-        }
-
-        // --- Game Loop ---
-        let lastLoopTime = Date.now();
-        function gameLoop() {
-            const now = Date.now();
-            const deltaTime = now - lastLoopTime; // Zeit seit letztem Frame (für Frame-unabhängige Physik/Bewegung, hier nicht voll genutzt)
-            lastLoopTime = now;
-
-            handleMovement(); // Lokale Bewegung verarbeiten
-
-            // --- SIMULATION: Bot Bewegung ---
-            simulateBotMovement(deltaTime);
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        // --- WebSocket Nachrichten Behandlung (SIMULIERT) ---
-
-        // Simuliert das Empfangen einer Nachricht vom Server
-        function handleServerMessage(data) {
-            // In echt: const data = JSON.parse(message.data);
-            if (!data || !data.type) {
-                console.error("Sim: Invalid message received", data);
-                return;
-            }
-
-            switch (data.type) {
-                case 'playerJoined':
-                    // Füge Spieler hinzu, WENN er noch nicht existiert UND nicht der lokale Spieler ist
-                    if (data.id !== localPlayerId && !players[data.id]) {
-                        console.log("Sim: Player joined", data);
-                        // Initialisiere den Spieler-Datensatz
-                        players[data.id] = {
-                            x: data.x, y: data.y, mx: data.mx, my: data.my,
-                            kills: data.kills || 0, emoji: data.emoji, name: data.name,
-                            element: null, cursorElement: null, nameElement: null,
-                            isHitting: false, isBot: data.isBot || false // Merken, ob es ein Bot ist
-                        };
-                        // Erstelle die DOM-Elemente
-                        const elements = createPlayerElement(data.id, players[data.id]);
-                        players[data.id].element = elements.element;
-                        players[data.id].cursorElement = elements.cursorElement;
-                        players[data.id].nameElement = elements.nameElement;
-
-                        addChatMessage(null, `${data.name} (${data.emoji}) ist beigetreten.`, true);
-                    }
-                    break;
-                case 'playerLeft':
-                    if (data.id !== localPlayerId && players[data.id]) {
-                        console.log("Sim: Player left", data);
-                        addChatMessage(null, `${players[data.id].name} hat das Spiel verlassen.`, true);
-                        removePlayerElement(data.id);
-                        delete players[data.id];
-                         // Lösche ggf. Bot-spezifische Daten
-                         if (botTargetPositions[data.id]) {
-                            delete botTargetPositions[data.id];
-                        }
-                    }
-                    break;
-                case 'playerUpdate':
-                    // Aktualisiere Spieler, WENN er existiert UND nicht der lokale Spieler ist
-                    if (data.id !== localPlayerId && players[data.id]) {
-                        updatePlayerPosition(data.id, data.x, data.y);
-                        updatePlayerCursor(data.id, data.mx, data.my); // Aktualisiert nur, wenn kein Bot
-
-                         // Schlag-Animation anzeigen/entfernen für andere Spieler
-                         const player = players[data.id];
-                         if(player.element){ // Nur wenn Element existiert
-                            if (data.isHitting && !player.isHitting) {
-                                player.element.classList.add('hit');
-                                player.isHitting = true;
-                            } else if (!data.isHitting && player.isHitting) {
-                                player.element.classList.remove('hit');
-                                player.isHitting = false;
-                            }
-                        }
-                    }
-                    break;
-                case 'chat':
-                     // Zeige Chat-Nachricht an, WENN der Sender existiert UND nicht der lokale Spieler ist
-                     // (Lokale Nachrichten werden schon in sendChatMessage angezeigt)
-                     if (data.senderId !== localPlayerId && players[data.senderId]) {
-                         console.log("Sim: Chat received", data);
-                         addChatMessage(players[data.senderId].name, data.message);
-                     }
-                    break;
-                case 'hitConfirmation': // Server bestätigt einen Treffer
-                     console.log("Sim: Hit confirmation", data);
-                     handleServerHitConfirmation(data);
-                     break;
-                 case 'gameState': // Empfange den kompletten Zustand (z.B. beim Join)
-                     console.log("Sim: Receiving full game state");
-                     // Lösche alte Spieler (außer sich selbst)
-                     for (const id in players) {
-                         if (id !== localPlayerId) {
-                             removePlayerElement(id);
-                             delete players[id];
-                         }
-                     }
-                      // Füge alle Spieler aus dem State hinzu
-                     for (const id in data.players) {
-                         if (id !== localPlayerId) {
-                              handleServerMessage({ type: 'playerJoined', ...data.players[id] });
-                         }
-                     }
-                     break;
-                // Weitere Nachrichten-Typen...
-            }
-        }
-
-        // Wird aufgerufen, wenn der Server (oder die Simulation) einen Treffer bestätigt
-        function handleServerHitConfirmation({ attackerId, victimId }) {
-            const attacker = players[attackerId];
-            const victim = players[victimId];
-
-            // Nur fortfahren, wenn beide Spieler noch existieren
-            if (!attacker || !victim || !attacker.element || !victim.element) return;
-
-            console.log(`${attacker.name} hit ${victim.name}`);
-
-            // Effekt auf Opfer (z.B. kurzes Blinken oder Zurückstoßen - hier nur Respawn)
-            victim.element.style.opacity = '0.5'; // Kurz unsichtbar machen
-
-             // Kills für Angreifer erhöhen (serverseitig passiert das)
-             attacker.kills = (attacker.kills || 0) + 1;
-             if (attackerId === localPlayerId) {
-                 localKills = attacker.kills;
-                 updateKillCounter();
-             } else {
-                 // Update Name des Angreifers (optional, wenn Kills angezeigt werden sollen)
-                 // updatePlayerName(attackerId, `${attacker.name} [${attacker.kills}]`);
-             }
-
-
-            // Kills für Opfer zurücksetzen
-            victim.kills = 0;
-            if (victimId === localPlayerId) {
-                localKills = 0;
-                updateKillCounter();
-                addChatMessage(null, `Du wurdest von ${attacker.name} getroffen! Deine Kills wurden zurückgesetzt.`, true);
-            } else {
-                addChatMessage(null, `${attacker.name} (${attacker.emoji}) hat ${victim.name} (${victim.emoji}) getroffen!`, true);
-                 // Update Name des Opfers (optional)
-                 // updatePlayerName(victimId, `${victim.name} [0]`);
-            }
-
-
-            // Opfer an zufälliger Position respawnen nach kurzer Verzögerung
-            setTimeout(() => {
-                 if (players[victimId] && players[victimId].element) { // Prüfen ob noch vorhanden
-                     const respawnX = Math.random() * (gameContainer.clientWidth - 50);
-                     const respawnY = Math.random() * (gameContainer.clientHeight - 50);
-                     updatePlayerPosition(victimId, respawnX, respawnY);
-                     players[victimId].element.style.opacity = '1'; // Wieder sichtbar machen
-
-                     // --- SIMULATION: Server würde dieses Positions-Update senden ---
-                     // handleServerMessage({type: 'playerUpdate', id: victimId, x: respawnX, y: respawnY, mx: victim.mx, my: victim.my, isHitting: false});
-                }
-            }, 200); // 200ms Verzögerung für den Effekt
-        }
-
-
-        // Simuliert das Senden des eigenen Zustands an den Server
-        let lastUpdateTime = 0;
-        const updateInterval = 50; // Send update max every 50ms (~20 updates/sec)
-
-        function sendMyUpdate(forceSend = false) {
-            const now = Date.now();
-            // Sende nur, wenn genug Zeit vergangen ist ODER wenn es ein wichtiges Update ist (forceSend, z.B. Schlag)
-            if (!localPlayerId || (!forceSend && now - lastUpdateTime < updateInterval)) {
-                return;
-            }
-            lastUpdateTime = now;
-
-            const localPlayer = players[localPlayerId];
-            if (!localPlayer) return; // Sicherheitshalber
-
-            const data = {
-                // type: 'playerUpdate', // In einer echten WS-Nachricht nötig
-                id: localPlayerId,
-                x: localPlayer.x,
-                y: localPlayer.y,
-                mx: localPlayer.mx,
-                my: localPlayer.my,
-                isHitting: localPlayer.isHitting // Sendet den aktuellen Schlag-Status
-            };
-             // --- SIMULATION: Senden an Server ---
-             // sendMessageToServer('playerUpdate', data);
-
-             // --- SIMULATION: Empfange Updates von anderen (Bots) ---
-             // In einer echten Anwendung kämen diese Updates vom Server.
-             // Hier rufen wir nur die Bot-Logik auf, die dann `handleServerMessage` für die Bots auslöst.
-             // simulateBotMovement() ist jetzt im gameLoop.
-        }
-
-        // --- Bot Simulation (Nur für Demo-Zwecke) ---
-        let botTargetPositions = {}; // Speichert { botId: { x, y } }
-        let botWaitUntil = {}; // Speichert { botId: timestamp } wann der Bot wieder laufen darf
-
-        function simulateAddBot(name, emoji) {
-            const botId = generateUniqueId();
-            const botData = {
-                id: botId,
-                x: Math.random() * (gameContainer.clientWidth - 50),
-                y: Math.random() * (gameContainer.clientHeight - 50),
-                mx: 0, my: 0, // Bots haben keine Maus
-                kills: 0,
-                emoji: emoji,
-                name: name,
-                isBot: true
-            };
-            // Simuliere "playerJoined" Nachricht vom Server
-            handleServerMessage({ type: 'playerJoined', ...botData });
-            // Setze initiales Ziel für den Bot
-             botTargetPositions[botId] = {
-                 x: Math.random() * (gameContainer.clientWidth - 50),
-                 y: Math.random() * (gameContainer.clientHeight - 50)
-             };
-            botWaitUntil[botId] = 0; // Startet sofort
-        }
-
-        function simulateBotMovement(deltaTime) {
-            const botSpeed = 1.5 + Math.random() * 0.5; // Leicht variable Geschwindigkeit
-            const now = Date.now();
-
-            for (const id in players) {
-                if (players[id]?.isBot) { // Nur wenn Bot und existiert
-                    const bot = players[id];
-
-                     // Überspringen, wenn Bot gerade wartet
-                     if (now < (botWaitUntil[id] || 0)) {
-                         continue;
-                     }
-
-                    let target = botTargetPositions[id];
-
-                    // Wenn kein Ziel oder Ziel erreicht, neues Ziel setzen und kurz warten
-                    if (!target || distance(bot.x, bot.y, target.x, target.y) < 15) {
-                         botTargetPositions[id] = {
-                             x: Math.random() * (gameContainer.clientWidth - 50),
-                             y: Math.random() * (gameContainer.clientHeight - 50)
-                         };
-                         target = botTargetPositions[id];
-                         // Warte 0.5 bis 2 Sekunden
-                         botWaitUntil[id] = now + 500 + Math.random() * 1500;
-                         continue; // Nächste Iteration abwarten
-                    }
-
-                    // Einfache Bewegung Richtung Ziel (deltaTime nicht wirklich genutzt hier, feste Geschwindigkeit)
-                    const angle = Math.atan2(target.y - bot.y, target.x - bot.x);
-                    const dx = Math.cos(angle) * botSpeed;
-                    const dy = Math.sin(angle) * botSpeed;
-
-                    const newX = bot.x + dx;
-                    const newY = bot.y + dy;
-
-                    // Simuliere eine "playerUpdate"-Nachricht FÜR diesen Bot
-                    // Diese wird dann von handleServerMessage verarbeitet, um den Bot im Spiel zu bewegen
-                    handleServerMessage({
-                        type: 'playerUpdate',
-                        id: id,
-                        x: newX,
-                        y: newY,
-                        mx: bot.mx, // Bleibt 0
-                        my: bot.my, // Bleibt 0
-                        isHitting: false // Bots schlagen hier nicht (könnte man einbauen)
-                    });
-                }
-            }
-        }
-
-
-        // --- Initialisierung ---
-        setupEventListeners();
-        // Das Spiel wird durch den Klick auf "Spiel starten!" gestartet (ruft startGame auf)
 
     </script>
+
 </body>
 </html>
