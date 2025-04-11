@@ -1,457 +1,853 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wengpeng - Gipfel des Luxuswassers</title>
+    <title>Slots Deluxe - RNG Casino</title>
     <style>
-        /* ----- CSS Reset & Grundstile ----- */
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400&display=swap');
-
+        /* --- Global Styles & Foundational Variables --- */
         :root {
-            --bg-color: #0a0a0a; /* Sehr dunkles Grau / Schwarz */
-            --text-color: #e0e0e0; /* Helles Grau */
-            --accent-color: #daa520; /* Gold */
-            --font-heading: 'Playfair Display', serif;
-            --font-body: 'Roboto', sans-serif;
+            /* These might be overridden by themes */
+            --bg-color-start: #0f0c29;
+            --bg-color-mid: #302b63;
+            --bg-color-end: #24243e;
+            --machine-bg: rgba(20, 20, 35, 0.85);
+            --display-bg: rgba(255, 255, 255, 0.08);
+            --text-color: #e8e8e8;
+            --primary-glow-color: var(--neon-cyan); /* Default to cyan */
+            --secondary-glow-color: var(--neon-magenta); /* Default to magenta */
+            --accent-color: var(--neon-magenta); /* Button, etc. */
+            --win-color: var(--neon-green);
+            --near-win-color: var(--neon-yellow);
+            --info-text-color: #bbb;
+            --digit-font-size: clamp(3.5rem, 10vw, 6rem);
+            --animation-speed: 65ms;
+            --spin-duration: 1500ms;
+            --blur-intensity: 6px;
+            --glow-intensity: 18px;
+            --border-radius-main: 25px;
+            --border-radius-inner: 15px;
+
+             /* Shared Colors (can be overridden by themes) */
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #fffb00;
+            --neon-green: #39ff14;
+            --classic-gold: #ffd700;
+            --classic-red: #dc143c;
+            --classic-dark: #333;
+            --vapor-pink: #ff69b4;
+            --vapor-cyan: #00bcd4;
+            --vapor-purple: #9c27b0;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-            font-size: 16px; /* Basis-Schriftgröße */
-        }
-
-        body {
-            font-family: var(--font-body);
-            background-color: var(--bg-color);
+        /* --- Basic Setup --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%; width: 100%;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            /* Background set by theme class */
             color: var(--text-color);
-            overflow-x: hidden; /* Verhindert horizontales Scrollen */
-            line-height: 1.6;
+            display: flex; flex-direction: column; /* Allow stacking info bar */
+            justify-content: center; align-items: center;
+            text-align: center; overflow: hidden; position: relative;
+            transition: background 0.5s ease;
         }
 
-        /* ----- Ladebildschirm (extrem clean) ----- */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* --- Theme Definitions --- */
+        /* Base styles are applied by default, theme classes override */
+
+        body.theme-neon {
+            background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
+            --primary-glow-color: var(--neon-cyan);
+            --secondary-glow-color: var(--neon-magenta);
+            --accent-color: var(--neon-magenta);
+            --win-color: var(--neon-green);
+            --near-win-color: var(--neon-yellow);
+            --machine-bg: rgba(20, 20, 35, 0.85);
+            --display-bg: rgba(255, 255, 255, 0.08);
+            --info-text-color: #bbb;
+        }
+        body.theme-neon::before { /* Background Grid */
+             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+             background-image: linear-gradient(var(--primary-glow-color) 1px, transparent 1px), linear-gradient(90deg, var(--primary-glow-color) 1px, transparent 1px);
+             background-size: 30px 30px; opacity: 0.05; z-index: 0; animation: scrollGrid 10s linear infinite;
+        }
+
+        body.theme-classic {
+            background: radial-gradient(ellipse at bottom, #4a0e0e, #1a1a1d);
+            --primary-glow-color: var(--classic-gold);
+            --secondary-glow-color: var(--classic-red);
+            --accent-color: var(--classic-gold);
+            --win-color: #00ff7f; /* Spring Green */
+            --near-win-color: #ff8c00; /* Dark Orange */
+            --machine-bg: linear-gradient(145deg, #444, #222);
+            --display-bg: rgba(0, 0, 0, 0.6);
+            --text-color: #f0e68c; /* Khaki */
+            --info-text-color: #ccc;
+            --border-radius-main: 15px;
+            --border-radius-inner: 8px;
+        }
+         body.theme-classic .digit { text-shadow: 0 2px 3px rgba(0,0,0,0.7); }
+         body.theme-classic #spin-button { background: linear-gradient(180deg, var(--classic-gold), #b8860b); color: #333; border: 2px solid #daa520; text-shadow: 0 1px 1px rgba(255,255,255,0.3); border-radius: 10px; }
+         body.theme-classic .slot-machine { border: 5px solid #444; border-top-color: #666; border-left-color: #555; }
+
+
+         body.theme-vaporwave {
+             background: linear-gradient(45deg, var(--vapor-cyan), var(--vapor-pink), var(--vapor-purple));
+             --primary-glow-color: var(--vapor-cyan);
+             --secondary-glow-color: var(--vapor-pink);
+             --accent-color: var(--vapor-pink);
+             --win-color: var(--neon-green);
+             --near-win-color: var(--neon-yellow);
+             --machine-bg: rgba(25, 25, 45, 0.7);
+             --display-bg: rgba(255, 255, 255, 0.15);
+             --text-color: #fff;
+             --info-text-color: #eee;
+             --border-radius-main: 30px;
+             --border-radius-inner: 20px;
+         }
+         body.theme-vaporwave::before { /* Optional Vaporwave Grid */
+              content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+              background-image: linear-gradient(var(--primary-glow-color) 1px, transparent 1px), linear-gradient(90deg, var(--primary-glow-color) 1px, transparent 1px);
+              background-size: 40px 40px; opacity: 0.08; z-index: 0; animation: scrollGrid 15s linear infinite;
+         }
+         body.theme-vaporwave .slot-machine { border: 2px solid var(--secondary-glow-color); }
+         body.theme-vaporwave #spin-button { background: linear-gradient(145deg, var(--vapor-pink), var(--vapor-purple)); border-radius: 15px; }
+
+
+        /* --- Animations (Mostly Theme Agnostic using Variables) --- */
+        @keyframes scrollGrid { 0% { background-position: 0 0; } 100% { background-position: 60px 60px; } }
+        @keyframes neonGlowJackpot {
+            0%, 100% { text-shadow: 0 0 6px var(--win-color), 0 0 12px var(--win-color), 0 0 18px var(--primary-glow-color); }
+            50% { text-shadow: 0 0 10px var(--win-color), 0 0 20px var(--win-color), 0 0 30px var(--primary-glow-color); }
+        }
+         @keyframes neonGlowNearWin {
+            0%, 100% { text-shadow: 0 0 5px var(--near-win-color), 0 0 10px var(--near-win-color); }
+            50% { text-shadow: 0 0 10px var(--near-win-color), 0 0 20px var(--near-win-color); }
+        }
+        @keyframes pulseButton {
+             0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color), inset 0 0 5px rgba(255,255,255,0.3); }
+             50% { transform: scale(1.03); box-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--accent-color), inset 0 0 8px rgba(255,255,255,0.5); }
+        }
+         @keyframes buttonClickFlash { /* Generic flash */
+              0%, 100% { transform: scale(1.05); filter: brightness(1.2); }
+              50% { transform: scale(1.02); filter: brightness(2.0); }
+         }
+        @keyframes spinReel {
+            0%   { opacity: 0.4; filter: blur(var(--blur-intensity)); transform: translateY(-18px) scale(0.85); }
+            50%  { opacity: 1.0; filter: blur(calc(var(--blur-intensity) / 5)); transform: translateY(0px) scale(1); }
+            100% { opacity: 0.4; filter: blur(var(--blur-intensity)); transform: translateY(18px) scale(0.85); }
+        }
+        @keyframes winFlash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(0, 255, 255, 0.25); } /* Default cyan, override if needed */
+        }
+        @keyframes machineIdleGlow {
+             0%, 100% { border-color: color-mix(in srgb, var(--primary-glow-color), transparent 80%); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6), 0 0 5px color-mix(in srgb, var(--primary-glow-color), transparent 90%); }
+             50% { border-color: color-mix(in srgb, var(--primary-glow-color), transparent 70%); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6), 0 0 10px color-mix(in srgb, var(--primary-glow-color), transparent 80%); }
+        }
+         @keyframes machineChargeUp {
+             0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6); }
+             50% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6), 0 0 20px 10px var(--accent-color); }
+             100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6); }
+         }
+        @keyframes machineGlowJackpot {
+             0%, 100% { box-shadow: 0 0 var(--glow-intensity) 5px var(--win-color), 0 0 calc(var(--glow-intensity) * 2) 10px var(--primary-glow-color), inset 0 0 10px rgba(0,0,0,0.6); }
+             50% { box-shadow: 0 0 calc(var(--glow-intensity) * 1.5) 8px var(--win-color), 0 0 calc(var(--glow-intensity) * 3) 15px var(--primary-glow-color), inset 0 0 15px rgba(0,0,0,0.7); }
+        }
+         @keyframes machineGlowNearWin {
+             0%, 100% { box-shadow: 0 0 calc(var(--glow-intensity) / 1.5) 4px var(--near-win-color), inset 0 0 10px rgba(0,0,0,0.6); }
+             50% { box-shadow: 0 0 var(--glow-intensity) 7px var(--near-win-color), inset 0 0 15px rgba(0,0,0,0.7); }
+         }
+         @keyframes machineShakeJackpot { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
+         @keyframes digitLand { 0% { transform: scale(1); opacity: 1; filter: brightness(1); } 50% { transform: scale(1.15) translateY(-5px); opacity: 1; filter: brightness(1.5); } 100% { transform: scale(1); opacity: 1; filter: brightness(1); } }
+         @keyframes messageAppear { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* --- UI Elements --- */
+        #game-container { position: relative; z-index: 1; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
+
+        /* NEW: Info Bar for Coins/Bet */
+        .game-info {
+             display: flex;
+             justify-content: space-around;
+             align-items: center;
+             background: rgba(0, 0, 0, 0.3);
+             padding: 8px 15px;
+             border-radius: 10px;
+             border: 1px solid color-mix(in srgb, var(--primary-glow-color), transparent 70%);
+             width: 90%;
+             max-width: 500px;
+             margin-bottom: 15px;
+             font-size: 1rem;
+             gap: 10px;
+             flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        .info-item { display: flex; align-items: center; gap: 8px; }
+        .info-item label { font-weight: bold; color: var(--info-text-color); opacity: 0.8; }
+        .info-item span, .info-item button { font-weight: bold; color: var(--primary-glow-color); }
+        .info-item button {
+             background: rgba(255, 255, 255, 0.1); border: 1px solid var(--primary-glow-color);
+             color: var(--primary-glow-color); border-radius: 5px; width: 25px; height: 25px;
+             cursor: pointer; transition: background 0.2s ease; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; line-height: 1; padding-bottom: 2px;
+        }
+        .info-item button:hover { background: rgba(255, 255, 255, 0.2); }
+        .info-item button:disabled { opacity: 0.4; cursor: not-allowed; }
+        #coin-display { color: var(--near-win-color); /* Yellow for coins */ font-size: 1.1rem;}
+        #current-bet-display { min-width: 40px; text-align: center; }
+
+        .slot-machine {
+            background: var(--machine-bg); padding: 35px 45px; border-radius: var(--border-radius-main);
+            border: 2px solid color-mix(in srgb, var(--primary-glow-color), transparent 80%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; align-items: center; gap: 30px;
+            min-width: 320px; max-width: 90vw; /* Responsive width */
+             position: relative;
+            transition: box-shadow 0.4s ease-in-out, border-color 0.4s ease-in-out;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            animation: machineIdleGlow 4s infinite ease-in-out;
+        }
+
+        .display { /* Digits display */
+            display: flex; justify-content: center; gap: clamp(15px, 3vw, 25px); /* Responsive gap */
+            background: var(--display-bg); padding: clamp(20px, 4vw, 30px) clamp(25px, 5vw, 40px);
+            border-radius: var(--border-radius-inner);
+            border: 1px solid color-mix(in srgb, var(--primary-glow-color), transparent 60%);
+            box-shadow: 0 0 20px color-mix(in srgb, var(--primary-glow-color), transparent 85%), inset 0 0 10px rgba(0,0,0, 0.6);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             width: 100%;
-            height: 100%;
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 1;
-            transition: opacity 1.5s ease-out, visibility 1.5s ease-out;
-            visibility: visible;
         }
 
-        .loading-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .loading-logo {
-            font-family: var(--font-heading);
-            font-size: 3rem;
-            color: var(--accent-color);
-            opacity: 0;
-            animation: pulse 2s infinite ease-in-out, fadeIn 1s 0.5s ease-out forwards;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        /* ----- Header (minimalistisch) ----- */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 2rem 5%;
-            display: flex;
-            justify-content: center; /* Logo zentriert */
-            align-items: center;
-            z-index: 100;
-            mix-blend-mode: difference; /* Cooler Effekt auf Hintergründen */
-        }
-
-        .logo {
-            font-family: var(--font-heading);
-            font-size: 1.8rem;
-            color: var(--text-color); /* Wird durch mix-blend-mode angepasst */
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        /* ----- Hero Section (dramatisch) ----- */
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 0 5%;
-            position: relative;
-            overflow: hidden; /* Für Hintergrundanimation */
-            background: linear-gradient(45deg, #050505, #1a1a1a, #050505);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(3rem, 10vw, 8rem); /* Responsive Schriftgröße */
+        .digit { /* Individual number */
+            font-size: var(--digit-font-size); font-weight: 700;
+            min-width: 1.1em; line-height: 1; display: inline-block;
             color: var(--text-color);
-            margin-bottom: 0.5rem;
-            opacity: 0;
-            transform: translateY(50px);
-            animation: fadeInUp 1.5s 1.8s ease-out forwards; /* Start nach Ladebildschirm */
+            text-shadow: 0 0 5px color-mix(in srgb, var(--primary-glow-color), transparent 40%);
+            transition: all 0.2s ease;
+            opacity: 1; filter: blur(0) brightness(1); transform: translateY(0) scale(1);
+        }
+         .digit.landing { animation: digitLand 0.3s ease-out forwards; }
+         .digit.spinning { animation: spinReel var(--animation-speed) linear infinite; color: var(--accent-color); text-shadow: none; }
+         .digit.jackpot-win { color: var(--win-color); animation: neonGlowJackpot 1.2s ease-in-out infinite; }
+         .digit.near-win { color: var(--near-win-color); animation: neonGlowNearWin 1.2s ease-in-out infinite; }
+
+        /* --- Machine States --- */
+        .slot-machine.charging { animation: machineChargeUp 0.4s ease-out forwards, machineIdleGlow 4s infinite ease-in-out; }
+        .slot-machine.jackpot-celebration { animation: machineGlowJackpot 1.2s ease-in-out infinite, machineShakeJackpot 0.5s linear infinite; }
+        .slot-machine.near-win-celebration { animation: machineGlowNearWin 1.2s ease-in-out infinite; }
+        body.flash-celebration { animation: winFlash 0.4s ease-in-out 4; }
+
+        /* --- Controls --- */
+        #spin-button {
+            background: linear-gradient(145deg, var(--accent-color), color-mix(in srgb, var(--accent-color), black 30%));
+            color: white; border: none; border-radius: 50px; padding: 18px 50px;
+            font-size: 1.6rem; font-weight: bold; font-family: inherit; cursor: pointer;
+            transition: all 0.15s ease; text-transform: uppercase; letter-spacing: 1.5px;
+            box-shadow: 0 0 12px var(--accent-color), 0 0 25px var(--accent-color), inset 0 0 6px rgba(255, 255, 255, 0.3);
+            animation: pulseButton 2s infinite ease-in-out;
+        }
+        #spin-button:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.1); }
+        #spin-button:active:not(:disabled) { animation: buttonClickFlash 0.2s ease-out; }
+        #spin-button.flash-active { animation: buttonClickFlash 0.2s ease-out; }
+        #spin-button:disabled { background: #4b4b4b; color: #888; cursor: not-allowed; opacity: 0.5; box-shadow: 0 0 5px rgba(100,100,100,0.5), inset 0 0 5px rgba(0,0,0,0.3); transform: scale(1); animation: none; }
+
+        .controls { /* Container for spin button and maybe others */
+            display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;
         }
 
-        .hero h2 {
-            font-family: var(--font-body);
-            font-size: clamp(1rem, 3vw, 1.5rem);
-            color: var(--accent-color);
-            font-weight: 300;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            opacity: 0;
-            transform: translateY(50px);
-            animation: fadeInUp 1.5s 2.1s ease-out forwards; /* Start etwas später */
+        /* --- Message Display --- */
+        #message {
+            margin-top: 5px; font-size: 1.3rem; font-weight: 700; min-height: 1.6em;
+            color: var(--primary-glow-color); transition: all 0.3s ease;
+            text-shadow: 0 0 6px var(--primary-glow-color); opacity: 0; transform: translateY(10px) scale(0.95);
         }
+        #message.visible { animation: messageAppear 0.4s ease-out forwards; }
+        #message.win-message { color: var(--win-color); text-shadow: 0 0 10px var(--win-color), 0 0 20px var(--primary-glow-color); }
+        #message.near-win-message { color: var(--near-win-color); text-shadow: 0 0 10px var(--near-win-color);}
+        #message.info-message { color: var(--info-text-color); text-shadow: 0 0 5px var(--info-text-color); }
+        #message.error-message { color: #ff6b6b; text-shadow: 0 0 5px #ff6b6b; }
 
-        /* Animation für Einblendung von unten */
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
+        /* --- Shop Button --- */
+         #shop-button {
+             position: absolute; top: 15px; left: 15px;
+             background: rgba(0, 0, 0, 0.4);
+             color: var(--primary-glow-color);
+             border: 1px solid var(--primary-glow-color);
+             border-radius: 8px;
+             padding: 8px 12px;
+             font-size: 0.9rem; font-weight: bold;
+             cursor: pointer; transition: all 0.3s ease; z-index: 100;
+             backdrop-filter: blur(5px);
+             box-shadow: 0 0 8px color-mix(in srgb, var(--primary-glow-color), transparent 70%);
+         }
+         #shop-button:hover { background: color-mix(in srgb, var(--primary-glow-color), transparent 80%); box-shadow: 0 0 12px color-mix(in srgb, var(--primary-glow-color), transparent 50%); }
+
+        /* --- Full Screen Button (Top Right) --- */
+        #fullscreen-button {
+             position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.4);
+             color: var(--primary-glow-color); border: 1px solid var(--primary-glow-color); border-radius: 50%;
+             width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex;
+             justify-content: center; align-items: center; transition: all 0.3s ease;
+             z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 0 8px color-mix(in srgb, var(--primary-glow-color), transparent 70%);
+        }
+        #fullscreen-button:hover { background: color-mix(in srgb, var(--primary-glow-color), transparent 80%); box-shadow: 0 0 12px color-mix(in srgb, var(--primary-glow-color), transparent 50%); transform: scale(1.1); }
+        #fullscreen-button .enter-icon::before { content: '⛶'; } #fullscreen-button .exit-icon::before { content: '↘↙'; }
+
+
+        /* --- Shop Modal --- */
+        #shop-modal {
+             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+             background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+             display: none; /* Initially hidden */
+             justify-content: center; align-items: center; z-index: 1000;
+             opacity: 0; transition: opacity 0.4s ease;
+        }
+        #shop-modal.visible { display: flex; opacity: 1; }
+
+        .shop-content {
+             background: var(--machine-bg); /* Use machine bg for consistency */
+             padding: 30px; border-radius: var(--border-radius-main);
+             border: 1px solid var(--primary-glow-color);
+             box-shadow: 0 0 30px color-mix(in srgb, var(--primary-glow-color), transparent 50%);
+             width: 90%; max-width: 600px; max-height: 80vh;
+             display: flex; flex-direction: column; gap: 20px;
+             overflow-y: auto;
+        }
+        .shop-header { display: flex; justify-content: space-between; align-items: center; }
+        .shop-header h2 { color: var(--primary-glow-color); text-shadow: 0 0 5px var(--primary-glow-color); }
+        .close-shop-button { background: none; border: none; font-size: 1.8rem; color: var(--info-text-color); cursor: pointer; transition: color 0.2s ease; line-height: 1; }
+        .close-shop-button:hover { color: var(--secondary-glow-color); }
+
+        .shop-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05); padding: 15px;
+            border-radius: var(--border-radius-inner); text-align: center;
+            border: 1px solid transparent; transition: all 0.3s ease;
+            display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+        }
+         .shop-item.selected { border-color: var(--win-color); box-shadow: 0 0 10px var(--win-color); }
+        .shop-item h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--text-color); }
+        .shop-item-price { font-size: 1rem; color: var(--near-win-color); font-weight: bold; }
+        .shop-item-price .coin-icon { font-size: 0.9em; } /* Style coin icon if using one */
+
+        .shop-item button {
+             background: var(--accent-color); color: white; border: none;
+             padding: 8px 15px; border-radius: 8px; cursor: pointer;
+             font-weight: bold; transition: background 0.2s ease, opacity 0.2s ease;
+             margin-top: 10px;
+        }
+         .shop-item button:hover:not(:disabled) { filter: brightness(1.2); }
+         .shop-item button:disabled { background: #555; opacity: 0.6; cursor: not-allowed; }
+         .shop-item button.select-button { background: color-mix(in srgb, var(--primary-glow-color), black 20%); }
+         .shop-item button.select-button.already-selected { background: #666; color: #aaa; }
+
+         /* Simple theme preview - adjust as needed */
+         .theme-preview { height: 30px; border-radius: 5px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
+         .preview-neon { background: linear-gradient(90deg, #0f0c29, #302b63); }
+         .preview-classic { background: linear-gradient(90deg, #4a0e0e, #1a1a1d); }
+         .preview-vaporwave { background: linear-gradient(90deg, var(--vapor-cyan), var(--vapor-pink)); }
+
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-neon"> <!-- Default theme class -->
+
+    <button id="shop-button" title="Open Theme Shop">🛒 Shop</button>
+    <button id="fullscreen-button" title="Toggle Fullscreen">
+        <span class="enter-icon"></span><span class="exit-icon" style="display: none;"></span>
+    </button>
+
+    <div id="game-container">
+        <!-- Info Bar -->
+        <div class="game-info">
+            <div class="info-item">
+                <label>COINS:</label>
+                <span id="coin-display">0</span> <span class="coin-icon">💰</span>
+            </div>
+            <div class="info-item">
+                <label>BET:</label>
+                <button id="decrease-bet" title="Decrease Bet">-</button>
+                <span id="current-bet-display">1</span>
+                <button id="increase-bet" title="Increase Bet">+</button>
+            </div>
+            <div class="info-item"> <!-- Simple free coins button -->
+                 <button id="get-free-coins" title="Get 50 Free Coins">+50💰</button>
+             </div>
+        </div>
+
+        <!-- Slot Machine -->
+        <div class="slot-machine" id="slot-machine">
+            <div class="display">
+                <span class="digit" id="digit1">-</span>
+                <span class="digit" id="digit2">-</span>
+                <span class="digit" id="digit3">-</span>
+            </div>
+            <div class="controls">
+                 <button id="spin-button">Spin</button>
+                 <div id="message" class="info-message">Welcome!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal">
+        <div class="shop-content">
+            <div class="shop-header">
+                <h2>Theme Shop</h2>
+                <button class="close-shop-button" id="close-shop" title="Close Shop">×</button>
+            </div>
+            <div class="shop-items" id="shop-items-container">
+                <!-- Shop items will be populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Placeholders -->
+    <audio id="spin-sound" src="#" preload="auto"></audio>
+    <audio id="reel-stop-sound" src="#" preload="auto"></audio>
+    <audio id="win-sound" src="#" preload="auto"></audio>
+    <audio id="near-win-sound" src="#" preload="auto"></audio>
+    <audio id="buy-sound" src="#" preload="auto"></audio> <!-- NEW -->
+    <audio id="error-sound" src="#" preload="auto"></audio> <!-- NEW -->
+
+    <script>
+        // --- Element References ---
+        const digit1 = document.getElementById('digit1');
+        const digit2 = document.getElementById('digit2');
+        const digit3 = document.getElementById('digit3');
+        const spinButton = document.getElementById('spin-button');
+        const attemptsDisplay = null; // Removed attempts display for coins/bet
+        const messageDisplay = document.getElementById('message');
+        const slotMachine = document.getElementById('slot-machine');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        const gameContainer = document.getElementById('game-container');
+        const bodyElement = document.body;
+
+        // NEW UI Elements
+         const coinDisplay = document.getElementById('coin-display');
+         const currentBetDisplay = document.getElementById('current-bet-display');
+         const increaseBetButton = document.getElementById('increase-bet');
+         const decreaseBetButton = document.getElementById('decrease-bet');
+         const shopButton = document.getElementById('shop-button');
+         const shopModal = document.getElementById('shop-modal');
+         const closeShopButton = document.getElementById('close-shop');
+         const shopItemsContainer = document.getElementById('shop-items-container');
+         const getFreeCoinsButton = document.getElementById('get-free-coins');
+
+        // Audio Elements
+        const spinSound = document.getElementById('spin-sound');
+        const reelStopSound = document.getElementById('reel-stop-sound');
+        const winSound = document.getElementById('win-sound');
+        const nearWinSound = document.getElementById('near-win-sound');
+         const buySound = document.getElementById('buy-sound'); // NEW
+         const errorSound = document.getElementById('error-sound'); // NEW
+
+        // --- Game Constants ---
+         const INITIAL_COINS = 200;
+         const MIN_BET = 1;
+         const MAX_BET = 50;
+         const BET_INCREMENT = 1; // Or 5, 10 etc.
+         const JACKPOT_MULTIPLIER = 100; // 777 pays bet * 100
+         const NEAR_WIN_MULTIPLIER = 5; // 77X pays bet * 5
+         const FREE_COIN_AMOUNT = 50; // How many free coins to give
+
+         // Theme definitions (match CSS classes: theme-*)
+         const THEMES = {
+             'neon': { name: 'Neon Nights', price: 0, previewClass: 'preview-neon' }, // Default is free
+             'classic': { name: 'Classic Casino', price: 500, previewClass: 'preview-classic' },
+             'vaporwave': { name: 'Vaporwave Vibes', price: 1000, previewClass: 'preview-vaporwave' }
+         };
+
+        // --- State Variables ---
+        let coins = INITIAL_COINS;
+        let currentBet = MIN_BET;
+        let selectedTheme = 'neon'; // Default theme ID
+        let purchasedThemes = new Set(['neon']); // Default theme is always purchased
+        let spinning = false;
+        const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+        // --- Sound Playback Helper ---
+        function playSound(audioElement) {
+            // Simple check if src exists and isn't just '#'
+            if (audioElement && audioElement.src && !audioElement.src.endsWith("#")) {
+                 audioElement.currentTime = 0;
+                 audioElement.play().catch(e => console.warn("Audio play prevented:", e));
             }
         }
 
-        /* ----- Content Sections ----- */
-        .content-section {
-            padding: 10rem 5%; /* Viel vertikaler Abstand */
-            max-width: 900px; /* Maximale Breite für Lesbarkeit */
-            margin: 0 auto;
-            text-align: center;
-            opacity: 0;
-            transform: translateY(80px);
-            transition: opacity 1.2s cubic-bezier(0.165, 0.84, 0.44, 1), transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+        // --- Local Storage ---
+        function saveState() {
+             try {
+                 localStorage.setItem('slotCoins', coins.toString());
+                 localStorage.setItem('slotCurrentBet', currentBet.toString());
+                 localStorage.setItem('slotSelectedTheme', selectedTheme);
+                 // Convert Set to Array for JSON compatibility
+                 localStorage.setItem('slotPurchasedThemes', JSON.stringify(Array.from(purchasedThemes)));
+             } catch (e) {
+                 console.error("Failed to save state to localStorage:", e);
+             }
+         }
+
+         function loadState() {
+             try {
+                 const savedCoins = localStorage.getItem('slotCoins');
+                 const savedBet = localStorage.getItem('slotCurrentBet');
+                 const savedTheme = localStorage.getItem('slotSelectedTheme');
+                 const savedPurchased = localStorage.getItem('slotPurchasedThemes');
+
+                 coins = savedCoins !== null ? parseInt(savedCoins, 10) : INITIAL_COINS;
+                 currentBet = savedBet !== null ? parseInt(savedBet, 10) : MIN_BET;
+                 selectedTheme = savedTheme !== null ? savedTheme : 'neon';
+
+                 if (savedPurchased !== null) {
+                     purchasedThemes = new Set(JSON.parse(savedPurchased));
+                 } else {
+                     purchasedThemes = new Set(['neon']); // Ensure default is always there
+                 }
+
+                 // Ensure current bet is within valid range after loading
+                 currentBet = Math.max(MIN_BET, Math.min(MAX_BET, currentBet));
+
+             } catch (e) {
+                 console.error("Failed to load state from localStorage:", e);
+                 // Reset to defaults if loading fails
+                 coins = INITIAL_COINS;
+                 currentBet = MIN_BET;
+                 selectedTheme = 'neon';
+                 purchasedThemes = new Set(['neon']);
+             }
+             // Ensure default theme is always purchased
+             purchasedThemes.add('neon');
+         }
+
+
+        // --- UI Update Functions ---
+        function updateCoinDisplay() { coinDisplay.textContent = coins; checkSpinButtonState(); }
+        function updateBetDisplay() { currentBetDisplay.textContent = currentBet; checkSpinButtonState(); }
+
+        function checkSpinButtonState() {
+            spinButton.disabled = spinning || coins < currentBet;
         }
 
-        .content-section.visible {
-            opacity: 1;
-            transform: translateY(0);
+        function applyTheme(themeId) {
+             if (!THEMES[themeId]) return; // Invalid theme
+
+             // Remove previous theme classes
+             bodyElement.className = ''; // Clear all classes first
+             Object.keys(THEMES).forEach(id => bodyElement.classList.remove(`theme-${id}`));
+
+             // Add new theme class
+             bodyElement.classList.add(`theme-${themeId}`);
+             selectedTheme = themeId;
+             // Potentially update other elements if theme affects more than body vars
+         }
+
+        // --- Helper Functions ---
+        function getRandomDigit() { return digits[Math.floor(Math.random() * digits.length)]; }
+        function clearDigitState(element) { element.classList.remove('spinning', 'jackpot-win', 'near-win', 'landing'); element.style.animation = ''; }
+        function clearMachineState() { slotMachine.classList.remove('charging', 'jackpot-celebration', 'near-win-celebration'); document.body.classList.remove('flash-celebration'); slotMachine.style.animation = 'machineIdleGlow 4s infinite ease-in-out'; }
+        function updateDigit(element, number) { clearDigitState(element); element.textContent = number; }
+        function showMessage(text, typeClass = 'info-message') { messageDisplay.textContent = text; messageDisplay.className = ''; void messageDisplay.offsetWidth; messageDisplay.classList.add(typeClass, 'visible'); }
+
+
+        // --- Betting Logic ---
+        function increaseBet() {
+            if (currentBet < MAX_BET) {
+                currentBet = Math.min(MAX_BET, currentBet + BET_INCREMENT);
+                updateBetDisplay();
+                // saveState(); // Optionally save bet immediately
+            }
+        }
+        function decreaseBet() {
+            if (currentBet > MIN_BET) {
+                currentBet = Math.max(MIN_BET, currentBet - BET_INCREMENT);
+                updateBetDisplay();
+                 // saveState(); // Optionally save bet immediately
+            }
         }
 
-        .content-section h3 {
-            font-family: var(--font-heading);
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            color: var(--text-color);
-            margin-bottom: 2rem;
-            position: relative;
-            display: inline-block;
+        // --- Free Coins Logic ---
+        function addFreeCoins() {
+            coins += FREE_COIN_AMOUNT;
+             showMessage(`+${FREE_COIN_AMOUNT} Free Coins Added!`, 'win-message'); // Use win style
+             updateCoinDisplay();
+             saveState();
+             playSound(buySound); // Use buy sound for getting coins
         }
 
-        /* Unterstrich-Animation */
-        .content-section h3::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 0;
-            height: 3px;
-            background-color: var(--accent-color);
-            transition: width 1s 0.5s ease-out; /* Startet nach Sichtbarkeit */
+        // --- Spin Logic ---
+        function setSpinningState(isSpinning) {
+            spinning = isSpinning;
+            checkSpinButtonState(); // Update button based on spinning state & coins
+
+             if (isSpinning) {
+                 clearMachineState();
+                 slotMachine.classList.add('charging');
+                 setTimeout(() => {
+                      if (!spinning) return;
+                      slotMachine.classList.remove('charging');
+                     [digit1, digit2, digit3].forEach(digit => { clearDigitState(digit); digit.classList.add('spinning'); });
+                 }, 350);
+             } else {
+                 slotMachine.classList.remove('charging');
+                 [digit1, digit2, digit3].forEach(digit => digit.classList.remove('spinning'));
+             }
         }
 
-        .content-section.visible h3::after {
-            width: 100%;
-        }
+        function spin() {
+            if (spinning || coins < currentBet) {
+                 if(coins < currentBet) {
+                     showMessage("Not enough coins!", 'error-message');
+                     playSound(errorSound);
+                 }
+                return;
+            }
 
-        .content-section p {
-            font-size: clamp(1rem, 2.5vw, 1.2rem);
-            color: var(--text-color);
-            line-height: 1.8;
-            margin-bottom: 3rem;
-        }
+            coins -= currentBet; // Deduct cost BEFORE spin
+            updateCoinDisplay();
+            // Don't save state here, save after win/loss calculation
 
-        .origins-list {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap; /* Umbruch bei kleineren Bildschirmen */
-            gap: 1rem 3rem; /* Abstand zwischen Elementen */
-            margin-top: 3rem;
-        }
+            spinButton.classList.add('flash-active');
+            setTimeout(() => spinButton.classList.remove('flash-active'), 200);
 
-        .origin {
-            font-family: var(--font-body);
-            font-size: 1.1rem;
-            color: var(--text-color);
-            font-weight: 400;
-            letter-spacing: 1px;
-            padding: 0.5rem 1rem;
-            border: 1px solid rgba(224, 224, 224, 0.2); /* Dezenter Rand */
-            border-radius: 20px; /* Abgerundete Ecken */
-            opacity: 0;
-            transform: scale(0.8);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-        }
+            playSound(spinSound);
+            setSpinningState(true);
+            showMessage('...', 'info-message');
 
-        /* Staffelte Animation für Herkunftsorte */
-        .content-section.visible .origin:nth-child(1) { transition-delay: 0.8s; }
-        .content-section.visible .origin:nth-child(2) { transition-delay: 1.0s; }
-        .content-section.visible .origin:nth-child(3) { transition-delay: 1.2s; }
-        .content-section.visible .origin:nth-child(4) { transition-delay: 1.4s; }
+            let finalResult = [getRandomDigit(), getRandomDigit(), getRandomDigit()];
+            const spinDuration = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--spin-duration')) || 1500;
+            const baseSettleDelay = 300;
+            const randomSettleVariance = 100;
 
-        .content-section.visible .origin {
-            opacity: 0.8;
-            transform: scale(1);
-        }
+            let spinInterval = setInterval(() => {
+                 if (digit1.classList.contains('spinning')) digit1.textContent = getRandomDigit();
+                 if (digit2.classList.contains('spinning')) digit2.textContent = getRandomDigit();
+                 if (digit3.classList.contains('spinning')) digit3.textContent = getRandomDigit();
+            }, 60);
 
-        .origin:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-            transform: scale(1.05); /* Leichter Hover-Effekt */
-        }
+            const stopTimes = [];
+            stopTimes[0] = spinDuration - (2 * baseSettleDelay) - Math.random() * randomSettleVariance;
+            stopTimes[1] = spinDuration - baseSettleDelay - Math.random() * randomSettleVariance;
+            stopTimes[2] = spinDuration;
 
-        .highlight {
-            color: var(--accent-color);
-            font-weight: 400;
-        }
+            const stopDigit = (digitElement, resultValue, delay) => {
+                setTimeout(() => {
+                    if (!spinning && !digitElement.classList.contains('jackpot-win') && !digitElement.classList.contains('near-win')) return; // Bail if cancelled early
+                    updateDigit(digitElement, resultValue);
+                    playSound(reelStopSound);
+                    digitElement.classList.add('landing');
+                    setTimeout(() => digitElement.classList.remove('landing'), 300);
+                }, delay);
+            };
 
-        /* ----- Bottle Showcase (optional, clean) ----- */
-        .bottle-section {
-            /* Ähnlich wie content-section, evtl. anderer Hintergrund oder Layout */
-            padding: 8rem 5%;
-            background-color: #111; /* Leicht anderer Hintergrund zur Abgrenzung */
-        }
+            stopDigit(digit1, finalResult[0], stopTimes[0]);
+            stopDigit(digit2, finalResult[1], stopTimes[1]);
 
-        .bottle-image {
-             /* Hier könnte ein extrem hochwertiges Bild der Flasche platziert werden */
-             /* Beispiel: background: url('wengpeng-bottle.png') no-repeat center center; background-size: contain; */
-            width: 100%;
-            max-width: 400px; /* Beispielgröße */
-            height: 60vh; /* Beispielhöhe */
-            margin: 3rem auto 0;
-            background-color: rgba(255, 255, 255, 0.05); /* Platzhalter-Farbe */
-            border-radius: 10px;
-             /* Add subtle animation if desired */
-            opacity: 0;
-            transform: scale(0.9);
-            transition: opacity 1.2s cubic-bezier(0.165, 0.84, 0.44, 1), transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
-            transition-delay: 0.3s; /* Startet nach Sichtbarkeit der Sektion */
-        }
-        .content-section.visible .bottle-image {
-             opacity: 1;
-             transform: scale(1);
-        }
-
-
-        /* ----- Footer ----- */
-        footer {
-            padding: 4rem 5%;
-            text-align: center;
-            margin-top: 8rem;
-            border-top: 1px solid rgba(224, 224, 224, 0.1);
-        }
-
-        footer p {
-            font-size: 0.9rem;
-            color: rgba(224, 224, 224, 0.6);
-            letter-spacing: 0.5px;
-        }
-
-        /* ----- Responsive Design ----- */
-        @media (max-width: 768px) {
-            html { font-size: 14px; } /* Kleinere Basisschrift */
-            header { padding: 1.5rem 5%; }
-            .logo { font-size: 1.5rem; }
-            .content-section { padding: 6rem 5%; }
-            .origins-list { gap: 0.5rem 1.5rem; }
-            .bottle-image { height: 50vh; }
-            footer { margin-top: 5rem; padding: 3rem 5%; }
-        }
-
-        @media (max-width: 480px) {
-            html { font-size: 13px; }
-             /* Weitere Anpassungen für sehr kleine Bildschirme */
-            .hero h1 { font-size: 3rem; } /* Feste Größe für sehr kleine Screens */
-            .hero h2 { font-size: 1rem; }
-            .content-section h3 { font-size: 2rem; }
-        }
-
-    </style>
-</head>
-<body>
-
-    <!-- Ladebildschirm -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-logo">W</div>
-    </div>
-
-    <!-- Header -->
-    <header>
-        <div class="logo">WENPENG</div>
-    </header>
-
-    <main>
-        <!-- Hero Section -->
-        <section class="hero">
-            <h1>WENPENG</h1>
-            <h2>Die Essenz reinen Luxus.</h2>
-            <!-- Hier könnte optional ein sehr subtiles Hintergrundvideo oder Canvas-Animation laufen -->
-        </section>
-
-        <!-- Philosophie Section -->
-        <section class="content-section" id="philosophy">
-            <h3>Die Fusion der Welten</h3>
-            <p>
-                Wengpeng ist nicht nur Wasser. Es ist eine Symphonie der reinsten Quellen,
-                eine kühne Komposition für den anspruchsvollsten Gaumen. Wir vereinen die
-                kristallklare <span class="highlight">Frische der Alpen</span>, die opulente
-                Reinheit aus <span class="highlight">Dubai</span>, die dynamische Klarheit
-                <span class="highlight">Hongkongs</span> und die stille Perfektion
-                <span class="highlight">Japans</span> zu einem unvergleichlichen Elixier.
-            </p>
-            <div class="origins-list">
-                <span class="origin">Alpine Majestät</span>
-                <span class="origin">Dubais Oase</span>
-                <span class="origin">Hongkongs Dynamik</span>
-                <span class="origin">Japans Harmonie</span>
-            </div>
-        </section>
-
-        <!-- Reinheit Section -->
-        <section class="content-section" id="purity">
-            <h3>Unvergleichliche Reinheit</h3>
-            <p>
-                Jeder Tropfen Wengpeng durchläuft einen proprietären Veredelungsprozess,
-                der die einzigartigen Charakteristika jeder Quelle bewahrt und gleichzeitig
-                eine absolute Reinheit garantiert. Das Ergebnis ist ein Wasser von
-                samtweicher Textur und subtiler Mineralität – ein Erlebnis, das alle Sinne belebt.
-            </p>
-             <!-- Hier könnte ein abstraktes Visual (z.B. SVG Animation von Wassertropfen) platziert werden -->
-        </section>
-
-         <!-- Flaschen-Showcase Section -->
-        <section class="content-section bottle-section" id="bottle">
-             <h3>Das Gefäß</h3>
-             <p>
-                 Unser Anspruch an Perfektion spiegelt sich auch im Design wider. Jede Wengpeng-Flasche
-                 ist ein Meisterwerk minimalistischer Eleganz, geschaffen, um den kostbaren Inhalt
-                 gebührend zu präsentieren und zu schützen.
-             </p>
-             <div class="bottle-image">
-                 <!-- Hier idealerweise das Bild der Flasche einfügen -->
-                 <!-- z.B. <img src="link/zum/wengpeng-flasche.png" alt="Wengpeng Flasche"> -->
-             </div>
-        </section>
-
-        <!-- Erlebnis Section -->
-        <section class="content-section" id="experience">
-            <h3>Definieren Sie Luxus neu</h3>
-            <p>
-                Wengpeng ist mehr als ein Getränk – es ist ein Statement. Ein Bekenntnis zu
-                kompromissloser Qualität und exquisitem Geschmack. Entdecken Sie Wasser,
-                wie Sie es noch nie erlebt haben. Erleben Sie Wengpeng.
-            </p>
-             <!-- Evtl. Call to Action oder Link zu Kontakt/Bestellung -->
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <p>© 2023 Wengpeng. Alle Rechte vorbehalten. Pure Exklusivität.</p>
-    </footer>
-
-    <script>
-        // ----- JavaScript für Animationen -----
-
-        // 1. Ladebildschirm ausblenden
-        window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById('loadingScreen');
-            // Kurze Verzögerung, damit man die Animation sieht
             setTimeout(() => {
-                loadingScreen.classList.add('hidden');
-            }, 1500); // Zeit muss zur CSS Transition passen
-        });
+                updateDigit(digit3, finalResult[2]);
+                playSound(reelStopSound);
+                digit3.classList.add('landing');
+                setTimeout(() => digit3.classList.remove('landing'), 300);
+                clearInterval(spinInterval);
+                setTimeout(() => {
+                     setSpinningState(false); // Officially stop spinning state
+                     checkResult(finalResult); // Check result AFTER animations settle
+                 }, 100); // Delay slightly after last reel lands visually
+            }, stopTimes[2]);
+        }
 
-        // 2. Scroll-Animationen (Einblenden beim Scrollen)
-        const sections = document.querySelectorAll('.content-section');
 
-        const revealSection = (entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    // Optional: Animation nur einmal auslösen
-                    // observer.unobserve(entry.target);
+        // --- Check Result and Award Coins ---
+        function checkResult(result) {
+            const [d1, d2, d3] = result;
+            let winnings = 0;
+            let message = "Spin Again!";
+            let messageClass = 'info-message';
+            let celebrationClass = null;
+            let soundEffect = null;
+             let digitClass = null;
+
+            clearMachineState(); // Clear previous glows/shakes
+             [digit1,digit2,digit3].forEach(clearDigitState);
+             digit1.textContent = d1; digit2.textContent = d2; digit3.textContent = d3;
+
+
+            if (d1 === 7 && d2 === 7 && d3 === 7) {
+                winnings = currentBet * JACKPOT_MULTIPLIER;
+                message = `JACKPOT! +${winnings} Coins!`;
+                messageClass = 'win-message';
+                celebrationClass = 'jackpot-celebration';
+                 soundEffect = winSound;
+                 digitClass = 'jackpot-win';
+                document.body.classList.add('flash-celebration');
+            } else if (d1 === 7 && d2 === 7 && d3 !== 7) {
+                winnings = currentBet * NEAR_WIN_MULTIPLIER;
+                message = `Near Win! +${winnings} Coins!`;
+                messageClass = 'near-win-message';
+                celebrationClass = 'near-win-celebration';
+                soundEffect = nearWinSound;
+                 digitClass = 'near-win'; // Only apply to the 7s below
+            } else {
+                // No win - message remains "Spin Again!"
+            }
+
+            // Apply results
+             showMessage(message, messageClass);
+             if (soundEffect) playSound(soundEffect);
+
+             if (winnings > 0) {
+                 coins += winnings;
+                 updateCoinDisplay();
+             }
+
+            // Apply visual styles for wins/near-wins
+             if (celebrationClass) {
+                 slotMachine.classList.add(celebrationClass);
+             }
+            if (digitClass) {
+                 if (digitClass === 'jackpot-win') {
+                     [digit1, digit2, digit3].forEach(d => d.classList.add(digitClass));
+                 } else if (digitClass === 'near-win') {
+                     digit1.classList.add(digitClass);
+                     digit2.classList.add(digitClass);
+                     // digit3 remains normal
+                 }
+             }
+
+             // Always save state after a spin resolves
+             saveState();
+             // Re-check button state in case winnings made spin possible again
+             checkSpinButtonState();
+        }
+
+
+        // --- Shop Logic ---
+        function openShop() { shopModal.classList.add('visible'); populateShop(); }
+        function closeShop() { shopModal.classList.remove('visible'); }
+
+        function populateShop() {
+            shopItemsContainer.innerHTML = ''; // Clear existing items
+
+            for (const themeId in THEMES) {
+                const theme = THEMES[themeId];
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('shop-item');
+                if (themeId === selectedTheme) {
+                    itemDiv.classList.add('selected');
                 }
-                // Optional: Elemente wieder ausblenden, wenn sie aus dem Viewport scrollen
-                // else {
-                //     entry.target.classList.remove('visible');
-                // }
-            });
-        };
 
-        // Intersection Observer Optionen
-        const options = {
-            root: null, // Beobachtet den Viewport
-            rootMargin: '0px',
-            threshold: 0.15 // Element muss zu 15% sichtbar sein
-        };
+                 const previewDiv = document.createElement('div');
+                 previewDiv.classList.add('theme-preview', theme.previewClass);
 
-        const observer = new IntersectionObserver(revealSection, options);
+                const nameH3 = document.createElement('h3');
+                nameH3.textContent = theme.name;
 
-        sections.forEach(section => {
-            observer.observe(section);
-        });
+                const priceSpan = document.createElement('span');
+                priceSpan.classList.add('shop-item-price');
 
-        // Optional: Weitere "krasse" JS-Animationen könnten hier hinzugefügt werden,
-        // z.B. Parallax-Scrolling für den Hintergrund, Maus-Effekte etc.
-        // Für extreme Effekte bräuchte man ggf. Bibliotheken wie GSAP oder Three.js,
-        // aber das würde den Rahmen einer einzelnen HTML-Datei sprengen.
+                const actionButton = document.createElement('button');
 
-        // Kleiner Maus-Folge-Effekt (sehr subtil)
-        // const cursorDot = document.createElement('div');
-        // cursorDot.style.position = 'fixed';
-        // cursorDot.style.width = '8px';
-        // cursorDot.style.height = '8px';
-        // cursorDot.style.backgroundColor = 'var(--accent-color)';
-        // cursorDot.style.borderRadius = '50%';
-        // cursorDot.style.pointerEvents = 'none';
-        // cursorDot.style.zIndex = '1001';
-        // cursorDot.style.opacity = '0.7';
-        // cursorDot.style.transition = 'transform 0.1s ease-out';
-        // document.body.appendChild(cursorDot);
+                if (purchasedThemes.has(themeId)) {
+                    priceSpan.textContent = 'Owned';
+                    actionButton.textContent = 'Select';
+                    actionButton.classList.add('select-button');
+                    if (themeId === selectedTheme) {
+                        actionButton.disabled = true;
+                        actionButton.textContent = 'Selected';
+                         actionButton.classList.add('already-selected');
+                    } else {
+                        actionButton.onclick = () => selectTheme(themeId);
+                    }
+                } else {
+                    priceSpan.innerHTML = `${theme.price} <span class="coin-icon">💰</span>`;
+                    actionButton.textContent = `Buy (${theme.price})`;
+                    actionButton.onclick = () => buyTheme(themeId);
+                    if (coins < theme.price) {
+                        actionButton.disabled = true;
+                    }
+                }
 
-        // window.addEventListener('mousemove', (e) => {
-        //    cursorDot.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`;
-        // });
+                itemDiv.appendChild(previewDiv);
+                itemDiv.appendChild(nameH3);
+                itemDiv.appendChild(priceSpan);
+                itemDiv.appendChild(actionButton);
+                shopItemsContainer.appendChild(itemDiv);
+            }
+        }
 
+        function buyTheme(themeId) {
+            if (purchasedThemes.has(themeId) || !THEMES[themeId]) return; // Already owned or invalid
+
+            const theme = THEMES[themeId];
+            if (coins >= theme.price) {
+                coins -= theme.price;
+                purchasedThemes.add(themeId);
+                updateCoinDisplay();
+                saveState();
+                populateShop(); // Update shop UI to show as owned/selectable
+                showMessage(`Theme "${theme.name}" purchased!`, 'win-message');
+                playSound(buySound);
+            } else {
+                showMessage("Not enough coins to buy!", 'error-message');
+                playSound(errorSound);
+            }
+        }
+
+        function selectTheme(themeId) {
+            if (!purchasedThemes.has(themeId) || !THEMES[themeId]) return; // Not owned or invalid
+
+            applyTheme(themeId);
+            saveState();
+            populateShop(); // Update shop UI to show selection
+             showMessage(`Theme "${THEMES[themeId].name}" applied!`, 'info-message');
+             // Maybe play a UI confirmation sound
+        }
+
+
+        // --- Fullscreen Logic (Same) ---
+         const fsEnterIcon = fullscreenButton.querySelector('.enter-icon');
+         const fsExitIcon = fullscreenButton.querySelector('.exit-icon');
+         function toggleFullScreen() { /* ... no changes needed ... */
+            const doc = window.document; const docEl = document.documentElement; // Use whole page for fullscreen
+             const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+             const cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+             if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) { requestFullScreen.call(docEl); } else { cancelFullScreen.call(doc); }
+         }
+         function updateFullscreenButton() { /* ... no changes needed ... */
+             if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) { fsEnterIcon.style.display = 'none'; fsExitIcon.style.display = 'inline'; fullscreenButton.title = "Exit Fullscreen"; } else { fsEnterIcon.style.display = 'inline'; fsExitIcon.style.display = 'none'; fullscreenButton.title = "Enter Fullscreen"; }
+         }
+
+
+        // --- Event Listeners ---
+        spinButton.addEventListener('click', spin);
+        increaseBetButton.addEventListener('click', increaseBet);
+        decreaseBetButton.addEventListener('click', decreaseBet);
+        getFreeCoinsButton.addEventListener('click', addFreeCoins);
+        shopButton.addEventListener('click', openShop);
+        closeShopButton.addEventListener('click', closeShop);
+        fullscreenButton.addEventListener('click', toggleFullScreen);
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach( eventType =>
+            document.addEventListener(eventType, updateFullscreenButton, false)
+         );
+         // Save state when the user leaves the page
+         window.addEventListener('beforeunload', saveState);
+
+
+        // --- Initialization ---
+         function initializeGame() {
+             loadState(); // Load coins, themes etc. first
+             applyTheme(selectedTheme); // Apply the loaded theme
+             updateCoinDisplay();
+             updateBetDisplay();
+             updateFullscreenButton();
+             showMessage('Welcome Back!', 'info-message'); // Initial message
+         }
+
+         initializeGame(); // Start the game
 
     </script>
-
 </body>
 </html>
