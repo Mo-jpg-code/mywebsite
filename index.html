@@ -3,851 +3,453 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slots Deluxe - RNG Casino</title>
-    <style>
-        /* --- Global Styles & Foundational Variables --- */
-        :root {
-            /* These might be overridden by themes */
-            --bg-color-start: #0f0c29;
-            --bg-color-mid: #302b63;
-            --bg-color-end: #24243e;
-            --machine-bg: rgba(20, 20, 35, 0.85);
-            --display-bg: rgba(255, 255, 255, 0.08);
-            --text-color: #e8e8e8;
-            --primary-glow-color: var(--neon-cyan); /* Default to cyan */
-            --secondary-glow-color: var(--neon-magenta); /* Default to magenta */
-            --accent-color: var(--neon-magenta); /* Button, etc. */
-            --win-color: var(--neon-green);
-            --near-win-color: var(--neon-yellow);
-            --info-text-color: #bbb;
-            --digit-font-size: clamp(3.5rem, 10vw, 6rem);
-            --animation-speed: 65ms;
-            --spin-duration: 1500ms;
-            --blur-intensity: 6px;
-            --glow-intensity: 18px;
-            --border-radius-main: 25px;
-            --border-radius-inner: 15px;
-
-             /* Shared Colors (can be overridden by themes) */
-            --neon-cyan: #00ffff;
-            --neon-magenta: #ff00ff;
-            --neon-yellow: #fffb00;
-            --neon-green: #39ff14;
-            --classic-gold: #ffd700;
-            --classic-red: #dc143c;
-            --classic-dark: #333;
-            --vapor-pink: #ff69b4;
-            --vapor-cyan: #00bcd4;
-            --vapor-purple: #9c27b0;
-        }
-
-        /* --- Basic Setup --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body {
-            height: 100%; width: 100%;
-            font-family: 'Orbitron', 'Segoe UI', sans-serif;
-            /* Background set by theme class */
-            color: var(--text-color);
-            display: flex; flex-direction: column; /* Allow stacking info bar */
-            justify-content: center; align-items: center;
-            text-align: center; overflow: hidden; position: relative;
-            transition: background 0.5s ease;
-        }
-
-        /* --- Theme Definitions --- */
-        /* Base styles are applied by default, theme classes override */
-
-        body.theme-neon {
-            background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
-            --primary-glow-color: var(--neon-cyan);
-            --secondary-glow-color: var(--neon-magenta);
-            --accent-color: var(--neon-magenta);
-            --win-color: var(--neon-green);
-            --near-win-color: var(--neon-yellow);
-            --machine-bg: rgba(20, 20, 35, 0.85);
-            --display-bg: rgba(255, 255, 255, 0.08);
-            --info-text-color: #bbb;
-        }
-        body.theme-neon::before { /* Background Grid */
-             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-             background-image: linear-gradient(var(--primary-glow-color) 1px, transparent 1px), linear-gradient(90deg, var(--primary-glow-color) 1px, transparent 1px);
-             background-size: 30px 30px; opacity: 0.05; z-index: 0; animation: scrollGrid 10s linear infinite;
-        }
-
-        body.theme-classic {
-            background: radial-gradient(ellipse at bottom, #4a0e0e, #1a1a1d);
-            --primary-glow-color: var(--classic-gold);
-            --secondary-glow-color: var(--classic-red);
-            --accent-color: var(--classic-gold);
-            --win-color: #00ff7f; /* Spring Green */
-            --near-win-color: #ff8c00; /* Dark Orange */
-            --machine-bg: linear-gradient(145deg, #444, #222);
-            --display-bg: rgba(0, 0, 0, 0.6);
-            --text-color: #f0e68c; /* Khaki */
-            --info-text-color: #ccc;
-            --border-radius-main: 15px;
-            --border-radius-inner: 8px;
-        }
-         body.theme-classic .digit { text-shadow: 0 2px 3px rgba(0,0,0,0.7); }
-         body.theme-classic #spin-button { background: linear-gradient(180deg, var(--classic-gold), #b8860b); color: #333; border: 2px solid #daa520; text-shadow: 0 1px 1px rgba(255,255,255,0.3); border-radius: 10px; }
-         body.theme-classic .slot-machine { border: 5px solid #444; border-top-color: #666; border-left-color: #555; }
-
-
-         body.theme-vaporwave {
-             background: linear-gradient(45deg, var(--vapor-cyan), var(--vapor-pink), var(--vapor-purple));
-             --primary-glow-color: var(--vapor-cyan);
-             --secondary-glow-color: var(--vapor-pink);
-             --accent-color: var(--vapor-pink);
-             --win-color: var(--neon-green);
-             --near-win-color: var(--neon-yellow);
-             --machine-bg: rgba(25, 25, 45, 0.7);
-             --display-bg: rgba(255, 255, 255, 0.15);
-             --text-color: #fff;
-             --info-text-color: #eee;
-             --border-radius-main: 30px;
-             --border-radius-inner: 20px;
-         }
-         body.theme-vaporwave::before { /* Optional Vaporwave Grid */
-              content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-              background-image: linear-gradient(var(--primary-glow-color) 1px, transparent 1px), linear-gradient(90deg, var(--primary-glow-color) 1px, transparent 1px);
-              background-size: 40px 40px; opacity: 0.08; z-index: 0; animation: scrollGrid 15s linear infinite;
-         }
-         body.theme-vaporwave .slot-machine { border: 2px solid var(--secondary-glow-color); }
-         body.theme-vaporwave #spin-button { background: linear-gradient(145deg, var(--vapor-pink), var(--vapor-purple)); border-radius: 15px; }
-
-
-        /* --- Animations (Mostly Theme Agnostic using Variables) --- */
-        @keyframes scrollGrid { 0% { background-position: 0 0; } 100% { background-position: 60px 60px; } }
-        @keyframes neonGlowJackpot {
-            0%, 100% { text-shadow: 0 0 6px var(--win-color), 0 0 12px var(--win-color), 0 0 18px var(--primary-glow-color); }
-            50% { text-shadow: 0 0 10px var(--win-color), 0 0 20px var(--win-color), 0 0 30px var(--primary-glow-color); }
-        }
-         @keyframes neonGlowNearWin {
-            0%, 100% { text-shadow: 0 0 5px var(--near-win-color), 0 0 10px var(--near-win-color); }
-            50% { text-shadow: 0 0 10px var(--near-win-color), 0 0 20px var(--near-win-color); }
-        }
-        @keyframes pulseButton {
-             0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color), inset 0 0 5px rgba(255,255,255,0.3); }
-             50% { transform: scale(1.03); box-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--accent-color), inset 0 0 8px rgba(255,255,255,0.5); }
-        }
-         @keyframes buttonClickFlash { /* Generic flash */
-              0%, 100% { transform: scale(1.05); filter: brightness(1.2); }
-              50% { transform: scale(1.02); filter: brightness(2.0); }
-         }
-        @keyframes spinReel {
-            0%   { opacity: 0.4; filter: blur(var(--blur-intensity)); transform: translateY(-18px) scale(0.85); }
-            50%  { opacity: 1.0; filter: blur(calc(var(--blur-intensity) / 5)); transform: translateY(0px) scale(1); }
-            100% { opacity: 0.4; filter: blur(var(--blur-intensity)); transform: translateY(18px) scale(0.85); }
-        }
-        @keyframes winFlash {
-            0%, 100% { background-color: transparent; }
-            50% { background-color: rgba(0, 255, 255, 0.25); } /* Default cyan, override if needed */
-        }
-        @keyframes machineIdleGlow {
-             0%, 100% { border-color: color-mix(in srgb, var(--primary-glow-color), transparent 80%); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6), 0 0 5px color-mix(in srgb, var(--primary-glow-color), transparent 90%); }
-             50% { border-color: color-mix(in srgb, var(--primary-glow-color), transparent 70%); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6), 0 0 10px color-mix(in srgb, var(--primary-glow-color), transparent 80%); }
-        }
-         @keyframes machineChargeUp {
-             0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6); }
-             50% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6), 0 0 20px 10px var(--accent-color); }
-             100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6); }
-         }
-        @keyframes machineGlowJackpot {
-             0%, 100% { box-shadow: 0 0 var(--glow-intensity) 5px var(--win-color), 0 0 calc(var(--glow-intensity) * 2) 10px var(--primary-glow-color), inset 0 0 10px rgba(0,0,0,0.6); }
-             50% { box-shadow: 0 0 calc(var(--glow-intensity) * 1.5) 8px var(--win-color), 0 0 calc(var(--glow-intensity) * 3) 15px var(--primary-glow-color), inset 0 0 15px rgba(0,0,0,0.7); }
-        }
-         @keyframes machineGlowNearWin {
-             0%, 100% { box-shadow: 0 0 calc(var(--glow-intensity) / 1.5) 4px var(--near-win-color), inset 0 0 10px rgba(0,0,0,0.6); }
-             50% { box-shadow: 0 0 var(--glow-intensity) 7px var(--near-win-color), inset 0 0 15px rgba(0,0,0,0.7); }
-         }
-         @keyframes machineShakeJackpot { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
-         @keyframes digitLand { 0% { transform: scale(1); opacity: 1; filter: brightness(1); } 50% { transform: scale(1.15) translateY(-5px); opacity: 1; filter: brightness(1.5); } 100% { transform: scale(1); opacity: 1; filter: brightness(1); } }
-         @keyframes messageAppear { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-        /* --- UI Elements --- */
-        #game-container { position: relative; z-index: 1; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
-
-        /* NEW: Info Bar for Coins/Bet */
-        .game-info {
-             display: flex;
-             justify-content: space-around;
-             align-items: center;
-             background: rgba(0, 0, 0, 0.3);
-             padding: 8px 15px;
-             border-radius: 10px;
-             border: 1px solid color-mix(in srgb, var(--primary-glow-color), transparent 70%);
-             width: 90%;
-             max-width: 500px;
-             margin-bottom: 15px;
-             font-size: 1rem;
-             gap: 10px;
-             flex-wrap: wrap; /* Allow wrapping on small screens */
-        }
-        .info-item { display: flex; align-items: center; gap: 8px; }
-        .info-item label { font-weight: bold; color: var(--info-text-color); opacity: 0.8; }
-        .info-item span, .info-item button { font-weight: bold; color: var(--primary-glow-color); }
-        .info-item button {
-             background: rgba(255, 255, 255, 0.1); border: 1px solid var(--primary-glow-color);
-             color: var(--primary-glow-color); border-radius: 5px; width: 25px; height: 25px;
-             cursor: pointer; transition: background 0.2s ease; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; line-height: 1; padding-bottom: 2px;
-        }
-        .info-item button:hover { background: rgba(255, 255, 255, 0.2); }
-        .info-item button:disabled { opacity: 0.4; cursor: not-allowed; }
-        #coin-display { color: var(--near-win-color); /* Yellow for coins */ font-size: 1.1rem;}
-        #current-bet-display { min-width: 40px; text-align: center; }
-
-        .slot-machine {
-            background: var(--machine-bg); padding: 35px 45px; border-radius: var(--border-radius-main);
-            border: 2px solid color-mix(in srgb, var(--primary-glow-color), transparent 80%);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0,0,0,0.6);
-            display: flex; flex-direction: column; align-items: center; gap: 30px;
-            min-width: 320px; max-width: 90vw; /* Responsive width */
-             position: relative;
-            transition: box-shadow 0.4s ease-in-out, border-color 0.4s ease-in-out;
-            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-            animation: machineIdleGlow 4s infinite ease-in-out;
-        }
-
-        .display { /* Digits display */
-            display: flex; justify-content: center; gap: clamp(15px, 3vw, 25px); /* Responsive gap */
-            background: var(--display-bg); padding: clamp(20px, 4vw, 30px) clamp(25px, 5vw, 40px);
-            border-radius: var(--border-radius-inner);
-            border: 1px solid color-mix(in srgb, var(--primary-glow-color), transparent 60%);
-            box-shadow: 0 0 20px color-mix(in srgb, var(--primary-glow-color), transparent 85%), inset 0 0 10px rgba(0,0,0, 0.6);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            width: 100%;
-        }
-
-        .digit { /* Individual number */
-            font-size: var(--digit-font-size); font-weight: 700;
-            min-width: 1.1em; line-height: 1; display: inline-block;
-            color: var(--text-color);
-            text-shadow: 0 0 5px color-mix(in srgb, var(--primary-glow-color), transparent 40%);
-            transition: all 0.2s ease;
-            opacity: 1; filter: blur(0) brightness(1); transform: translateY(0) scale(1);
-        }
-         .digit.landing { animation: digitLand 0.3s ease-out forwards; }
-         .digit.spinning { animation: spinReel var(--animation-speed) linear infinite; color: var(--accent-color); text-shadow: none; }
-         .digit.jackpot-win { color: var(--win-color); animation: neonGlowJackpot 1.2s ease-in-out infinite; }
-         .digit.near-win { color: var(--near-win-color); animation: neonGlowNearWin 1.2s ease-in-out infinite; }
-
-        /* --- Machine States --- */
-        .slot-machine.charging { animation: machineChargeUp 0.4s ease-out forwards, machineIdleGlow 4s infinite ease-in-out; }
-        .slot-machine.jackpot-celebration { animation: machineGlowJackpot 1.2s ease-in-out infinite, machineShakeJackpot 0.5s linear infinite; }
-        .slot-machine.near-win-celebration { animation: machineGlowNearWin 1.2s ease-in-out infinite; }
-        body.flash-celebration { animation: winFlash 0.4s ease-in-out 4; }
-
-        /* --- Controls --- */
-        #spin-button {
-            background: linear-gradient(145deg, var(--accent-color), color-mix(in srgb, var(--accent-color), black 30%));
-            color: white; border: none; border-radius: 50px; padding: 18px 50px;
-            font-size: 1.6rem; font-weight: bold; font-family: inherit; cursor: pointer;
-            transition: all 0.15s ease; text-transform: uppercase; letter-spacing: 1.5px;
-            box-shadow: 0 0 12px var(--accent-color), 0 0 25px var(--accent-color), inset 0 0 6px rgba(255, 255, 255, 0.3);
-            animation: pulseButton 2s infinite ease-in-out;
-        }
-        #spin-button:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.1); }
-        #spin-button:active:not(:disabled) { animation: buttonClickFlash 0.2s ease-out; }
-        #spin-button.flash-active { animation: buttonClickFlash 0.2s ease-out; }
-        #spin-button:disabled { background: #4b4b4b; color: #888; cursor: not-allowed; opacity: 0.5; box-shadow: 0 0 5px rgba(100,100,100,0.5), inset 0 0 5px rgba(0,0,0,0.3); transform: scale(1); animation: none; }
-
-        .controls { /* Container for spin button and maybe others */
-            display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;
-        }
-
-        /* --- Message Display --- */
-        #message {
-            margin-top: 5px; font-size: 1.3rem; font-weight: 700; min-height: 1.6em;
-            color: var(--primary-glow-color); transition: all 0.3s ease;
-            text-shadow: 0 0 6px var(--primary-glow-color); opacity: 0; transform: translateY(10px) scale(0.95);
-        }
-        #message.visible { animation: messageAppear 0.4s ease-out forwards; }
-        #message.win-message { color: var(--win-color); text-shadow: 0 0 10px var(--win-color), 0 0 20px var(--primary-glow-color); }
-        #message.near-win-message { color: var(--near-win-color); text-shadow: 0 0 10px var(--near-win-color);}
-        #message.info-message { color: var(--info-text-color); text-shadow: 0 0 5px var(--info-text-color); }
-        #message.error-message { color: #ff6b6b; text-shadow: 0 0 5px #ff6b6b; }
-
-        /* --- Shop Button --- */
-         #shop-button {
-             position: absolute; top: 15px; left: 15px;
-             background: rgba(0, 0, 0, 0.4);
-             color: var(--primary-glow-color);
-             border: 1px solid var(--primary-glow-color);
-             border-radius: 8px;
-             padding: 8px 12px;
-             font-size: 0.9rem; font-weight: bold;
-             cursor: pointer; transition: all 0.3s ease; z-index: 100;
-             backdrop-filter: blur(5px);
-             box-shadow: 0 0 8px color-mix(in srgb, var(--primary-glow-color), transparent 70%);
-         }
-         #shop-button:hover { background: color-mix(in srgb, var(--primary-glow-color), transparent 80%); box-shadow: 0 0 12px color-mix(in srgb, var(--primary-glow-color), transparent 50%); }
-
-        /* --- Full Screen Button (Top Right) --- */
-        #fullscreen-button {
-             position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.4);
-             color: var(--primary-glow-color); border: 1px solid var(--primary-glow-color); border-radius: 50%;
-             width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex;
-             justify-content: center; align-items: center; transition: all 0.3s ease;
-             z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 0 8px color-mix(in srgb, var(--primary-glow-color), transparent 70%);
-        }
-        #fullscreen-button:hover { background: color-mix(in srgb, var(--primary-glow-color), transparent 80%); box-shadow: 0 0 12px color-mix(in srgb, var(--primary-glow-color), transparent 50%); transform: scale(1.1); }
-        #fullscreen-button .enter-icon::before { content: '⛶'; } #fullscreen-button .exit-icon::before { content: '↘↙'; }
-
-
-        /* --- Shop Modal --- */
-        #shop-modal {
-             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-             background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
-             display: none; /* Initially hidden */
-             justify-content: center; align-items: center; z-index: 1000;
-             opacity: 0; transition: opacity 0.4s ease;
-        }
-        #shop-modal.visible { display: flex; opacity: 1; }
-
-        .shop-content {
-             background: var(--machine-bg); /* Use machine bg for consistency */
-             padding: 30px; border-radius: var(--border-radius-main);
-             border: 1px solid var(--primary-glow-color);
-             box-shadow: 0 0 30px color-mix(in srgb, var(--primary-glow-color), transparent 50%);
-             width: 90%; max-width: 600px; max-height: 80vh;
-             display: flex; flex-direction: column; gap: 20px;
-             overflow-y: auto;
-        }
-        .shop-header { display: flex; justify-content: space-between; align-items: center; }
-        .shop-header h2 { color: var(--primary-glow-color); text-shadow: 0 0 5px var(--primary-glow-color); }
-        .close-shop-button { background: none; border: none; font-size: 1.8rem; color: var(--info-text-color); cursor: pointer; transition: color 0.2s ease; line-height: 1; }
-        .close-shop-button:hover { color: var(--secondary-glow-color); }
-
-        .shop-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
-
-        .shop-item {
-            background: rgba(255, 255, 255, 0.05); padding: 15px;
-            border-radius: var(--border-radius-inner); text-align: center;
-            border: 1px solid transparent; transition: all 0.3s ease;
-            display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
-        }
-         .shop-item.selected { border-color: var(--win-color); box-shadow: 0 0 10px var(--win-color); }
-        .shop-item h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--text-color); }
-        .shop-item-price { font-size: 1rem; color: var(--near-win-color); font-weight: bold; }
-        .shop-item-price .coin-icon { font-size: 0.9em; } /* Style coin icon if using one */
-
-        .shop-item button {
-             background: var(--accent-color); color: white; border: none;
-             padding: 8px 15px; border-radius: 8px; cursor: pointer;
-             font-weight: bold; transition: background 0.2s ease, opacity 0.2s ease;
-             margin-top: 10px;
-        }
-         .shop-item button:hover:not(:disabled) { filter: brightness(1.2); }
-         .shop-item button:disabled { background: #555; opacity: 0.6; cursor: not-allowed; }
-         .shop-item button.select-button { background: color-mix(in srgb, var(--primary-glow-color), black 20%); }
-         .shop-item button.select-button.already-selected { background: #666; color: #aaa; }
-
-         /* Simple theme preview - adjust as needed */
-         .theme-preview { height: 30px; border-radius: 5px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
-         .preview-neon { background: linear-gradient(90deg, #0f0c29, #302b63); }
-         .preview-classic { background: linear-gradient(90deg, #4a0e0e, #1a1a1d); }
-         .preview-vaporwave { background: linear-gradient(90deg, var(--vapor-cyan), var(--vapor-pink)); }
-
-    </style>
+    <title>WengPeng - The Epitome of Purity</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Global Reset & Base Styles --- */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-color: #020408; /* Deepest Base */
+            --bg-alt: #080C14; /* Slightly Lighter Dark */
+            --text-color: #e8edf2; /* Clearer Off-White */
+            --text-muted: rgba(232, 237, 242, 0.7); /* Softer text */
+            --accent-color: #CCA43D; /* Richer Gold */
+            --accent-light: #f3e9cc; /* Pale Gold/Cream */
+            --accent-dark: #a8852a; /* Darker Gold for depth */
+            --border-color: rgba(204, 164, 61, 0.25); /* Refined Gold Border */
+            --shadow-color: rgba(204, 164, 61, 0.12); /* Softer shadow */
+            --section-padding: 140px 7%; /* Increased Padding */
+            --header-font: 'Playfair Display', serif;
+            --body-font: 'Lato', sans-serif;
+            --smooth-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Standard smooth ease */
+            --elegant-ease: cubic-bezier(0.645, 0.045, 0.355, 1.000); /* More elegant */
+            --modal-bg: rgba(6, 9, 15, 0.97);
+        }
+        html { scroll-behavior: smooth; font-size: 16.5px; /* Slightly larger base */ }
+        body {
+            font-family: var(--body-font); background-color: var(--bg-color); color: var(--text-color);
+            line-height: 1.75; /* Increased line height */
+            overflow-x: hidden; opacity: 0; animation: pageFadeIn 1.2s var(--elegant-ease) 0.3s forwards;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23ffffff' fill-opacity='0.015' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E"); /* Very subtle noise */
+        }
+        @keyframes pageFadeIn { to { opacity: 1; } }
+
+        /* --- Typography Polish --- */
+        h1, h2, h3 { font-family: var(--header-font); color: var(--accent-light); margin-bottom: 1.5rem; line-height: 1.3; font-weight: 700; text-shadow: 0 3px 15px rgba(0,0,0,0.35); letter-spacing: 0.5px; }
+        h1 { font-size: clamp(3.5rem, 7.5vw, 6rem); font-style: italic; letter-spacing: 1px; }
+        h2 { font-size: clamp(2.5rem, 5.5vw, 4rem); } /* Larger H2 */
+        h3 { font-size: clamp(1.8rem, 4.2vw, 2.5rem); color: var(--accent-color); }
+        p { margin-bottom: 1.8rem; max-width: 62ch; /* Slightly narrower for rhythm */ font-size: clamp(1.05rem, 1.9vw, 1.15rem); font-weight: 300; }
+        p.lead { font-size: clamp(1.2rem, 2.1vw, 1.45rem); font-weight: 400; color: var(--accent-light); font-style: italic; }
+        a { color: var(--accent-color); text-decoration: none; transition: color 0.4s var(--smooth-ease), opacity 0.4s var(--smooth-ease), transform 0.3s var(--smooth-ease); display: inline-block; }
+        a:hover { color: var(--accent-light); opacity: 0.85; transform: translateY(-2px); }
+
+        /* --- Layout & Sections Refinement --- */
+        .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 2; }
+        section { padding: var(--section-padding); position: relative; overflow: hidden; border-bottom: 1px solid var(--border-color); }
+        section:last-of-type { border-bottom: none; }
+        .content-section:nth-of-type(odd) { background-color: var(--bg-alt); }
+
+        /* --- Wave Divider (Refined Looks) --- */
+        .wave-divider { padding-bottom: calc(var(--section-padding) + 60px); /* Add wave height to padding */ } /* Ensure space */
+        .wave-divider::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; /* Slightly taller wave */ background-size: cover; background-repeat: no-repeat; z-index: 1; pointer-events: none; }
+        .content-section:nth-of-type(even).wave-divider::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.39-16.72-168.19-17.73-250.45-.39-58.79,11.9-117.28,34.13-172,47.86A600.21,600.21,0,0,0,0,27.35V120H1200V95.83C1132.19,118.92,1055.71,111.31,985.66,92.83Z' style='fill:%23080C14;'%3E%3C/path%3E%3C/svg%3E"); } /* Fill matches ALT BG */
+        .content-section:nth-of-type(odd).wave-divider::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.39-16.72-168.19-17.73-250.45-.39-58.79,11.9-117.28,34.13-172,47.86A600.21,600.21,0,0,0,0,27.35V120H1200V95.83C1132.19,118.92,1055.71,111.31,985.66,92.83Z' style='fill:%23020408;'%3E%3C/path%3E%3C/svg%3E"); } /* Fill matches BASE BG */
+
+        /* --- Header Refinement --- */
+        .main-header { padding: 28px 7%; z-index: 1000; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(2, 4, 8, 0.85), rgba(2, 4, 8, 0)); transition: background-color 0.5s var(--smooth-ease), padding 0.5s var(--smooth-ease), box-shadow 0.5s var(--smooth-ease); opacity: 0; animation: slideDownFadeIn 1s var(--elegant-ease) 0.5s forwards; position: fixed; top: 0; left: 0; width: 100%;}
+        .main-header.scrolled { background-color: rgba(2, 4, 8, 0.95); padding: 20px 7%; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .logo { font-size: clamp(1.8rem, 3.8vw, 2.5rem); color: var(--accent-light); font-weight: 700; font-style: italic; letter-spacing: 1.8px; transition: transform 0.5s var(--elegant-ease); }
+        .logo:hover { transform: scale(1.06) rotate(-2deg); }
+        @keyframes slideDownFadeIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .header-cta { /* Elevated Button */
+            background: linear-gradient(145deg, var(--accent-color), var(--accent-dark));
+            color: #fff; /* White text for contrast */
+            padding: 10px 22px; border-radius: 25px; font-size: 0.95rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; border: none; cursor: pointer;
+            transition: all 0.4s var(--elegant-ease); box-shadow: 0 4px 15px rgba(204, 164, 61, 0.2);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .header-cta:hover { background: linear-gradient(145deg, var(--accent-light), var(--accent-color)); color: var(--bg-color); transform: scale(1.05) translateY(-1px); box-shadow: 0 6px 20px rgba(243, 233, 204, 0.25); }
+
+        /* --- Hero Section Polish --- */
+        .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; /* NEED HIGH QUALITY IMAGE HERE */ background: url('https://images.unsplash.com/photo-1561715240-a7a78cef37d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2100&q=85') no-repeat center center/cover; background-attachment: fixed; color: #fff; border-bottom: none; } /* Higher quality suggestion */
+        .hero::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(2, 4, 8, 0.4) 0%, rgba(2, 4, 8, 0.9) 100%); z-index: 1; } /* Darker gradient */
+        .hero-content { position: relative; z-index: 2; max-width: 950px; padding: 30px; }
+        .hero h1 { color: #fff; margin-bottom: 1rem; }
+        .hero h1 .char { display: inline-block; opacity: 0; transform: translateY(50px) scale(0.8) rotateX(60deg); filter: blur(4px); animation: letterReveal 1.2s var(--elegant-ease) forwards; }
+        @keyframes letterReveal { to { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); filter: blur(0px); } }
+        .hero .tagline { font-size: clamp(1.3rem, 2.6vw, 1.8rem); margin-bottom: 3rem; color: var(--accent-light); opacity: 0; transform: translateY(25px); animation: slideUpFadeIn 1.4s var(--elegant-ease) 1.8s forwards; letter-spacing: 0.5px; }
+        .cta-button { /* Hero CTA Refined */
+            display: inline-block; position: relative; background: none; color: var(--accent-light); padding: 16px 40px; border: 2px solid var(--accent-color); border-radius: 50px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; transition: all 0.4s var(--elegant-ease); cursor: pointer; font-size: 1.1rem; overflow: hidden; z-index: 1; opacity: 0; transform: scale(0.9); animation: scaleUpFadeIn 1.2s var(--elegant-ease) 2.4s forwards; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        .cta-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(204, 164, 61, 0.8), transparent); transition: left 0.6s var(--elegant-ease); z-index: -1; border-radius: 50px; opacity: 0; } /* Subtle Shine Effect */
+        .cta-button:hover { color: #fff; border-color: var(--accent-light); transform: scale(1.03) translateY(-2px); box-shadow: 0 5px 25px var(--shadow-color); }
+        .cta-button:hover::before { left: 100%; opacity: 1; }
+        @keyframes slideUpFadeIn { to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleUpFadeIn { to { opacity: 1; transform: scale(1); } }
+
+        /* --- Content Sections Refinement --- */
+        .section-content { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; /* Increased gap */ align-items: center; }
+        .layout-alternating:nth-of-type(even) .section-image { order: 1; } .layout-alternating:nth-of-type(even) .section-text { order: 2; }
+        .layout-alternating:nth-of-type(odd) .section-image { order: 2; } .layout-alternating:nth-of-type(odd) .section-text { order: 1; }
+        .section-image img { /* NEED HIGH QUALITY IMAGES */ width: 100%; max-width: 480px; display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 18px 60px rgba(0,0,0, 0.25); transition: transform 1s var(--elegant-ease), box-shadow 0.6s var(--elegant-ease); filter: brightness(0.95) saturate(1.05); }
+        .section-image img:hover { transform: scale(1.04) rotate(-1deg); box-shadow: 0 25px 70px var(--shadow-color); filter: brightness(1) saturate(1.1); }
+        .section-text { position: relative; z-index: 2; }
+        .product-image img { max-width: 250px; filter: drop-shadow(0 15px 40px rgba(255, 255, 255, 0.12)); transition: transform 1.3s var(--elegant-ease); }
+        .product-image img.is-visible { transform: scale(1) rotate(0deg); }
+        .product-details .price { font-size: 1.6rem; color: var(--accent-color); margin: 2.5rem 0 2rem; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+        .price span { font-size: 1rem; color: var(--text-muted); font-weight: 300; margin-left: 10px; font-style: italic; }
+        .features h2 { text-align: center; margin-bottom: 6rem; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 60px; /* Increased gap */ }
+        .feature-item { background: rgba(8, 12, 20, 0.6); padding: 50px 40px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 12px 35px rgba(0,0,0, 0.3); transition: transform 0.5s var(--elegant-ease), box-shadow 0.5s var(--elegant-ease), border-color 0.5s var(--elegant-ease); opacity: 0; transform: translateY(60px); text-align: center; }
+        .feature-item:hover { transform: translateY(-15px) scale(1.03); box-shadow: 0 20px 55px var(--shadow-color); border-color: rgba(204, 164, 61, 0.5); }
+        .feature-item .icon { font-size: 4rem; color: var(--accent-color); margin-bottom: 2rem; display: inline-block; text-shadow: 0 0 25px var(--accent-color); animation: floatElegant 4.5s ease-in-out infinite; }
+        .icon-source::before { content: "🏞️"; } .icon-purity::before { content: "💧"; } .icon-luxury::before { content: "⚜️"; } /* Replace with SVGs */
+        @keyframes floatElegant { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-12px) scale(1.06) rotate(3deg); } }
+        .feature-item h3 { margin-bottom: 1rem; font-size: 2rem; }
+
+        /* --- Footer Refinement --- */
+        .main-footer { text-align: center; padding: 50px 7%; margin-top: 0; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-muted); background-color: var(--bg-color); position: relative; z-index: 5; }
+        .main-footer p { font-size: inherit; margin-bottom: 0; letter-spacing: 0.5px; }
+
+        /* --- Exclusive Access Section Polish --- */
+        .exclusive-access-area { padding: 110px 7% 130px; background-color: #010204; position: relative; text-align: center; border-top: 3px double var(--accent-color); /* Double border */ box-shadow: 0 -10px 35px rgba(204, 164, 61, 0.1); z-index: 1; }
+        .exclusive-access-area .container { z-index: 2; }
+        .exclusive-access-area h2 { color: var(--accent-color); font-size: clamp(2rem, 4.5vw, 3rem); margin-bottom: 1.2rem; }
+        .exclusive-access-area p { color: var(--text-muted); max-width: 58ch; margin-left: auto; margin-right: auto; font-size: clamp(1rem, 1.9vw, 1.1rem); }
+        .exclusive-access-area form { margin-top: 3rem; max-width: 500px; margin-left: auto; margin-right: auto; display: flex; gap: 15px; opacity: 0; transform: translateY(40px); transition-delay: 0.2s; }
+        .exclusive-access-area input[type="email"] { flex-grow: 1; padding: 16px 22px; /* More padding */ border: 1px solid var(--border-color); background-color: rgba(11, 15, 25, 0.5); color: var(--text-color); border-radius: 5px; font-size: 1.05rem; transition: all 0.4s var(--smooth-ease); font-family: var(--body-font); }
+        .exclusive-access-area input[type="email"]::placeholder { color: rgba(224, 229, 235, 0.4); }
+        .exclusive-access-area input[type="email"]:focus { outline: none; border-color: var(--accent-color); background-color: rgba(11, 15, 25, 0.8); box-shadow: 0 0 18px var(--shadow-color), inset 0 0 5px rgba(204, 164, 61, 0.1); }
+        .exclusive-access-area input[type="email"]:disabled { background-color: rgba(11, 15, 25, 0.3); cursor: not-allowed; }
+        .exclusive-access-area .submit-button { /* Premium Button */
+            background: linear-gradient(145deg, var(--accent-color), var(--accent-dark)); color: #fff; padding: 16px 30px; border: none; border-radius: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; cursor: pointer; font-size: 1rem; flex-shrink: 0; min-width: 170px; position: relative; transition: all 0.4s var(--elegant-ease); box-shadow: 0 4px 15px rgba(204, 164, 61, 0.2); text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .exclusive-access-area .submit-button:hover:not(:disabled) { background: linear-gradient(145deg, var(--accent-light), var(--accent-color)); color: var(--bg-color); transform: scale(1.04) translateY(-2px); box-shadow: 0 6px 20px rgba(243, 233, 204, 0.25); }
+        .exclusive-access-area .submit-button.loading { pointer-events: none; color: transparent; opacity: 0.7; }
+        .exclusive-access-area .submit-button.success { background: #3a9a51; color: #fff; cursor: default; box-shadow: 0 4px 15px rgba(58, 154, 81, 0.3); }
+        .exclusive-access-area .submit-button.error-state { background: #c04040; color: #fff; box-shadow: 0 4px 15px rgba(192, 64, 64, 0.3); }
+        .spinner { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid rgba(2, 4, 8, 0.4); border-top-color: #fff; /* White spinner on gold button */ border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+        .submit-button.loading .spinner { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #exclusive-confirmation-message { margin-top: 1.8rem; min-height: 1.5em; font-weight: 400; font-size: 1rem; transition: color 0.4s ease, opacity 0.4s ease; opacity: 0; }
+        #exclusive-confirmation-message.visible { opacity: 1; } #exclusive-confirmation-message.success-msg { color: #77cc8a; } #exclusive-confirmation-message.error-msg { color: #e6808a; }
+
+        /* --- Modal Polish --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1040; opacity: 0; visibility: hidden; transition: opacity 0.5s var(--smooth-ease), visibility 0s linear 0.5s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; transition: opacity 0.5s var(--smooth-ease); }
+        .modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -45%) scale(0.95); /* Start slightly higher */ background-color: var(--modal-bg); backdrop-filter: blur(8px); padding: 45px 50px; /* More padding */ border-radius: 10px; border-top: 3px solid var(--accent-color); /* Top border accent */ box-shadow: 0 15px 50px rgba(0,0,0, 0.5); width: 90%; max-width: 520px; z-index: 1050; opacity: 0; visibility: hidden; transition: opacity 0.5s var(--elegant-ease), transform 0.5s var(--elegant-ease), visibility 0s linear 0.5s;
+        }
+        .modal.active { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+        .modal-close-button { position: absolute; top: 18px; right: 18px; background: none; border: none; color: var(--text-muted); font-size: 2rem; cursor: pointer; line-height: 1; transition: color 0.4s var(--smooth-ease), transform 0.4s var(--smooth-ease); }
+        .modal-close-button:hover { color: var(--accent-light); transform: rotate(180deg) scale(1.1); }
+        .modal-header h2 { color: var(--accent-light); text-align: center; margin-bottom: 2.5rem; font-size: 2rem; letter-spacing: 1px; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .modal-body .form-group { margin-bottom: 1.8rem; }
+        .modal-body label { display: block; margin-bottom: 0.6rem; color: var(--accent-light); font-weight: 400; font-size: 0.95rem; }
+        .modal-body input[type="text"], .modal-body input[type="email"] { width: 100%; padding: 14px 18px; border: 1px solid var(--border-color); background-color: rgba(11, 15, 25, 0.6); color: var(--text-color); border-radius: 5px; font-size: 1rem; font-family: var(--body-font); transition: all 0.4s var(--smooth-ease); }
+        .modal-body input[type="text"]:focus, .modal-body input[type="email"]:focus { outline: none; border-color: var(--accent-color); background-color: rgba(11, 15, 25, 0.9); box-shadow: 0 0 15px var(--shadow-color), inset 0 0 4px rgba(204, 164, 61, 0.1); }
+        .modal-body input[type="text"]:disabled, .modal-body input[type="email"]:disabled { background-color: rgba(11, 15, 25, 0.4); cursor: not-allowed; opacity: 0.7; }
+        .modal-body .modal-submit-button { /* Match exclusive button style */
+            display: block; width: 100%; background: linear-gradient(145deg, var(--accent-color), var(--accent-dark)); color: #fff; padding: 15px 20px; border: none; border-radius: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; cursor: pointer; font-size: 1rem; position: relative; margin-top: 1.5rem; transition: all 0.4s var(--elegant-ease); box-shadow: 0 4px 15px rgba(204, 164, 61, 0.2); text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .modal-body .modal-submit-button:hover:not(:disabled) { background: linear-gradient(145deg, var(--accent-light), var(--accent-color)); color: var(--bg-color); transform: scale(1.02) translateY(-1px); box-shadow: 0 6px 20px rgba(243, 233, 204, 0.25); }
+        .modal-body .modal-submit-button.loading { pointer-events: none; color: transparent; opacity: 0.7; }
+        .modal-body .modal-submit-button.success { background: #3a9a51; color: #fff; cursor: default; box-shadow: 0 4px 15px rgba(58, 154, 81, 0.3); }
+        .modal-body .modal-submit-button.error-state { background: #c04040; color: #fff; box-shadow: 0 4px 15px rgba(192, 64, 64, 0.3); }
+        .modal-submit-button .spinner { border-top-color: #fff; /* Spinner on gold */ }
+        #modal-confirmation-message { text-align: center; margin-top: 1.8rem; min-height: 1.5em; font-weight: 400; font-size: 1rem; transition: color 0.4s ease, opacity 0.4s ease; opacity: 0; }
+        #modal-confirmation-message.visible { opacity: 1; } #modal-confirmation-message.success-msg { color: #77cc8a; } #modal-confirmation-message.error-msg { color: #e6808a; }
+
+        /* --- Scroll Animation Base --- */
+        .animate-on-scroll { opacity: 0; transition: opacity 1s var(--elegant-ease), transform 1s var(--elegant-ease); }
+        .animate-on-scroll.delay-1 { transition-delay: 0.2s; } .animate-on-scroll.delay-2 { transition-delay: 0.4s; } .animate-on-scroll.delay-3 { transition-delay: 0.6s; }
+        .slide-in-left { transform: translateX(-60px); } .slide-in-right { transform: translateX(60px); }
+        .slide-in-up { transform: translateY(60px); } .fade-in { transform: translateY(30px); }
+        .zoom-in { transform: scale(0.88); }
+        .is-visible { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 992px) {
+            :root { --section-padding: 110px 6%; }
+            .section-content { gap: 50px; }
+            .section-image img { max-width: 400px; } .product-image img { max-width: 200px; }
+            .wave-divider::after { height: 50px; }
+            .wave-divider { padding-bottom: calc(var(--section-padding) + 50px); }
+             .section-content { grid-template-columns: 1fr; text-align: center; }
+             .layout-alternating:nth-of-type(even) .section-image, .layout-alternating:nth-of-type(odd) .section-image { order: 1; margin-bottom: 40px; }
+             .layout-alternating:nth-of-type(even) .section-text, .layout-alternating:nth-of-type(odd) .section-text { order: 2; }
+        }
+        @media (max-width: 768px) {
+            :root { --section-padding: 90px 5%; font-size: 16px; }
+            h1 { font-size: 2.8rem; } h2 { font-size: 2.2rem; } h3 { font-size: 1.8rem; }
+            .hero { background-attachment: scroll; }
+            .main-header { padding: 22px 5%; } .main-header.scrolled { padding: 16px 5%; }
+            .header-cta { padding: 8px 16px; font-size: 0.85rem; }
+            .exclusive-access-area form { flex-direction: column; gap: 20px; }
+            .exclusive-access-area .submit-button { width: 100%; }
+            .modal { padding: 35px 30px; max-width: 90%; }
+            .modal-header h2 { font-size: 1.6rem; }
+            .wave-divider::after { height: 40px; }
+             .wave-divider { padding-bottom: calc(var(--section-padding) + 40px); }
+        }
+
+    </style>
 </head>
-<body class="theme-neon"> <!-- Default theme class -->
+<body>
 
-    <button id="shop-button" title="Open Theme Shop">🛒 Shop</button>
-    <button id="fullscreen-button" title="Toggle Fullscreen">
-        <span class="enter-icon"></span><span class="exit-icon" style="display: none;"></span>
-    </button>
+    <header class="main-header" id="main-header">
+        <div class="logo">WengPeng</div>
+        <button class="header-cta" id="open-register-modal">Register Now</button>
+    </header>
 
-    <div id="game-container">
-        <!-- Info Bar -->
-        <div class="game-info">
-            <div class="info-item">
-                <label>COINS:</label>
-                <span id="coin-display">0</span> <span class="coin-icon">💰</span>
-            </div>
-            <div class="info-item">
-                <label>BET:</label>
-                <button id="decrease-bet" title="Decrease Bet">-</button>
-                <span id="current-bet-display">1</span>
-                <button id="increase-bet" title="Increase Bet">+</button>
-            </div>
-            <div class="info-item"> <!-- Simple free coins button -->
-                 <button id="get-free-coins" title="Get 50 Free Coins">+50💰</button>
-             </div>
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1 class="hero-headline">WengPeng</h1>
+            <p class="tagline">The Soul of Beijing. Bottled Elixir.</p>
+            <a href="#about" class="cta-button">Discover the Source</a>
         </div>
+    </section>
 
-        <!-- Slot Machine -->
-        <div class="slot-machine" id="slot-machine">
-            <div class="display">
-                <span class="digit" id="digit1">-</span>
-                <span class="digit" id="digit2">-</span>
-                <span class="digit" id="digit3">-</span>
+    <!-- About Section -->
+    <section class="content-section about layout-alternating wave-divider" id="about">
+        <div class="container section-content">
+            <div class="section-image animate-on-scroll slide-in-left">
+                <!-- PLACEHOLDER: Replace with stunning, high-res landscape -->
+                <img src="https://via.placeholder.com/480x600/080C14/CCA43D?text=Pristine+Source" alt="Pristine Beijing Spring Source Landscape">
             </div>
-            <div class="controls">
-                 <button id="spin-button">Spin</button>
-                 <div id="message" class="info-message">Welcome!</div>
+            <div class="section-text">
+                <h2 class="animate-on-scroll fade-in delay-1">From Ancient Springs</h2>
+                <p class="animate-on-scroll fade-in delay-2">Deep beneath protected lands near Beijing lies the source of WengPeng. Here, water embarks on a centuries-long pilgrimage through mineral-rich strata, emerging naturally filtered, impeccably pure, and imbued with the silent energy of the earth.</p>
+                <p class="lead animate-on-scroll fade-in delay-3">It is not merely sourced; it is curated by time and terrain.</p>
             </div>
+        </div>
+    </section>
+
+    <!-- Product Section -->
+    <section class="content-section product layout-alternating wave-divider" id="product">
+        <div class="container section-content">
+             <div class="section-text">
+                <h2 class="animate-on-scroll fade-in delay-1">The 250ml Vessel</h2>
+                <p class="animate-on-scroll fade-in delay-2">Our signature 250ml bottle is a statement in minimalist luxury. Designed to preserve the pristine quality within, its form reflects the clarity and value of WengPeng water. An intimate serving for moments of personal indulgence.</p>
+                <div class="price product-details animate-on-scroll fade-in delay-3">
+                    €0.30 / $0.27 <span> per ml</span> <br>
+                    (€75 / $67.50 <span> per 250ml vessel</span>)
+                </div>
+                 <p class="animate-on-scroll fade-in delay-3" style="color: var(--text-muted);"><em>Acquisition currently by referral or invitation.</em></p>
+            </div>
+            <div class="section-image product-image">
+                 <!-- PLACEHOLDER: Replace with elegant bottle render -->
+                <img src="https://via.placeholder.com/250x600/020408/f5e5a4?text=WengPeng+Bottle" alt="WengPeng 250ml Water Bottle" class="animate-on-scroll zoom-in" id="product-bottle">
+            </div>
+        </div>
+    </section>
+
+     <!-- Features Section -->
+    <section class="content-section features wave-divider" id="features">
+        <div class="container">
+            <h2 class="animate-on-scroll fade-in" style="text-align: center;">The WengPeng Distinction</h2>
+            <div class="features-grid">
+                <div class="feature-item animate-on-scroll slide-in-up delay-1">
+                    <span class="icon icon-source">🏞️</span>
+                    <h3>Pristine Origin</h3>
+                    <p>Sourced from protected, geologically unique springs near Beijing. Naturally purified over centuries.</p>
+                </div>
+                <div class="feature-item animate-on-scroll slide-in-up delay-2">
+                     <span class="icon icon-purity">💧</span>
+                    <h3>Unrivaled Purity</h3>
+                    <p>A uniquely smooth, crisp taste profile with perfectly balanced minerality. The essence of pure hydration.</p>
+                </div>
+                <div class="feature-item animate-on-scroll slide-in-up delay-3">
+                     <span class="icon icon-luxury">⚜️</span>
+                    <h3>Reserved Exclusivity</h3>
+                    <p>A mark of discernment. Available only to a select clientele through private channels and partnerships.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <p>© 2024 WengPeng Water. All Rights Reserved. | Beijing Origin | An Essence Reserved</p>
+    </footer>
+
+    <!-- Exclusive Access Section -->
+    <section class="exclusive-access-area" id="exclusive-access">
+        <div class="container">
+            <h2 class="animate-on-scroll fade-in">Join the Connoisseurs' Circle</h2>
+            <p class="animate-on-scroll fade-in delay-1">To maintain the utmost exclusivity, WengPeng is available by invitation. Register your interest below to be considered for future allocations and private communications.</p>
+            <form id="exclusive-access-form" class="animate-on-scroll slide-in-up" novalidate>
+                <input type="email" id="exclusive-email-input" placeholder="Enter your email address" required>
+                <button type="submit" class="submit-button" id="exclusive-submit-button">
+                    <span class="button-text">Register Interest</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+            <p id="exclusive-confirmation-message" class="animate-on-scroll fade-in delay-2"></p>
+        </div>
+    </section>
+
+    <!-- Registration Modal -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal" id="register-modal">
+        <button class="modal-close-button" id="modal-close-button">×</button>
+        <div class="modal-header">
+            <h2>Register Your Interest</h2>
+        </div>
+        <div class="modal-body">
+            <form id="register-form" novalidate>
+                <div class="form-group">
+                    <label for="modal-name">Full Name</label>
+                    <input type="text" id="modal-name" name="name" required placeholder="e.g. Jean Dupont">
+                </div>
+                <div class="form-group">
+                    <label for="modal-email">Email Address</label>
+                    <input type="email" id="modal-email" name="email" required placeholder="e.g. email@example.com">
+                </div>
+                <button type="submit" class="modal-submit-button" id="modal-submit-button">
+                    <span class="button-text">Submit Registration</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+            <p id="modal-confirmation-message"></p>
         </div>
     </div>
 
-    <!-- Shop Modal -->
-    <div id="shop-modal">
-        <div class="shop-content">
-            <div class="shop-header">
-                <h2>Theme Shop</h2>
-                <button class="close-shop-button" id="close-shop" title="Close Shop">×</button>
-            </div>
-            <div class="shop-items" id="shop-items-container">
-                <!-- Shop items will be populated by JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Audio Placeholders -->
-    <audio id="spin-sound" src="#" preload="auto"></audio>
-    <audio id="reel-stop-sound" src="#" preload="auto"></audio>
-    <audio id="win-sound" src="#" preload="auto"></audio>
-    <audio id="near-win-sound" src="#" preload="auto"></audio>
-    <audio id="buy-sound" src="#" preload="auto"></audio> <!-- NEW -->
-    <audio id="error-sound" src="#" preload="auto"></audio> <!-- NEW -->
 
     <script>
-        // --- Element References ---
-        const digit1 = document.getElementById('digit1');
-        const digit2 = document.getElementById('digit2');
-        const digit3 = document.getElementById('digit3');
-        const spinButton = document.getElementById('spin-button');
-        const attemptsDisplay = null; // Removed attempts display for coins/bet
-        const messageDisplay = document.getElementById('message');
-        const slotMachine = document.getElementById('slot-machine');
-        const fullscreenButton = document.getElementById('fullscreen-button');
-        const gameContainer = document.getElementById('game-container');
-        const bodyElement = document.body;
+        // --- All JavaScript remains the same as v5 ---
+        // Includes: Sticky Header, Smooth Scroll, Hero Animation,
+        // Scroll Animations (Observer), Exclusive Form Logic, Modal Logic
+        document.addEventListener('DOMContentLoaded', () => {
 
-        // NEW UI Elements
-         const coinDisplay = document.getElementById('coin-display');
-         const currentBetDisplay = document.getElementById('current-bet-display');
-         const increaseBetButton = document.getElementById('increase-bet');
-         const decreaseBetButton = document.getElementById('decrease-bet');
-         const shopButton = document.getElementById('shop-button');
-         const shopModal = document.getElementById('shop-modal');
-         const closeShopButton = document.getElementById('close-shop');
-         const shopItemsContainer = document.getElementById('shop-items-container');
-         const getFreeCoinsButton = document.getElementById('get-free-coins');
+            // --- Sticky Header ---
+            const header = document.getElementById('main-header');
+            if (header) { window.addEventListener('scroll', () => { header.classList.toggle('scrolled', window.scrollY > 60); }); } // Increased threshold slightly
 
-        // Audio Elements
-        const spinSound = document.getElementById('spin-sound');
-        const reelStopSound = document.getElementById('reel-stop-sound');
-        const winSound = document.getElementById('win-sound');
-        const nearWinSound = document.getElementById('near-win-sound');
-         const buySound = document.getElementById('buy-sound'); // NEW
-         const errorSound = document.getElementById('error-sound'); // NEW
+            // --- Smooth Scroll for #about link ---
+            document.querySelectorAll('a[href="#about"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetElement = document.querySelector('#about');
+                    if(targetElement) { targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                });
+            });
 
-        // --- Game Constants ---
-         const INITIAL_COINS = 200;
-         const MIN_BET = 1;
-         const MAX_BET = 50;
-         const BET_INCREMENT = 1; // Or 5, 10 etc.
-         const JACKPOT_MULTIPLIER = 100; // 777 pays bet * 100
-         const NEAR_WIN_MULTIPLIER = 5; // 77X pays bet * 5
-         const FREE_COIN_AMOUNT = 50; // How many free coins to give
-
-         // Theme definitions (match CSS classes: theme-*)
-         const THEMES = {
-             'neon': { name: 'Neon Nights', price: 0, previewClass: 'preview-neon' }, // Default is free
-             'classic': { name: 'Classic Casino', price: 500, previewClass: 'preview-classic' },
-             'vaporwave': { name: 'Vaporwave Vibes', price: 1000, previewClass: 'preview-vaporwave' }
-         };
-
-        // --- State Variables ---
-        let coins = INITIAL_COINS;
-        let currentBet = MIN_BET;
-        let selectedTheme = 'neon'; // Default theme ID
-        let purchasedThemes = new Set(['neon']); // Default theme is always purchased
-        let spinning = false;
-        const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-        // --- Sound Playback Helper ---
-        function playSound(audioElement) {
-            // Simple check if src exists and isn't just '#'
-            if (audioElement && audioElement.src && !audioElement.src.endsWith("#")) {
-                 audioElement.currentTime = 0;
-                 audioElement.play().catch(e => console.warn("Audio play prevented:", e));
-            }
-        }
-
-        // --- Local Storage ---
-        function saveState() {
-             try {
-                 localStorage.setItem('slotCoins', coins.toString());
-                 localStorage.setItem('slotCurrentBet', currentBet.toString());
-                 localStorage.setItem('slotSelectedTheme', selectedTheme);
-                 // Convert Set to Array for JSON compatibility
-                 localStorage.setItem('slotPurchasedThemes', JSON.stringify(Array.from(purchasedThemes)));
-             } catch (e) {
-                 console.error("Failed to save state to localStorage:", e);
-             }
-         }
-
-         function loadState() {
-             try {
-                 const savedCoins = localStorage.getItem('slotCoins');
-                 const savedBet = localStorage.getItem('slotCurrentBet');
-                 const savedTheme = localStorage.getItem('slotSelectedTheme');
-                 const savedPurchased = localStorage.getItem('slotPurchasedThemes');
-
-                 coins = savedCoins !== null ? parseInt(savedCoins, 10) : INITIAL_COINS;
-                 currentBet = savedBet !== null ? parseInt(savedBet, 10) : MIN_BET;
-                 selectedTheme = savedTheme !== null ? savedTheme : 'neon';
-
-                 if (savedPurchased !== null) {
-                     purchasedThemes = new Set(JSON.parse(savedPurchased));
-                 } else {
-                     purchasedThemes = new Set(['neon']); // Ensure default is always there
-                 }
-
-                 // Ensure current bet is within valid range after loading
-                 currentBet = Math.max(MIN_BET, Math.min(MAX_BET, currentBet));
-
-             } catch (e) {
-                 console.error("Failed to load state from localStorage:", e);
-                 // Reset to defaults if loading fails
-                 coins = INITIAL_COINS;
-                 currentBet = MIN_BET;
-                 selectedTheme = 'neon';
-                 purchasedThemes = new Set(['neon']);
-             }
-             // Ensure default theme is always purchased
-             purchasedThemes.add('neon');
-         }
-
-
-        // --- UI Update Functions ---
-        function updateCoinDisplay() { coinDisplay.textContent = coins; checkSpinButtonState(); }
-        function updateBetDisplay() { currentBetDisplay.textContent = currentBet; checkSpinButtonState(); }
-
-        function checkSpinButtonState() {
-            spinButton.disabled = spinning || coins < currentBet;
-        }
-
-        function applyTheme(themeId) {
-             if (!THEMES[themeId]) return; // Invalid theme
-
-             // Remove previous theme classes
-             bodyElement.className = ''; // Clear all classes first
-             Object.keys(THEMES).forEach(id => bodyElement.classList.remove(`theme-${id}`));
-
-             // Add new theme class
-             bodyElement.classList.add(`theme-${themeId}`);
-             selectedTheme = themeId;
-             // Potentially update other elements if theme affects more than body vars
-         }
-
-        // --- Helper Functions ---
-        function getRandomDigit() { return digits[Math.floor(Math.random() * digits.length)]; }
-        function clearDigitState(element) { element.classList.remove('spinning', 'jackpot-win', 'near-win', 'landing'); element.style.animation = ''; }
-        function clearMachineState() { slotMachine.classList.remove('charging', 'jackpot-celebration', 'near-win-celebration'); document.body.classList.remove('flash-celebration'); slotMachine.style.animation = 'machineIdleGlow 4s infinite ease-in-out'; }
-        function updateDigit(element, number) { clearDigitState(element); element.textContent = number; }
-        function showMessage(text, typeClass = 'info-message') { messageDisplay.textContent = text; messageDisplay.className = ''; void messageDisplay.offsetWidth; messageDisplay.classList.add(typeClass, 'visible'); }
-
-
-        // --- Betting Logic ---
-        function increaseBet() {
-            if (currentBet < MAX_BET) {
-                currentBet = Math.min(MAX_BET, currentBet + BET_INCREMENT);
-                updateBetDisplay();
-                // saveState(); // Optionally save bet immediately
-            }
-        }
-        function decreaseBet() {
-            if (currentBet > MIN_BET) {
-                currentBet = Math.max(MIN_BET, currentBet - BET_INCREMENT);
-                updateBetDisplay();
-                 // saveState(); // Optionally save bet immediately
-            }
-        }
-
-        // --- Free Coins Logic ---
-        function addFreeCoins() {
-            coins += FREE_COIN_AMOUNT;
-             showMessage(`+${FREE_COIN_AMOUNT} Free Coins Added!`, 'win-message'); // Use win style
-             updateCoinDisplay();
-             saveState();
-             playSound(buySound); // Use buy sound for getting coins
-        }
-
-        // --- Spin Logic ---
-        function setSpinningState(isSpinning) {
-            spinning = isSpinning;
-            checkSpinButtonState(); // Update button based on spinning state & coins
-
-             if (isSpinning) {
-                 clearMachineState();
-                 slotMachine.classList.add('charging');
-                 setTimeout(() => {
-                      if (!spinning) return;
-                      slotMachine.classList.remove('charging');
-                     [digit1, digit2, digit3].forEach(digit => { clearDigitState(digit); digit.classList.add('spinning'); });
-                 }, 350);
-             } else {
-                 slotMachine.classList.remove('charging');
-                 [digit1, digit2, digit3].forEach(digit => digit.classList.remove('spinning'));
-             }
-        }
-
-        function spin() {
-            if (spinning || coins < currentBet) {
-                 if(coins < currentBet) {
-                     showMessage("Not enough coins!", 'error-message');
-                     playSound(errorSound);
-                 }
-                return;
+            // --- Hero Headline Animation ---
+             const headline = document.querySelector('.hero-headline');
+            if (headline) {
+                const text = headline.textContent.trim();
+                headline.textContent = '';
+                text.split('').forEach((char, index) => {
+                    const span = document.createElement('span');
+                    span.textContent = char === ' ' ? '\u00A0' : char;
+                    span.className = 'char';
+                    span.style.animationDelay = `${index * 0.06 + 1}s`; // Fine-tuned delay
+                    headline.appendChild(span);
+                });
             }
 
-            coins -= currentBet; // Deduct cost BEFORE spin
-            updateCoinDisplay();
-            // Don't save state here, save after win/loss calculation
+            // --- Scroll Triggered Animations (Intersection Observer) ---
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 }; // Trigger slightly later for effect
+            const observerCallback = (entries, observer) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); /* observer.unobserve(entry.target); */ } }); };
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+            document.querySelectorAll('.animate-on-scroll').forEach(el => { if(el) observer.observe(el); });
 
-            spinButton.classList.add('flash-active');
-            setTimeout(() => spinButton.classList.remove('flash-active'), 200);
+            // --- Exclusive Access Form (Fake Submission) ---
+            const exclusiveAccessForm = document.getElementById('exclusive-access-form');
+            const exclusiveEmailInput = document.getElementById('exclusive-email-input');
+            const exclusiveSubmitButton = document.getElementById('exclusive-submit-button');
+            const exclusiveConfirmationMessage = document.getElementById('exclusive-confirmation-message');
 
-            playSound(spinSound);
-            setSpinningState(true);
-            showMessage('...', 'info-message');
+            if (exclusiveAccessForm && exclusiveEmailInput && exclusiveSubmitButton && exclusiveConfirmationMessage) {
+                 const exclusiveButtonText = exclusiveSubmitButton.querySelector('.button-text');
 
-            let finalResult = [getRandomDigit(), getRandomDigit(), getRandomDigit()];
-            const spinDuration = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--spin-duration')) || 1500;
-            const baseSettleDelay = 300;
-            const randomSettleVariance = 100;
+                exclusiveAccessForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    exclusiveConfirmationMessage.textContent = ''; exclusiveConfirmationMessage.className = ''; exclusiveConfirmationMessage.classList.remove('visible');
+                    exclusiveSubmitButton.classList.remove('error-state', 'success');
 
-            let spinInterval = setInterval(() => {
-                 if (digit1.classList.contains('spinning')) digit1.textContent = getRandomDigit();
-                 if (digit2.classList.contains('spinning')) digit2.textContent = getRandomDigit();
-                 if (digit3.classList.contains('spinning')) digit3.textContent = getRandomDigit();
-            }, 60);
-
-            const stopTimes = [];
-            stopTimes[0] = spinDuration - (2 * baseSettleDelay) - Math.random() * randomSettleVariance;
-            stopTimes[1] = spinDuration - baseSettleDelay - Math.random() * randomSettleVariance;
-            stopTimes[2] = spinDuration;
-
-            const stopDigit = (digitElement, resultValue, delay) => {
-                setTimeout(() => {
-                    if (!spinning && !digitElement.classList.contains('jackpot-win') && !digitElement.classList.contains('near-win')) return; // Bail if cancelled early
-                    updateDigit(digitElement, resultValue);
-                    playSound(reelStopSound);
-                    digitElement.classList.add('landing');
-                    setTimeout(() => digitElement.classList.remove('landing'), 300);
-                }, delay);
-            };
-
-            stopDigit(digit1, finalResult[0], stopTimes[0]);
-            stopDigit(digit2, finalResult[1], stopTimes[1]);
-
-            setTimeout(() => {
-                updateDigit(digit3, finalResult[2]);
-                playSound(reelStopSound);
-                digit3.classList.add('landing');
-                setTimeout(() => digit3.classList.remove('landing'), 300);
-                clearInterval(spinInterval);
-                setTimeout(() => {
-                     setSpinningState(false); // Officially stop spinning state
-                     checkResult(finalResult); // Check result AFTER animations settle
-                 }, 100); // Delay slightly after last reel lands visually
-            }, stopTimes[2]);
-        }
-
-
-        // --- Check Result and Award Coins ---
-        function checkResult(result) {
-            const [d1, d2, d3] = result;
-            let winnings = 0;
-            let message = "Spin Again!";
-            let messageClass = 'info-message';
-            let celebrationClass = null;
-            let soundEffect = null;
-             let digitClass = null;
-
-            clearMachineState(); // Clear previous glows/shakes
-             [digit1,digit2,digit3].forEach(clearDigitState);
-             digit1.textContent = d1; digit2.textContent = d2; digit3.textContent = d3;
-
-
-            if (d1 === 7 && d2 === 7 && d3 === 7) {
-                winnings = currentBet * JACKPOT_MULTIPLIER;
-                message = `JACKPOT! +${winnings} Coins!`;
-                messageClass = 'win-message';
-                celebrationClass = 'jackpot-celebration';
-                 soundEffect = winSound;
-                 digitClass = 'jackpot-win';
-                document.body.classList.add('flash-celebration');
-            } else if (d1 === 7 && d2 === 7 && d3 !== 7) {
-                winnings = currentBet * NEAR_WIN_MULTIPLIER;
-                message = `Near Win! +${winnings} Coins!`;
-                messageClass = 'near-win-message';
-                celebrationClass = 'near-win-celebration';
-                soundEffect = nearWinSound;
-                 digitClass = 'near-win'; // Only apply to the 7s below
-            } else {
-                // No win - message remains "Spin Again!"
-            }
-
-            // Apply results
-             showMessage(message, messageClass);
-             if (soundEffect) playSound(soundEffect);
-
-             if (winnings > 0) {
-                 coins += winnings;
-                 updateCoinDisplay();
-             }
-
-            // Apply visual styles for wins/near-wins
-             if (celebrationClass) {
-                 slotMachine.classList.add(celebrationClass);
-             }
-            if (digitClass) {
-                 if (digitClass === 'jackpot-win') {
-                     [digit1, digit2, digit3].forEach(d => d.classList.add(digitClass));
-                 } else if (digitClass === 'near-win') {
-                     digit1.classList.add(digitClass);
-                     digit2.classList.add(digitClass);
-                     // digit3 remains normal
-                 }
-             }
-
-             // Always save state after a spin resolves
-             saveState();
-             // Re-check button state in case winnings made spin possible again
-             checkSpinButtonState();
-        }
-
-
-        // --- Shop Logic ---
-        function openShop() { shopModal.classList.add('visible'); populateShop(); }
-        function closeShop() { shopModal.classList.remove('visible'); }
-
-        function populateShop() {
-            shopItemsContainer.innerHTML = ''; // Clear existing items
-
-            for (const themeId in THEMES) {
-                const theme = THEMES[themeId];
-                const itemDiv = document.createElement('div');
-                itemDiv.classList.add('shop-item');
-                if (themeId === selectedTheme) {
-                    itemDiv.classList.add('selected');
-                }
-
-                 const previewDiv = document.createElement('div');
-                 previewDiv.classList.add('theme-preview', theme.previewClass);
-
-                const nameH3 = document.createElement('h3');
-                nameH3.textContent = theme.name;
-
-                const priceSpan = document.createElement('span');
-                priceSpan.classList.add('shop-item-price');
-
-                const actionButton = document.createElement('button');
-
-                if (purchasedThemes.has(themeId)) {
-                    priceSpan.textContent = 'Owned';
-                    actionButton.textContent = 'Select';
-                    actionButton.classList.add('select-button');
-                    if (themeId === selectedTheme) {
-                        actionButton.disabled = true;
-                        actionButton.textContent = 'Selected';
-                         actionButton.classList.add('already-selected');
-                    } else {
-                        actionButton.onclick = () => selectTheme(themeId);
+                    if (!exclusiveAccessForm.checkValidity() || !exclusiveEmailInput.value.includes('@')) {
+                        exclusiveConfirmationMessage.textContent = 'Please provide a valid email address.'; exclusiveConfirmationMessage.className = 'error-msg visible';
+                        exclusiveEmailInput.focus(); exclusiveSubmitButton.classList.add('error-state');
+                        setTimeout(() => { exclusiveSubmitButton.classList.remove('error-state'); }, 2000); return;
                     }
-                } else {
-                    priceSpan.innerHTML = `${theme.price} <span class="coin-icon">💰</span>`;
-                    actionButton.textContent = `Buy (${theme.price})`;
-                    actionButton.onclick = () => buyTheme(themeId);
-                    if (coins < theme.price) {
-                        actionButton.disabled = true;
+                    const email = exclusiveEmailInput.value;
+                    exclusiveSubmitButton.classList.add('loading'); exclusiveSubmitButton.disabled = true; exclusiveEmailInput.disabled = true;
+                    if(exclusiveButtonText) exclusiveButtonText.textContent = 'Submitting...';
+
+                    setTimeout(() => {
+                        exclusiveSubmitButton.classList.remove('loading'); exclusiveSubmitButton.classList.add('success');
+                        if(exclusiveButtonText) exclusiveButtonText.textContent = 'Submitted';
+                        exclusiveConfirmationMessage.textContent = `Thank you, ${email}. Your interest has been registered. We will be in touch.`;
+                        exclusiveConfirmationMessage.className = 'success-msg visible';
+                    }, 2200);
+                });
+            } else { console.error("Exclusive access form elements not found!"); }
+
+
+            // --- Registration Modal Logic ---
+            const modal = document.getElementById('register-modal');
+            const overlay = document.getElementById('modal-overlay');
+            const openModalButton = document.getElementById('open-register-modal');
+            const closeModalButton = document.getElementById('modal-close-button');
+            const registerForm = document.getElementById('register-form');
+            const modalNameInput = document.getElementById('modal-name');
+            const modalEmailInput = document.getElementById('modal-email');
+            const modalSubmitButton = document.getElementById('modal-submit-button');
+            const modalConfirmationMessage = document.getElementById('modal-confirmation-message');
+
+            function openModal() { if (!modal || !overlay) return; modal.classList.add('active'); overlay.classList.add('active'); resetModalForm(); }
+            function closeModal() { if (!modal || !overlay) return; modal.classList.remove('active'); overlay.classList.remove('active'); }
+            function resetModalForm() {
+                if (!registerForm || !modalSubmitButton || !modalConfirmationMessage || !modalNameInput || !modalEmailInput) return;
+                registerForm.reset();
+                modalSubmitButton.classList.remove('loading', 'success', 'error-state');
+                modalSubmitButton.disabled = false; modalNameInput.disabled = false; modalEmailInput.disabled = false;
+                const buttonText = modalSubmitButton.querySelector('.button-text');
+                if(buttonText) buttonText.textContent = 'Submit Registration';
+                modalConfirmationMessage.textContent = ''; modalConfirmationMessage.className = ''; modalConfirmationMessage.classList.remove('visible');
+            }
+
+            if (openModalButton) { openModalButton.addEventListener('click', openModal); }
+            if (closeModalButton) { closeModalButton.addEventListener('click', closeModal); }
+            if (overlay) { overlay.addEventListener('click', closeModal); } // Close on overlay click
+
+            if (registerForm && modalNameInput && modalEmailInput && modalSubmitButton && modalConfirmationMessage) {
+                const modalButtonText = modalSubmitButton.querySelector('.button-text');
+                registerForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    modalConfirmationMessage.textContent = ''; modalConfirmationMessage.className = ''; modalConfirmationMessage.classList.remove('visible');
+                    modalSubmitButton.classList.remove('error-state', 'success');
+                    const name = modalNameInput.value.trim(); const email = modalEmailInput.value.trim(); let isValid = true; let errorMsg = '';
+                    if (name === '') { isValid = false; errorMsg = 'Please enter your name.'; modalNameInput.focus(); }
+                    else if (email === '' || !email.includes('@')) { isValid = false; errorMsg = 'Please enter a valid email address.'; modalEmailInput.focus(); }
+
+                    if (!isValid) {
+                        modalConfirmationMessage.textContent = errorMsg; modalConfirmationMessage.className = 'error-msg visible';
+                        modalSubmitButton.classList.add('error-state'); setTimeout(() => { modalSubmitButton.classList.remove('error-state'); }, 2000); return;
                     }
-                }
+                    modalSubmitButton.classList.add('loading'); modalSubmitButton.disabled = true; modalNameInput.disabled = true; modalEmailInput.disabled = true;
+                    if(modalButtonText) modalButtonText.textContent = 'Registering...';
 
-                itemDiv.appendChild(previewDiv);
-                itemDiv.appendChild(nameH3);
-                itemDiv.appendChild(priceSpan);
-                itemDiv.appendChild(actionButton);
-                shopItemsContainer.appendChild(itemDiv);
-            }
-        }
+                    setTimeout(() => {
+                        modalSubmitButton.classList.remove('loading'); modalSubmitButton.classList.add('success');
+                        if(modalButtonText) modalButtonText.textContent = 'Registered!';
+                        modalConfirmationMessage.textContent = `Thank you, ${name}! Your registration is complete. We'll be in touch at ${email}.`;
+                        modalConfirmationMessage.className = 'success-msg visible';
+                        // setTimeout(closeModal, 4000); // Optional auto-close
+                    }, 1800);
+                });
+            } else { console.error("Registration modal elements not found!"); }
 
-        function buyTheme(themeId) {
-            if (purchasedThemes.has(themeId) || !THEMES[themeId]) return; // Already owned or invalid
-
-            const theme = THEMES[themeId];
-            if (coins >= theme.price) {
-                coins -= theme.price;
-                purchasedThemes.add(themeId);
-                updateCoinDisplay();
-                saveState();
-                populateShop(); // Update shop UI to show as owned/selectable
-                showMessage(`Theme "${theme.name}" purchased!`, 'win-message');
-                playSound(buySound);
-            } else {
-                showMessage("Not enough coins to buy!", 'error-message');
-                playSound(errorSound);
-            }
-        }
-
-        function selectTheme(themeId) {
-            if (!purchasedThemes.has(themeId) || !THEMES[themeId]) return; // Not owned or invalid
-
-            applyTheme(themeId);
-            saveState();
-            populateShop(); // Update shop UI to show selection
-             showMessage(`Theme "${THEMES[themeId].name}" applied!`, 'info-message');
-             // Maybe play a UI confirmation sound
-        }
-
-
-        // --- Fullscreen Logic (Same) ---
-         const fsEnterIcon = fullscreenButton.querySelector('.enter-icon');
-         const fsExitIcon = fullscreenButton.querySelector('.exit-icon');
-         function toggleFullScreen() { /* ... no changes needed ... */
-            const doc = window.document; const docEl = document.documentElement; // Use whole page for fullscreen
-             const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
-             const cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
-             if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) { requestFullScreen.call(docEl); } else { cancelFullScreen.call(doc); }
-         }
-         function updateFullscreenButton() { /* ... no changes needed ... */
-             if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) { fsEnterIcon.style.display = 'none'; fsExitIcon.style.display = 'inline'; fullscreenButton.title = "Exit Fullscreen"; } else { fsEnterIcon.style.display = 'inline'; fsExitIcon.style.display = 'none'; fullscreenButton.title = "Enter Fullscreen"; }
-         }
-
-
-        // --- Event Listeners ---
-        spinButton.addEventListener('click', spin);
-        increaseBetButton.addEventListener('click', increaseBet);
-        decreaseBetButton.addEventListener('click', decreaseBet);
-        getFreeCoinsButton.addEventListener('click', addFreeCoins);
-        shopButton.addEventListener('click', openShop);
-        closeShopButton.addEventListener('click', closeShop);
-        fullscreenButton.addEventListener('click', toggleFullScreen);
-        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach( eventType =>
-            document.addEventListener(eventType, updateFullscreenButton, false)
-         );
-         // Save state when the user leaves the page
-         window.addEventListener('beforeunload', saveState);
-
-
-        // --- Initialization ---
-         function initializeGame() {
-             loadState(); // Load coins, themes etc. first
-             applyTheme(selectedTheme); // Apply the loaded theme
-             updateCoinDisplay();
-             updateBetDisplay();
-             updateFullscreenButton();
-             showMessage('Welcome Back!', 'info-message'); // Initial message
-         }
-
-         initializeGame(); // Start the game
-
+        }); // End DOMContentLoaded
     </script>
+
 </body>
 </html>
