@@ -2,431 +2,673 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPhone 15 Pro - Dynamic Island: Fluidly Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinterest Clone</title>
     <style>
-        :root {
-            --bg-deep-space: #030305;
-            --bg-interactive-element: #1C1C1E; /* For iPhone body */
-            --text-luminous: #FFFFFF;
-            --text-primary: #E8E8ED;
-            --text-secondary: #9A9AA0;
-            --accent-vibrant-blue: #0A84FF;
-            --accent-highlight-glow: rgba(10, 132, 255, 0.2); /* Subtle glow for DI */
-            
-            /* Feature-specific accents (can be used for icons or subtle DI backgrounds) */
-            --color-music: #FF2D55;
-            --color-maps: #32D74B;
-            --color-timer: #FF9500;
-            --color-call: #5856D6;
-
-            --screen-off-grey: #2C2C2E; /* Darker grey for even better DI contrast */
-            --island-black: #000000;
-
-            --font-ui-primary: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-            --font-ui-secondary: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-
-            --ease-apple-refined: cubic-bezier(0.45, 0, 0.15, 1); /* Very smooth, slightly faster start */
-            --ease-spring-subtle: cubic-bezier(0.3, 1.2, 0.6, 1); /* Less aggressive spring */
-            --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
-
-            --td-scene: 0.9s; /* td: transition-duration */
-            --td-island: 0.6s;
-            --td-text: 0.75s;
+        /* Global Resets & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+                         Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+                         sans-serif;
         }
 
-        /* Base & Global Styles */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body {
-            width: 100%; height: 100%; overflow: hidden;
-            background: var(--bg-deep-space);
-            color: var(--text-primary);
-            font-family: var(--font-ui-secondary);
-            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-            perspective: 1000px; /* For subtle 3D effects on stage if needed */
+        body {
+            background-color: #fff; /* Pinterest main background can vary, often white */
+            color: #111;
         }
 
-        .animation-stage {
-            width: 100%; height: 100%;
-            position: relative; overflow: hidden;
-            display: flex; justify-content: center; align-items: center; /* Center phone by default */
+        button {
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            padding: 8px 12px;
+            border-radius: 24px;
+            font-weight: 600;
         }
 
-        /* Contextual Background Accents */
-        .background-accent-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden; z-index: 1; pointer-events: none;
+        /* Header Styles */
+        .pinterest-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            z-index: 1000;
         }
-        .bg-blur-shape {
+
+        .pinterest-logo {
+            width: 32px;
+            height: 32px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23E60023"><path d="M12 1.07c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10S17.52 1.07 12 1.07zm3.92 14.75c-.4.08-.82.12-1.25.12-1.2 0-2.2-.45-2.82-1.22-.6-.75-.92-1.77-.92-2.95 0-1.08.25-1.98.72-2.7.48-.72 1.12-1.25 1.9-1.58.32-.12.68-.18 1.02-.18.6 0 1.1.12 1.5.32.4.22.72.52.95.9.22.38.35.8.35 1.25 0 .2-.02.4-.05.58-.05.2-.1.38-.2.55l-.52 1.9c-.08.28-.12.55-.12.8 0 .4.1.72.3.98.2.25.48.38.8.38.3 0 .58-.08.8-.22.22-.15.4-.35.52-.6l.12-.28c.08-.18.12-.38.12-.58 0-.72-.22-1.3-.65-1.78-.42-.48-.95-.72-1.58-.72-.35 0-.65.08-.9.22-.25.15-.42.35-.52.6-.1.25-.15.5-.15.78 0 .3.05.55.12.78.08.22.2.4.35.55.15.15.32.22.5.22.4 0 .72-.15.98-.42.25-.28.42-.6.52-.98l.6-2.2c.05-.2.08-.4.08-.6 0-.7-.25-1.3-.72-1.78-.48-.48-1.1-.72-1.8-.72-.72 0-1.3.18-1.78.52-.48.35-.8.8-.98 1.3-.18.5-.28 1.05-.28 1.65 0 1.3.35 2.4.98 3.3.65.9 1.5 1.38 2.58 1.38.5 0 .98-.1 1.4-.3.42-.2.78-.48 1.08-.82.3-.35.5-.75.6-1.2l.1-.42c.02-.1.02-.2.02-.3 0-.3-.08-.55-.22-.72-.15-.18-.35-.28-.6-.28-.25 0-.48.08-.65.22-.18.15-.3.35-.35.6l-.1.3c-.02.1-.05.2-.08.28-.02.08-.05.12-.08.15-.02.02-.05.05-.08.05-.1 0-.18-.02-.22-.08-.05-.05-.08-.12-.08-.2 0-.1.02-.2.08-.3l.35-1.25c.1-.38.15-.7.15-1 0-.5-.12-.95-.35-1.3-.22-.38-.5-.68-.82-.9-.32-.22-.68-.35-1.08-.35-.6 0-1.1.15-1.5.42-.4.28-.7.65-.9 1.1-.2.48-.3.98-.3 1.52 0 .7.18 1.3.52 1.78.35.48.8.8 1.3.98.2.08.4.12.6.12.5 0 .9-.12 1.22-.35.32-.22.55-.52.7-.9.08-.18.12-.38.12-.58h.02c.02.08.05.15.08.22.15.3.22.6.22.95 0 .6-.15 1.1-.42 1.52-.28.4-.6.72-.98.98-.38.25-.8.42-1.25.52z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin-right: 8px;
+        }
+        .pinterest-logo:hover {
+            opacity: 0.8;
+        }
+
+        .nav-button {
+            padding: 12px 16px;
+            border-radius: 24px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .nav-button.active {
+            background-color: #111;
+            color: #fff;
+        }
+        .nav-button:not(.active):hover {
+            background-color: #f0f0f0;
+        }
+
+        .search-container {
+            flex-grow: 1;
+            margin: 0 16px;
+            position: relative;
+        }
+        .search-icon-prefix {
             position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #767676;
+            pointer-events: none; /* Allows click through to input */
+        }
+        .search-icon-prefix svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        .search-bar {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px 0 48px; /* Left padding for icon */
+            border: none;
+            background-color: #efefef;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-bar:focus {
+            background-color: #e0e0e0;
+            /* box-shadow: 0 0 0 2px #007bff; /* Example focus ring */
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+        }
+        .icon-button {
+            background-color: transparent;
+            border: none;
+            padding: 8px;
             border-radius: 50%;
-            opacity: 0;
-            transform: scale(0.5);
-            transition: all 1.5s var(--ease-out-quint);
-            filter: blur(80px); /* Significant blur for soft effect */
+            margin-left: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        /* JS will position and color these based on scene */
+        .icon-button svg {
+            width: 24px;
+            height: 24px;
+            fill: #5f5f5f; /* Pinterest's dark grey for icons */
+        }
+        .icon-button:hover {
+            background-color: #f0f0f0;
+        }
+        .profile-icon {
+            width: 28px;
+            height: 28px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: #5f5f5f;
+        }
 
-        /* Scene Structure */
-        .scene-content-wrapper { /* This holds text, absolutely positioned on stage */
+        /* Dropdown Menu (Generic) */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
             position: absolute;
-            width: 100%; height: 100%;
-            top:0; left:0;
-            padding: 6vmin 4vmin;
-            display: flex; /* For aligning text content */
-            z-index: 100; /* Above phone, below certain UI popups if any */
-            pointer-events: none; /* Allow clicks through to phone if it were interactive */
+            background-color: #fff;
+            min-width: 220px; /* Adjusted width */
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+            border-radius: 16px; /* More Pinterest-like */
+            padding: 8px 0; /* Vertical padding for the container */
+            z-index: 1001;
+            right: 0; /* Align to the right */
+            top: calc(100% + 10px); /* Position below the button with some gap */
         }
-        .text-group { /* Will contain title & description */
+        .dropdown-content a, .dropdown-content .dropdown-item {
+            color: #111;
+            padding: 10px 16px; /* Standard padding for items */
+            text-decoration: none;
+            display: block;
+            font-size: 16px;
+            font-weight: normal; /* Normal weight for dropdown items */
+        }
+        .dropdown-content a:hover, .dropdown-content .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+        .dropdown-content .section-title {
+            padding: 8px 16px 4px;
+            font-size: 12px;
+            color: #767676;
+            text-transform: uppercase;
+            font-weight: normal;
+        }
+        .dropdown-content .separator {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 8px 0;
+        }
+        .dropdown.show .dropdown-content {
+            display: block;
+        }
+
+        /* Create Dropdown Specifics */
+        #create-dropdown-content .dropdown-item {
+            font-weight: 700; /* Bold for create options */
+        }
+
+        /* Main Content Area */
+        .pinterest-main-content {
+            padding-top: 100px; /* Header height + some margin */
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-bottom: 20px;
+        }
+
+        .pin-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); /* Pinterest-like column width */
+            gap: 16px; /* Gap between pins */
+            align-items: start; /* Important for masonry-like effect with CSS grid */
+        }
+
+        .pin {
+            position: relative;
+            border-radius: 16px; /* Rounded corners for pins */
+            overflow: hidden;
+            cursor: pointer;
+            break-inside: avoid-column; /* For CSS column-based masonry, not strictly needed for grid */
+            margin-bottom: 16px; /* if not using grid gap effectively */
+        }
+        .pin img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 16px; /* Ensure image itself has rounded corners if it peeks */
+        }
+
+        .pin-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
             opacity: 0;
-            transform: translateY(25px);
-            transition: opacity var(--td-text) var(--ease-apple-refined), transform var(--td-text) var(--ease-apple-refined);
-            pointer-events: auto; /* Enable text selection if needed */
-            will-change: opacity, transform;
+            transition: opacity 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px;
+            border-radius: 16px; /* Match pin */
         }
-        .scene-content-wrapper.active .text-group { opacity: 1; transform: translateY(0); }
+        .pin:hover .pin-overlay {
+            opacity: 1;
+        }
 
-        .text-title {
-            font-family: var(--font-ui-primary);
-            font-size: clamp(5vmin, 7vw, 8vmin); font-weight: 600;
-            line-height: 1.1; color: var(--text-luminous);
-            margin-bottom: 1.8vmin;
-            /* For character/word reveal */
-            clip-path: inset(0 100% 0 0); transition: clip-path 0.8s var(--ease-out-quint) 0.1s;
+        .pin-save-button {
+            background-color: #e60023; /* Pinterest Red */
+            color: white;
+            padding: 12px 16px;
+            border-radius: 24px;
+            font-weight: bold;
+            align-self: flex-end; /* Position to top right */
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
         }
-        .scene-content-wrapper.active .text-title { clip-path: inset(0 0% 0 0); }
+        .pin-save-button:hover {
+            background-color: #ad081b; /* Darker red */
+        }
 
-        .text-description {
-            font-size: clamp(3vmin, 4vw, 4.5vmin);
-            color: var(--text-secondary); line-height: 1.45;
-            max-width: 55vmin;
-            /* For character/word reveal */
-            clip-path: inset(0 100% 0 0); transition: clip-path 0.8s var(--ease-out-quint) 0.3s;
+        .pin-bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end; /* Or space-between if there's text */
         }
-        .scene-content-wrapper.active .text-description { clip-path: inset(0 0% 0 0); }
+        .pin-bottom-bar .icon-button svg {
+            fill: white; /* Icons on overlay should be white */
+            width: 20px;
+            height: 20px;
+        }
+        .pin-bottom-bar .icon-button {
+            background-color: rgba(0,0,0,0.4); /* Semi-transparent background for better visibility */
+        }
+        .pin-bottom-bar .icon-button:hover {
+            background-color: rgba(0,0,0,0.6);
+        }
+
+        /* Floating Action Button (FAB) - e.g., for Help or Add */
+        .fab-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+        }
+        .fab-button {
+            background-color: #e0e0e0; /* Light grey, often white on Pinterest */
+            color: #111;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border: none;
+        }
+        .fab-button svg {
+            width: 24px;
+            height: 24px;
+            fill: #111;
+        }
+        .fab-button:hover {
+            background-color: #d0d0d0;
+        }
         
-        /* iPhone Mockup - Cleaned and Refined */
-        .iphone-rig { /* Handles global scale/opacity and subtle tilt */
-            width: 40vmin; height: 80vmin;
-            max-width: 190px; max-height: 380px; /* Slightly smaller for cleaner look */
-            opacity: 0; transform: scale(0.9) rotateX(5deg); /* Initial subtle perspective */
-            transition: opacity 1.2s var(--ease-out-quint) 0.2s, transform 1.2s var(--ease-out-quint) 0.2s;
-            z-index: 50; position: relative; /* Centered by parent flex */
-            will-change: opacity, transform;
-        }
-        .iphone-rig.visible { opacity: 1; transform: scale(1) rotateX(0deg); }
-
-        .iphone-shell {
-            width: 100%; height: 100%;
-            background-color: var(--bg-interactive-element);
-            border: 0.5vmin solid #38383A; /* Darker, more subtle border */
-            border-radius: 7vmin; position: relative;
-            box-shadow: 0 1vmin 2.5vmin rgba(0,0,0,0.35), inset 0 0 0.2vmin rgba(255,255,255,0.05);
-        }
-        .iphone-display {
-            position: absolute; top: 1vmin; left: 1vmin;
-            width: calc(100% - 2vmin); height: calc(100% - 2vmin);
-            background-color: var(--screen-off-grey);
-            border-radius: 6vmin;
-            overflow: hidden; display: flex; flex-direction: column; align-items: center;
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1002;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* Dynamic Island - Enhanced Visuals */
-        .di-host {
-            margin-top: 3.5%; position: relative;
-            width: 34%; min-width: 68px; height: 5.5%; min-height: 18px; /* Slightly larger for better presence */
-        }
-        .di-element {
-            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            background-color: var(--island-black);
-            border-radius: 2.8vmin;
-            transition: width var(--td-island) var(--ease-spring-subtle),
-                        height var(--td-island) var(--ease-spring-subtle),
-                        border-radius var(--td-island) var(--ease-spring-subtle);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 1vmin 1.8vmin; /* Slightly more padding */
-            overflow: hidden; color: var(--text-luminous);
-            box-shadow: 0 0.1vmin 1vmin var(--accent-highlight-glow), /* Subtle outer glow */
-                        inset 0 0.1vmin 0.1vmin rgba(255,255,255,0.05); /* Inner top highlight */
-            will-change: width, height, border-radius;
-        }
-        .di-element.pill { width: 100%; height: 100%; }
-        .di-element.expanded-m { width: 200%; height: 150%; border-radius: 4vmin; }
-        .di-element.expanded-l { width: 280%; height: 220%; border-radius: 5vmin; }
-        .di-element.banner {
-            width: calc(var(--phone-screen-width-cssVar, 93%)); /* Using CSS var set by JS */
-            height: 170%; border-radius: 4vmin;
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
         }
 
-        .di-ui-content {
-            opacity: 0; transform: translateY(2px) scale(0.98);
-            transition: opacity 0.4s var(--ease-apple-refined) 0.15s, transform 0.4s var(--ease-apple-refined) 0.15s;
-            font-size: max(2vmin, 11.5px); font-weight: 500;
-            display: flex; align-items: center; gap: 1.3vmin;
-            white-space: nowrap; width: 100%;
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
         }
-        .di-element.active .di-ui-content { opacity: 1; transform: translateY(0) scale(1); }
-        
-        .di-ui-icon { width: 3.5vmin; height: 3.5vmin; min-width: 18px; min-height: 18px; }
-        .di-ui-icon svg { display: block; width: 100%; height: 100%; fill: currentColor; }
-        .di-ui-text-main { flex-grow: 1; text-align: left; }
-        .di-ui-text-sub { font-size: 0.8em; color: var(--text-secondary); opacity: 0.9; }
-        .di-ui-trailing { margin-left: auto; display: flex; align-items: center; }
-        
-        /* Enhanced DI Feature Styles */
-        .di-feature-music .di-ui-icon { color: var(--color-music); }
-        .di-feature-maps .di-ui-icon { color: var(--color-maps); }
-        .di-feature-timer .di-ui-icon { color: var(--color-timer); }
-        .di-feature-call .di-ui-icon { color: var(--color-call); }
-        .di-call-avatar { width: 5vmin; height: 5vmin; border-radius: 50%; background-color: #444; margin-right: 1.3vmin; }
-        .di-call-actions span { margin-left:1.5vmin; padding:0.7vmin; border-radius:50%; background:rgba(255,255,255,0.1); }
-        .di-call-actions .hangup { background:rgba(255,45,85,0.2); color:#FF2D55; }
-        .di-call-actions .answer { background:rgba(50,215,75,0.2); color:#32D74B; }
 
-        .di-waveform-gfx { display: flex; align-items: flex-end; height: 3vmin; gap: 0.4vmin; }
-        .di-waveform-gfx .gfx-bar { width: 0.5vmin; background-color: currentColor; /* Inherits color from parent */ border-radius: 0.25vmin; animation: diWaveGFX 1.2s infinite ease-in-out alternate; }
-        .di-waveform-gfx .gfx-bar:nth-child(1) { height: 50%; animation-delay: -0.4s; }
-        .di-waveform-gfx .gfx-bar:nth-child(2) { height: 90%; animation-delay: -0.2s; }
-        .di-waveform-gfx .gfx-bar:nth-child(3) { height: 70%; animation-delay: 0s; }
-        @keyframes diWaveGFX { 0% { transform: scaleY(0.2); } 100% { transform: scaleY(1); } }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .nav-button.home-text { display: none; } /* Hide "Home" text */
+            .nav-button.create-text { display: none; } /* Hide "Create" text on button, it's in dropdown */
+            .search-container { margin: 0 8px; }
+            .pinterest-header { padding: 0 8px; }
+            .header-icons .icon-button { margin-left: 4px; }
+             .pin-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            .pinterest-main-content {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+        }
+         @media (max-width: 480px) {
+            .search-bar { font-size: 14px; height: 40px; }
+            .search-icon-prefix svg { width: 16px; height: 16px; }
+            .search-icon-prefix { left: 12px; }
+            .search-bar { padding-left: 38px; }
+            .icon-button svg { width: 20px; height: 20px; }
+            .profile-icon { width: 24px; height: 24px; font-size: 12px; }
+            .pinterest-logo { width: 28px; height: 28px; }
+            .nav-button { padding: 10px 12px; font-size: 14px; }
+        }
+
     </style>
 </head>
 <body>
-    <div class="animation-stage">
-        <div class="background-accent-layer" id="bgAccentLayer">
-            <!-- Blurred shapes added by JS -->
+
+    <!-- Header -->
+    <header class="pinterest-header">
+        <a href="#" class="pinterest-logo" aria-label="Pinterest"></a>
+        <button class="nav-button active home-text">Home</button>
+        
+        <div class="dropdown">
+            <button class="nav-button create-text" id="create-button" aria-haspopup="true" aria-expanded="false">
+                Create
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-left: 4px; vertical-align: middle;"><path d="M12 15.5a1 1 0 0 1-.71-.29l-4-4a1 1 0 1 1 1.42-1.42L12 13.1l3.29-3.31a1 1 0 0 1 1.42 1.42l-4 4a1 1 0 0 1-.71.29z"></path></svg>
+            </button>
+            <div class="dropdown-content" id="create-dropdown-content" aria-labelledby="create-button">
+                <a href="#" class="dropdown-item">Create Idea Pin</a>
+                <a href="#" class="dropdown-item">Create Pin</a>
+            </div>
         </div>
 
-        <div class="iphone-rig" id="iphoneRig">
-            <div class="iphone-shell">
-                <div class="iphone-display" id="iphoneDisplay">
-                    <div class="di-host">
-                        <div class="di-element pill" id="diElement"></div>
-                    </div>
+        <div class="search-container">
+            <div class="search-icon-prefix">
+                <svg aria-hidden="true" aria-label="Search" role="img" viewBox="0 0 24 24"><path d="M10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6m13.12 2.88-4.26-4.26A9.842 9.842 0 0 0 20 10c0-5.52-4.48-10-10-10S0 4.48 0 10s4.48 10 10 10c1.67 0 3.24-.41 4.62-1.14l4.26 4.26a3 3 0 0 0 4.24 0 3 3 0 0 0 0-4.24"></path></svg>
+            </div>
+            <input type="search" class="search-bar" placeholder="Search">
+        </div>
+
+        <div class="header-icons">
+            <button class="icon-button" aria-label="Notifications">
+                <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"></path></svg>
+            </button>
+            <button class="icon-button" aria-label="Messages">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
+            </button>
+            
+            <div class="dropdown">
+                <button class="icon-button profile-icon-wrapper" id="profile-button" aria-label="Profile" aria-haspopup="true" aria-expanded="false">
+                    <span class="profile-icon">P</span> <!-- Placeholder initial -->
+                </button>
+                 <div class="dropdown-content" id="profile-dropdown-content" aria-labelledby="profile-button">
+                    <div class="section-title">Currently in</div>
+                    <a href="#" class="dropdown-item" style="display: flex; align-items: center;">
+                        <span class="profile-icon" style="width: 32px; height: 32px; margin-right: 12px; font-size: 16px;">P</span>
+                        <div>
+                            <div style="font-weight: 600;">ProfileName</div>
+                            <div style="font-size: 14px; color: #767676;">Personal</div>
+                            <div style="font-size: 14px; color: #767676;">user@example.com</div>
+                        </div>
+                    </a>
+                    <div class="separator"></div>
+                    <div class="section-title">Your accounts</div>
+                    <a href="#" class="dropdown-item">Add account</a>
+                    <a href="#" class="dropdown-item">Convert to business</a>
+                    <div class="separator"></div>
+                    <div class="section-title">More options</div>
+                    <a href="#" class="dropdown-item">Settings</a>
+                    <a href="#" class="dropdown-item">Tune your home feed</a>
+                    <a href="#" class="dropdown-item">Install the Windows app</a>
+                    <a href="#" class="dropdown-item">Get help</a>
+                    <a href="#" class="dropdown-item">See terms of service</a>
+                    <a href="#" class="dropdown-item">See privacy policy</a>
+                    <a href="#" class="dropdown-item">Log out</a>
                 </div>
             </div>
-        </div>
-
-        <div class="scene-content-wrapper" id="sceneContentWrapper">
-            <div class="text-group" id="textGroup">
-                <h1 class="text-title" id="mainTextTitle"></h1>
-                <p class="text-description" id="mainTextDescription"></p>
+            <div class="dropdown">
+                 <button class="icon-button" id="options-arrow-button" aria-label="More options" aria-haspopup="true" aria-expanded="false">
+                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 15.5a1 1 0 0 1-.71-.29l-4-4a1 1 0 1 1 1.42-1.42L12 13.1l3.29-3.31a1 1 0 0 1 1.42 1.42l-4 4a1 1 0 0 1-.71.29z"></path></svg>
+                 </button>
+                 <!-- This dropdown content is the same as profile dropdown for this example -->
+                 <div class="dropdown-content" id="options-arrow-dropdown-content" aria-labelledby="options-arrow-button">
+                     <div class="section-title">Currently in</div>
+                     <a href="#" class="dropdown-item" style="display: flex; align-items: center;">
+                         <span class="profile-icon" style="width: 32px; height: 32px; margin-right: 12px; font-size: 16px;">P</span>
+                         <div>
+                             <div style="font-weight: 600;">ProfileName</div>
+                             <div style="font-size: 14px; color: #767676;">Personal</div>
+                             <div style="font-size: 14px; color: #767676;">user@example.com</div>
+                         </div>
+                     </a>
+                     <div class="separator"></div>
+                     <a href="#" class="dropdown-item">Log out</a>
+                 </div>
             </div>
         </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="pinterest-main-content">
+        <div class="pin-container" id="pin-container">
+            <!-- Pins will be injected here by JavaScript -->
+        </div>
+    </main>
+
+    <!-- Floating Action Button (e.g., Help) -->
+    <div class="fab-container">
+        <button class="fab-button" aria-label="Help">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"></path></svg>
+        </button>
     </div>
 
-    <!-- SVG Icons (Same defs as before, ensure they are present) -->
-    <svg width="0" height="0" style="position:absolute;visibility:hidden;">
-        <defs>
-            <g id="icon-music-note"> <path d="M12 3v10.55A4.003 4.003 0 0010 13a4 4 0 104 4V7h4V3h-6zm-2 12a2 2 0 110-4 2 2 0 010 4z"/> </g>
-            <g id="icon-map-pin"> <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/> </g>
-            <g id="icon-timer"> <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-.25-13.55l-.24 1.7L15.5 12l-3.99 3.85.24 1.7L17.5 12l-5.75-5.55zM11 6v6h2V6h-2z"/> </g>
-            <g id="icon-phone"> <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/> </g>
-        </defs>
-    </svg>
+    <!-- Toast Notification -->
+    <div id="toast">A message will show here</div>
+
 
     <script>
-    // --- Configurable Scene Data ---
-    // textPos: alignSelf (flex start/center/end), textAlign (left/center/right)
-    // iphonePos: { x, y } (percentage from center, e.g. x:-20 means 20% left of center)
-    const MASTER_TIMELINE = [
-        { name: 'Intro', duration: 3500, iphone: { visible: false }, text: { title: 'Dynamic Island', desc: 'A magical new way to interact with iPhone.', layout: { alignSelf: 'center', textAlign: 'center' } } },
-        {
-            name: 'Music', duration: 4800, iphone: { visible: true, x: 0, y: 10 }, // Phone slightly lower
-            text: { title: 'Music in Motion', desc: 'Control playback, see album art, all fluidly integrated.', layout: { alignSelf: 'flex-start', textAlign: 'center' } }, // Text at top
-            di: { initial: 'pill', sequence: [
-                { state: 'expanded-m', delay: 400, content: makeMusicDI('Riverside', 'Agnes Obel') },
-                { state: 'pill', delay: 3000, content: '' } ] }
-        },
-        {
-            name: 'Maps', duration: 5200, iphone: { visible: true, x: -25, y: 0 }, // Phone left
-            text: { title: 'Glanceable Navigation', desc: 'Your next turn, always in view. Arrive smoothly.', layout: { alignSelf: 'center', textAlign: 'left', customLeft: '55%' } }, // Text right
-            di: { initial: 'pill', sequence: [
-                { state: 'expanded-l', delay: 400, content: makeMapsDI('Turn left: Park Ave', '0.2 mi') },
-                { state: 'pill', delay: 3500, content: '' } ] }
-        },
-        {
-            name: 'Timer', duration: 4800, iphone: { visible: true, x: 25, y: 0 }, // Phone right
-            text: { title: 'Live Activities', desc: 'Timers, sports scores, ride shares – all at a glance.', layout: { alignSelf: 'center', textAlign: 'right', customRight: '55%' } }, // Text left
-            di: { initial: 'pill', sequence: [
-                { state: 'expanded-m', delay: 400, content: makeTimerDI('Presentation', '14:52') },
-                { state: 'pill', delay: 3000, content: '' } ] }
-        },
-        {
-            name: 'Call', duration: 5500, iphone: { visible: true, x: 0, y: 0 }, // Phone centered
-            text: { title: 'Calls, Reimagined', desc: 'Incoming calls transform the Island, keeping you in flow.', layout: { alignSelf: 'flex-end', textAlign: 'center', customBottom: '10%'} }, // Text bottom
-            di: { initial: 'pill', sequence: [
-                { state: 'banner', delay: 400, content: makeIncomingCallDI('Elena Royce', 'Mobile') },
-                { state: 'expanded-l', delay: 1500, content: makeActiveCallDI('Elena Royce', '02:17') },
-                { state: 'pill', delay: 2500, content: '' } ] }
-        },
-        { // Multitask (Simplified): Show two compact DI features sequentially for now
-            name: 'Multitask', duration: 6000, iphone: { visible: true, x: 0, y: 10 },
-            text: { title: 'Juggles It All', desc: 'Dynamic Island intelligently manages multiple background activities.', layout: { alignSelf: 'flex-start', textAlign: 'center' } },
-            di: { initial: 'pill', sequence: [
-                { state: 'expanded-m', delay: 400, content: makeMusicDI('Now Playing...', '', true) + makeTimerDI('Meeting', '05:10', true) }, // Both compact
-                { state: 'pill', delay: 4000, content: '' } ] }
-        },
-        { name: 'Outro', duration: 4000, iphone: { visible: true, x:0, y:-5, finalScale: 1.03 }, text: { title: 'iPhone 15 Pro', desc: 'Fluidly Pro.', layout: { alignSelf: 'flex-end', textAlign: 'center', customBottom: '15%' } } }
-    ];
+        // --- Sample Pin Data ---
+        // In a real app, this would come from an API
+        const samplePins = [
+            { id: 1, imageUrl: 'https://picsum.photos/seed/p1/236/350', title: 'Mountain Escape' },
+            { id: 2, imageUrl: 'https://picsum.photos/seed/p2/236/420', title: 'City Lights' },
+            { id: 3, imageUrl: 'https://picsum.photos/seed/p3/236/300', title: 'Forest Trail' },
+            { id: 4, imageUrl: 'https://picsum.photos/seed/p4/236/450', title: 'Beach Vibes' },
+            { id: 5, imageUrl: 'https://picsum.photos/seed/p5/236/380', title: 'Abstract Art' },
+            { id: 6, imageUrl: 'https://picsum.photos/seed/p6/236/320', title: 'Cozy Interior' },
+            { id: 7, imageUrl: 'https://picsum.photos/seed/p7/236/400', title: 'Street Food' },
+            { id: 8, imageUrl: 'https://picsum.photos/seed/p8/236/280', title: 'Vintage Car' },
+            { id: 9, imageUrl: 'https://picsum.photos/seed/p9/236/480', title: 'Cute Animals' },
+            { id: 10, imageUrl: 'https://picsum.photos/seed/p10/236/360', title: 'Tech Gadgets' },
+            { id: 11, imageUrl: 'https://picsum.photos/seed/p11/236/330', title: 'Gardening Tips' },
+            { id: 12, imageUrl: 'https://picsum.photos/seed/p12/236/410', title: 'Fashion Trends' },
+            { id: 13, imageUrl: 'https://picsum.photos/seed/p13/236/290', title: 'DIY Crafts' },
+            { id: 14, imageUrl: 'https://picsum.photos/seed/p14/236/460', title: 'Workout Routine' },
+            { id: 15, imageUrl: 'https://picsum.photos/seed/p15/236/370', title: 'Travel Destinations' },
+            { id: 16, imageUrl: 'https://picsum.photos/seed/p16/236/310', title: 'Recipe Ideas' },
+            { id: 17, imageUrl: 'https://picsum.photos/seed/p17/236/430', title: 'Book Recommendations' },
+            { id: 18, imageUrl: 'https://picsum.photos/seed/p18/236/340', title: 'Home Organization' },
+            { id: 19, imageUrl: 'https://picsum.photos/seed/p19/236/470', title: 'Photography Skills' },
+            { id: 20, imageUrl: 'https://picsum.photos/seed/p20/236/390', title: 'Mindfulness Practice' },
+        ];
 
-    // --- Dynamic Island UI Content Generators ---
-    function makeIcon(iconId, colorVar) { return `<span class="di-ui-icon" style="color:var(${colorVar});"><svg viewBox="0 0 24 24"><use href="#${iconId}"/></svg></span>`; }
-    function makeMusicDI(title, artist, compact = false) {
-        let html = `<div class="di-ui-content di-feature-music">${makeIcon('icon-music-note', '--color-music')}`;
-        if (!compact) html += `<div class="di-ui-text-main">${title}<div class="di-ui-text-sub">${artist}</div></div>`;
-        else html += `<div class="di-ui-text-main">${title}</div>`;
-        html += `<div class="di-ui-trailing"><div class="di-waveform-gfx"><div class="gfx-bar"></div><div class="gfx-bar"></div><div class="gfx-bar"></div></div></div></div>`;
-        return html;
-    }
-    function makeMapsDI(instruction, distance) {
-        const arrowIcon = `<span class="di-ui-icon" style="transform: rotate(45deg);"><svg viewBox="0 0 24 24"><path d="M3 11l19-9L12.5 21.5 11 13 3 11z" fill="var(--color-maps)"/></svg></span>`;
-        return `<div class="di-ui-content di-feature-maps">${makeIcon('icon-map-pin', '--color-maps')}<div class="di-ui-text-main">${instruction}<div class="di-ui-text-sub">${distance}</div></div><div class="di-ui-trailing">${arrowIcon}</div></div>`;
-    }
-    function makeTimerDI(label, time, compact = false) {
-        let html = `<div class="di-ui-content di-feature-timer">${makeIcon('icon-timer', '--color-timer')}`;
-        if (!compact) html += `<div class="di-ui-text-main">${label}</div>`;
-        html += `<div class="di-ui-trailing" style="color:var(--color-timer); font-weight:600;">${time}</div></div>`;
-        return html;
-    }
-    function makeIncomingCallDI(name, type) {
-        const decline = `<span class="di-ui-icon hangup"><svg viewBox="0 0 24 24"><use href="#icon-phone" style="transform: rotate(135deg);"/></svg></span>`;
-        const answer = `<span class="di-ui-icon answer"><svg viewBox="0 0 24 24"><use href="#icon-phone"/></svg></span>`;
-        return `<div class="di-ui-content di-feature-call"><div class="di-call-avatar"></div><div class="di-ui-text-main">${name}<div class="di-ui-text-sub">${type}</div></div><div class="di-ui-trailing di-call-actions">${decline}${answer}</div></div>`;
-    }
-    function makeActiveCallDI(name, duration) {
-        return `<div class="di-ui-content di-feature-call"><div class="di-call-avatar"></div><div class="di-ui-text-main">${name}<div class="di-ui-text-sub" style="color:var(--color-call);">${duration}</div></div><div class="di-ui-trailing"><div class="di-waveform-gfx" style="color:var(--color-call); height:2vmin;"><div class="gfx-bar"></div><div class="gfx-bar"></div><div class="gfx-bar"></div></div></div></div>`;
-    }
+        const pinContainer = document.getElementById('pin-container');
+        const toastElement = document.getElementById('toast');
 
-    // --- Core Animation Logic ---
-    let currentTimelineIndex = -1;
-    let sceneTimer, diTimer;
+        // --- Function to create a single pin element ---
+        function createPinElement(pinData) {
+            const pinDiv = document.createElement('div');
+            pinDiv.classList.add('pin');
+            pinDiv.setAttribute('tabindex', '0'); // For accessibility
+            pinDiv.setAttribute('aria-label', `Pin: ${pinData.title}`);
 
-    const iphoneRigEl = document.getElementById('iphoneRig');
-    const diElementEl = document.getElementById('diElement');
-    const iphoneDisplayEl = document.getElementById('iphoneDisplay');
-    const sceneContentWrapperEl = document.getElementById('sceneContentWrapper');
-    const textGroupEl = document.getElementById('textGroup');
-    const mainTextTitleEl = document.getElementById('mainTextTitle');
-    const mainTextDescriptionEl = document.getElementById('mainTextDescription');
-    const bgAccentLayerEl = document.getElementById('bgAccentLayer');
+            const img = document.createElement('img');
+            img.src = pinData.imageUrl;
+            img.alt = pinData.title;
+            // To help with masonry-like layout, you might need to set specific heights or aspect ratios
+            // For now, we let the grid handle it. Randomizing height for more visual variety:
+            const randomHeightSegment = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4
+            // img.style.height = `${randomHeightSegment * 100}px`; // This helps masonry but not always ideal
+            // img.style.objectFit = 'cover';
 
-    function updateDynamicIsland(stateClass, contentHTML = '') {
-        clearTimeout(diTimer);
-        diElementEl.className = 'di-element'; // Reset
-        if (stateClass) diElementEl.classList.add(stateClass);
-        diElementEl.innerHTML = contentHTML;
+            const overlayDiv = document.createElement('div');
+            overlayDiv.classList.add('pin-overlay');
 
-        if (stateClass === 'banner') {
-            diElementEl.style.setProperty('--phone-screen-width-cssVar', `${iphoneDisplayEl.offsetWidth * 0.93}px`);
-        } else {
-            diElementEl.style.removeProperty('--phone-screen-width-cssVar');
-        }
-        // Trigger content animation
-        setTimeout(() => { if (contentHTML) diElementEl.classList.add('active'); }, 20);
-    }
+            const saveButton = document.createElement('button');
+            saveButton.classList.add('pin-save-button');
+            saveButton.textContent = 'Save';
+            saveButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent pin click event
+                showToast(`"${pinData.title}" saved (mock)!`);
+                // In a real app, you'd call an API to save this pin
+                // and maybe change button text to "Saved" or update UI.
+            });
 
-    function playDISequence(sequence, initialShape) {
-        updateDynamicIsland(initialShape, ''); // Start with initial shape, no content
-        let stepIndex = 0;
-        function nextStep() {
-            if (stepIndex >= sequence.length) return;
-            const step = sequence[stepIndex];
-            diTimer = setTimeout(() => {
-                updateDynamicIsland(step.state, step.content);
-                stepIndex++;
-                nextStep();
-            }, step.delay);
-        }
-        nextStep();
-    }
-
-    function updateTextContent(config) {
-        sceneContentWrapperEl.classList.remove('active'); // Hide old text
-        
-        if (config.text) {
-            const layout = config.text.layout;
-            sceneContentWrapperEl.style.alignItems = layout.alignSelf || 'center';
-            textGroupEl.style.textAlign = layout.textAlign || 'center';
+            const bottomBar = document.createElement('div');
+            bottomBar.classList.add('pin-bottom-bar');
             
-            // Handle custom positioning if provided
-            textGroupEl.style.position = 'relative'; // Reset from potential absolute
-            textGroupEl.style.left = 'auto'; textGroupEl.style.right = 'auto'; textGroupEl.style.bottom = 'auto';
+            const shareButton = document.createElement('button');
+            shareButton.classList.add('icon-button');
+            shareButton.setAttribute('aria-label', 'Share');
+            shareButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>`;
+            shareButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showToast('Share (mock)');
+            });
 
-            if (layout.customLeft) { textGroupEl.style.position = 'absolute'; textGroupEl.style.left = layout.customLeft; }
-            if (layout.customRight) { textGroupEl.style.position = 'absolute'; textGroupEl.style.right = layout.customRight; }
-            if (layout.customBottom) { textGroupEl.style.position = 'absolute'; textGroupEl.style.bottom = layout.customBottom; textGroupEl.style.top = 'auto';} // override flex align
-            else {textGroupEl.style.top = 'auto';} // Reset top if not using customBottom
+            const moreButton = document.createElement('button');
+            moreButton.classList.add('icon-button');
+            moreButton.setAttribute('aria-label', 'More options');
+            moreButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>`;
+            moreButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showToast('More options (mock)');
+            });
 
-            mainTextTitleEl.innerHTML = config.text.title.split('').map(char => `<span>${char === ' ' ? ' ' : char}</span>`).join(''); // For char animation
-            mainTextDescriptionEl.innerHTML = config.text.desc.split('').map(char => `<span>${char === ' ' ? ' ' : char}</span>`).join('');
+            bottomBar.appendChild(shareButton);
+            bottomBar.appendChild(moreButton);
 
-            // Reveal new text - slightly delayed to allow old text to clear
-            setTimeout(() => sceneContentWrapperEl.classList.add('active'), 100);
-        }
-    }
-    
-    function updateBackgroundAccents(sceneName) {
-        bgAccentLayerEl.innerHTML = ''; // Clear old
-        let shapes = [];
-        switch(sceneName) {
-            case 'Music': shapes.push({ size: '60vmin', color: 'var(--color-music)', top: '10%', left: '70%', opacity: 0.15 }); break;
-            case 'Maps': shapes.push({ size: '70vmin', color: 'var(--color-maps)', top: '60%', left: '10%', opacity: 0.1 }); break;
-            case 'Timer': shapes.push({ size: '50vmin', color: 'var(--color-timer)', top: '20%', left: '20%', opacity: 0.12 }); break;
-            case 'Call': shapes.push({ size: '80vmin', color: 'var(--color-call)', top: '50%', left: '50%', opacity: 0.08 }); break;
-        }
-        shapes.forEach(s => {
-            const shapeEl = document.createElement('div');
-            shapeEl.className = 'bg-blur-shape';
-            shapeEl.style.width = s.size; shapeEl.style.height = s.size;
-            shapeEl.style.backgroundColor = s.color;
-            shapeEl.style.top = s.top; shapeEl.style.left = s.left;
-            bgAccentLayerEl.appendChild(shapeEl);
-            setTimeout(() => { // Animate in
-                shapeEl.style.opacity = s.opacity;
-                shapeEl.style.transform = `scale(1) translate(-50%, -50%)`; // Assuming centered via top/left
-            }, 100);
-        });
-    }
+            overlayDiv.appendChild(saveButton);
+            overlayDiv.appendChild(bottomBar);
+
+            pinDiv.appendChild(img);
+            pinDiv.appendChild(overlayDiv);
+
+            pinDiv.addEventListener('click', () => {
+                // In a real app, this would open the Pin detail view
+                console.log('Pin clicked:', pinData.title);
+                showToast(`Opening "${pinData.title}" (mock)`);
+            });
+            
+            // Set a dynamic height for the pin image's parent to help with grid layout
+            // This is a very simplified masonry-like effect helper.
+            // Real Pinterest uses more sophisticated JS for masonry.
+            img.onload = () => {
+                 const aspectRatio = img.naturalWidth / img.naturalHeight;
+                 // Calculate height based on fixed width (236px)
+                 // const pinWidth = 236;
+                 // const calculatedHeight = pinWidth / aspectRatio;
+                 // pinDiv.style.gridRowEnd = `span ${Math.ceil(calculatedHeight / 10) + 2}`; // Adjust 10 for grid-auto-rows unit
+                 // The CSS grid `align-items: start;` handles variable heights quite well.
+            };
 
 
-    function advanceTimeline() {
-        clearTimeout(sceneTimer); clearTimeout(diTimer);
-
-        currentTimelineIndex = (currentTimelineIndex + 1) % MASTER_TIMELINE.length;
-        const config = MASTER_TIMELINE[currentTimelineIndex];
-
-        // Update iPhone
-        iphoneRigEl.classList.toggle('visible', config.iphone.visible !== false);
-        if (config.iphone.visible) {
-            const x = config.iphone.x || 0;
-            const y = config.iphone.y || 0;
-            const scale = config.iphone.finalScale || 1;
-            iphoneRigEl.style.transform = `translate(${x}%, ${y}%) scale(${scale}) rotateX(0deg)`;
+            return pinDiv;
         }
 
-        // Update Text
-        updateTextContent(config);
+        // --- Populate pins ---
+        function loadPins() {
+            samplePins.forEach(pinData => {
+                const pinElement = createPinElement(pinData);
+                pinContainer.appendChild(pinElement);
+            });
+        }
+
+        // --- Toast Notification Function ---
+        let toastTimeout;
+        function showToast(message) {
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastElement.textContent = message;
+            toastElement.classList.add('show');
+            toastTimeout = setTimeout(() => {
+                toastElement.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- Dropdown Menu Logic ---
+        function setupDropdowns() {
+            const dropdowns = document.querySelectorAll('.dropdown');
+
+            dropdowns.forEach(dropdown => {
+                const button = dropdown.querySelector('button[aria-haspopup="true"]');
+                const content = dropdown.querySelector('.dropdown-content');
+
+                if (button && content) {
+                    button.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+                        // Close all other open dropdowns first
+                        closeAllDropdowns(dropdown);
+                        
+                        if (isExpanded) {
+                            content.style.display = 'none';
+                            button.setAttribute('aria-expanded', 'false');
+                        } else {
+                            content.style.display = 'block';
+                            button.setAttribute('aria-expanded', 'true');
+                        }
+                    });
+                }
+            });
+
+            // Close dropdowns if clicking outside
+            document.addEventListener('click', (event) => {
+                closeAllDropdowns();
+            });
+        }
+
+        function closeAllDropdowns(exceptThisDropdown = null) {
+            document.querySelectorAll('.dropdown').forEach(d => {
+                if (d === exceptThisDropdown) return;
+                const btn = d.querySelector('button[aria-haspopup="true"]');
+                const cnt = d.querySelector('.dropdown-content');
+                if (btn && cnt) {
+                    cnt.style.display = 'none';
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
         
-        // Update Background Accents
-        updateBackgroundAccents(config.name);
+        // --- Search Bar Interaction ---
+        const searchBar = document.querySelector('.search-bar');
+        searchBar.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (this.value.trim() !== '') {
+                    showToast(`Searching for: "${this.value}" (mock)`);
+                    // In a real app, you'd trigger a search here
+                    this.value = ''; // Clear after "search"
+                }
+            }
+        });
 
-        // Update Dynamic Island
-        if (config.di) {
-            playDISequence(config.di.sequence, config.di.initial);
-        } else {
-            updateDynamicIsland('pill', ''); // Default state
-        }
 
-        sceneTimer = setTimeout(advanceTimeline, config.duration);
-    }
+        // --- Initialize ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPins();
+            setupDropdowns();
 
-    // --- Initial Setup ---
-    window.onload = () => {
-        // Initial hide for text elements for first animation
-        sceneContentWrapperEl.classList.remove('active');
-        advanceTimeline(); // Start the show
-    };
+            // Mock search functionality
+            const searchInput = document.querySelector('.search-bar');
+            if (searchInput) {
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && searchInput.value.trim() !== '') {
+                        showToast(`Searching for "${searchInput.value.trim()}" (mock)...`);
+                        // Here you would typically redirect to a search results page
+                        // or dynamically load search results.
+                        // For this clone, we just show a toast.
+                        searchInput.value = ''; // Optionally clear input
+                    }
+                });
+            }
+        });
+
     </script>
+
 </body>
 </html>
