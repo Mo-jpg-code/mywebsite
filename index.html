@@ -2,912 +2,779 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>IdeaSpark 2025 - Advanced Concept</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Satellite Tracker</title>
     <style>
-        :root {
-            --bg-primary: #0D0F12; /* Even darker, slightly blueish */
-            --bg-secondary: #181A1F;
-            --bg-tertiary: #22252B;
-            --bg-glass: rgba(30, 30, 35, 0.6); /* For glassmorphism */
-            --text-primary: #F0F2F5;
-            --text-secondary: #A8ACB3;
-            --accent-primary: #00D1FF; /* Brighter Cyan */
-            --accent-secondary: #FF3B7F; /* Punchier Pink */
-            --border-color: #2A2D33;
-            --header-height: 56px;
-            --bottom-nav-height: 60px;
-            --border-radius-main: 22px;
-            --border-radius-small: 14px;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-        }
-
-        * {
+        body {
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: var(--font-main);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            height: 100%;
             overflow: hidden;
-            background-color: #050608;
+            background-color: #0a0a1a; /* Dark space blue */
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        .app-shell {
-            width: 100%; height: 100%;
-            max-width: 414px; max-height: calc(414px * (16 / 9));
-            margin: auto; position: relative;
-            background-color: var(--bg-primary); color: var(--text-primary);
-            overflow: hidden; display: flex; flex-direction: column;
-            border: 1px solid #1A1C20;
-            box-shadow: 0 0 40px rgba(0,0,0,0.7);
-        }
-         @media (max-width: 450px) {
-            .app-shell { max-width: 100%; max-height: 100%; border: none; box-shadow: none; }
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
         }
 
-        /* Page Transitions & Content */
-        .page-content {
-            flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-            padding: 16px;
-            padding-top: calc(var(--header-height) + 16px);
-            padding-bottom: calc(var(--bottom-nav-height) + 16px);
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            opacity: 0; transform: translateX(20px);
-            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-            pointer-events: none;
-            z-index: 1;
+        #loading-spinner {
+            border: 8px solid #222;
+            border-top: 8px solid #3498db; /* Blue accent */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
         }
-        .page-content.active {
-            opacity: 1; transform: translateX(0);
-            pointer-events: auto;
+
+        #loading-text {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #aaa;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(20, 20, 40, 0.85); /* Dark translucent panel */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            max-height: 70vh;
+            overflow-y: auto;
+            color: #e0e0e0;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            display: none; /* Hidden by default */
+            z-index: 10;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        #info-panel.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #info-panel h2 {
+            margin-top: 0;
+            color: #58a6ff; /* Light blue title */
+            font-size: 1.4em;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        #info-panel p {
+            margin: 8px 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        #info-panel strong {
+            color: #88c0d0; /* Lighter blue for emphasis */
+        }
+        #info-panel .close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #info-panel .close-button:hover {
+            color: #fff;
+        }
+
+        #search-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
             z-index: 10;
         }
 
-        /* Header */
-        .app-header {
-            height: var(--header-height); padding: 0 16px;
-            display: flex; align-items: center; justify-content: center;
-            background-color: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
-            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            max-width: inherit; margin: 0 auto;
+        #search-input {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(20, 20, 40, 0.85);
+            backdrop-filter: blur(5px);
+            color: #e0e0e0;
+            width: 250px;
+            font-size: 0.9em;
+            outline: none;
+            transition: width 0.3s ease-in-out, box-shadow 0.3s ease;
         }
-        .app-header-logo {
-            font-size: 1.5em; font-weight: 700; color: var(--accent-primary);
-            letter-spacing: 1px; text-shadow: 0 0 5px var(--accent-primary);
+        #search-input:focus {
+            width: 300px;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
         }
-        .app-header-logo .sparkle { color: var(--accent-secondary); font-style: italic; text-shadow: 0 0 5px var(--accent-secondary); }
-
-        /* General UI Elements */
-        .section-title {
-            font-size: 1.2em; font-weight: 700; margin-bottom: 16px;
-            color: var(--text-primary); letter-spacing: 0.5px;
+        #search-results {
+            list-style: none;
+            padding: 0;
+            margin: 5px 0 0 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: rgba(20, 20, 40, 0.9);
+            border-radius: 5px;
+            position: absolute;
+            width: 100%;
         }
-        .button-primary {
-            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-            color: var(--bg-primary); font-weight: 600;
-            padding: 12px 24px; border-radius: var(--border-radius-small);
-            border: none; cursor: pointer; text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(0, 209, 255, 0.2), 0 4px 10px rgba(255, 59, 127, 0.2);
+        #search-results li {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.85em;
         }
-        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 209, 255, 0.3), 0 6px 15px rgba(255, 59, 127, 0.3); }
-        .button-secondary {
-            background-color: var(--bg-tertiary); color: var(--text-secondary);
-            padding: 10px 20px; border-radius: var(--border-radius-small);
-            border: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s;
-        }
-        .button-secondary:hover { background-color: #33363d; }
-        .input-field {
-            width: 100%; padding: 14px 18px; font-size: 1em;
-            border-radius: var(--border-radius-small); border: 1px solid var(--border-color);
-            background-color: var(--bg-tertiary); color: var(--text-primary); outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-field:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(0, 209, 255, 0.3); }
-        textarea.input-field { min-height: 80px; resize: vertical; }
-
-        /* Skeleton Loader */
-        .skeleton-pin-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .skeleton-pin {
-            background-color: var(--bg-secondary); border-radius: var(--border-radius-main);
-            overflow: hidden;
-        }
-        .skeleton-pin-img { width: 100%; padding-bottom: 120%; /* Aspect ratio proxy */ background-color: var(--bg-tertiary); animation: pulse 1.5s infinite ease-in-out; }
-        .skeleton-pin-content { padding: 10px 14px 14px; }
-        .skeleton-pin-title { height: 1em; width: 70%; background-color: var(--bg-tertiary); margin-bottom: 6px; border-radius: 4px; animation: pulse 1.5s infinite ease-in-out; }
-        .skeleton-pin-user { height: 0.8em; width: 40%; background-color: var(--bg-tertiary); border-radius: 4px; animation: pulse 1.5s infinite ease-in-out; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-
-        /* --- Pin Grid (Home, Profile) --- */
-        .pin-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; }
-        .pin {
-            position: relative; background-color: var(--bg-secondary);
-            border-radius: var(--border-radius-main); overflow: hidden; cursor: pointer;
-            color: var(--text-primary); box-shadow: 0 5px 15px rgba(0,0,0,0.25);
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-        }
-        .pin:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-        .pin:active { transform: scale(0.96); }
-        .pin img { width: 100%; height: auto; display: block; background-color: var(--bg-tertiary); }
-        .pin-content { padding: 10px 14px 14px; }
-        .pin-title { font-size: 0.9em; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pin-user { display: flex; align-items: center; font-size: 0.75em; color: var(--text-secondary); }
-        .pin-user-avatar {
-            width: 20px; height: 20px; border-radius: 50%;
-            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-            margin-right: 6px; display: flex; align-items: center; justify-content: center;
-            font-size: 0.7em; font-weight: bold; color: var(--bg-primary);
-        }
-        .pin-save-button {
-            position: absolute; top: 12px; right: 12px;
-            background-color: var(--bg-glass); color: white;
-            padding: 7px 11px; border-radius: var(--border-radius-small);
-            font-weight: 600; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;
-            font-size: 0.8em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            transition: background-color 0.2s, color 0.2s, transform 0.1s;
-        }
-        .pin-save-button:active { transform: scale(0.9); }
-        .pin-save-button.saved { background-color: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
-
-
-        /* --- Discover Page --- */
-        #discoverPage .search-bar-container { margin-bottom: 24px; position: relative; }
-        #discoverPage .search-input {
-            width: 100%; padding: 16px 22px; padding-left: 52px;
-            font-size: 1.05em; border-radius: var(--border-radius-main);
-            border: 1px solid var(--border-color); background-color: var(--bg-tertiary);
-            color: var(--text-primary); outline: none;
-        }
-        #discoverPage .search-icon {
-            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
-            width: 22px; height: 22px; fill: var(--text-secondary);
-        }
-        .category-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-        .category-tag {
-            background-color: var(--bg-tertiary); color: var(--text-secondary);
-            padding: 9px 18px; border-radius: var(--border-radius-small);
-            font-size: 0.9em; font-weight: 500; cursor: pointer;
-            border: 1px solid var(--border-color);
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.1s;
-        }
-        .category-tag:hover { background-color: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
-        .category-tag:active { transform: scale(0.95); }
-        .mock-search-results .result-item {
-            background-color: var(--bg-secondary); padding: 14px; border-radius: var(--border-radius-small);
-            margin-bottom: 10px; font-size: 0.95em; cursor: pointer; transition: background-color 0.2s;
-        }
-        .mock-search-results .result-item:hover { background-color: var(--bg-tertiary); }
-
-        /* --- Create Page --- */
-        .create-options-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } /* Single column for more focus */
-        .create-option-card {
-            background-color: var(--bg-secondary); border-radius: var(--border-radius-main);
-            padding: 24px; display: flex; align-items: center;
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .create-option-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
-        .create-option-card svg {
-            width: 32px; height: 32px; fill: var(--accent-primary); margin-right: 16px;
-        }
-        .create-option-card .ai-sparkle svg { fill: var(--accent-secondary); }
-        .create-option-card p { font-size: 1em; font-weight: 600; }
-        .create-option-card .description { font-size: 0.8em; color: var(--text-secondary); margin-top: 4px;}
-
-        /* --- Updates Page --- */
-        .notification-list .notification-item {
-            display: flex; align-items: flex-start; background-color: var(--bg-secondary);
-            padding: 14px 18px; border-radius: var(--border-radius-small); margin-bottom: 12px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15); cursor: pointer; transition: background-color 0.2s;
-        }
-        .notification-item:hover { background-color: var(--bg-tertiary); }
-        .notification-icon {
-            min-width: 36px; height: 36px; border-radius: 50%;
-            background-color: var(--accent-primary); color: var(--bg-primary);
-            display: flex; align-items: center; justify-content: center;
-            margin-right: 14px; font-weight: bold; font-size: 1.1em;
-        }
-        .notification-icon.comment { background-color: var(--accent-secondary); }
-        .notification-text p { font-size: 0.95em; margin-bottom: 3px; line-height: 1.4; }
-        .notification-text .time { font-size: 0.8em; color: var(--text-secondary); }
-
-        /* --- Profile Page --- */
-        .profile-header { text-align: center; margin-bottom: 28px; }
-        .profile-avatar-large {
-            width: 100px; height: 100px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center;
-            font-size: 3em; font-weight: bold; color: var(--bg-primary);
-            box-shadow: 0 0 0 5px var(--bg-primary), 0 0 0 8px var(--accent-primary);
-        }
-        .profile-name { font-size: 1.6em; font-weight: 700; margin-bottom: 6px; }
-        .profile-username { font-size: 0.95em; color: var(--text-secondary); margin-bottom: 16px; }
-        .profile-stats { display: flex; justify-content: space-around; margin-bottom: 28px; }
-        .stat-item { text-align: center; }
-        .stat-item .count { font-size: 1.3em; font-weight: 700; }
-        .stat-item .label { font-size: 0.85em; color: var(--text-secondary); }
-        .profile-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-        .profile-tab {
-            flex: 1; text-align: center; padding: 14px 0; font-weight: 600;
-            color: var(--text-secondary); cursor: pointer;
-            border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s;
-        }
-        .profile-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-primary); }
-        .profile-tab-content { display: none; } /* Handled by JS for animations */
-        .profile-tab-content.active-tab-content { display: block; } /* Initial state before JS animation */
-        .board-card-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .board-card {
-            background-color: var(--bg-secondary); border-radius: var(--border-radius-main);
-            padding-bottom: 75%; /* Aspect ratio for cover */ position: relative;
-            overflow: hidden; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .board-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
-        .board-card-cover { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; background-color: var(--bg-tertiary); }
-        .board-card-name {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            padding: 10px; background: linear-gradient(transparent, rgba(0,0,0,0.7));
-            color: white; font-weight: 600; font-size: 0.9em; text-align: center;
+        #search-results li:hover {
+            background-color: rgba(52, 152, 219, 0.3);
         }
 
-
-        /* --- Bottom Navigation --- */
-        .bottom-nav {
-            height: var(--bottom-nav-height); background-color: var(--bg-secondary);
-            border-top: 1px solid var(--border-color); display: flex; justify-content: space-around;
-            align-items: center; position: fixed; bottom: 0; left: 0; right: 0;
-            z-index: 100; max-width: inherit; margin: 0 auto;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+        #timeline-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            max-width: 800px;
+            background-color: rgba(20, 20, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px 20px;
+            z-index: 10;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            text-align: center;
         }
-        .nav-item {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: none; border: none; color: var(--text-secondary); padding: 4px 0;
-            cursor: pointer; transition: color 0.2s, transform 0.1s;
+        #timeline-slider {
+            width: 80%;
+            cursor: pointer;
         }
-        .nav-item:active { transform: scale(0.9); }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-item svg { width: 28px; height: 28px; fill: currentColor; margin-bottom: 2px; }
-        .nav-item-profile .profile-avatar-nav {
-            width: 30px; height: 30px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--text-secondary), #999);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: var(--bg-primary); font-size: 1em;
-            transition: box-shadow 0.2s, background 0.2s;
+        #time-display {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #ccc;
         }
-        .nav-item.active .nav-item-profile .profile-avatar-nav {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            box-shadow: 0 0 10px var(--accent-primary);
+        #time-controls button {
+            background: rgba(52, 152, 219, 0.5);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
-
-        /* --- Modals (General Purpose) --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            z-index: 1000; display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s 0.3s linear;
-        }
-        .modal-overlay.visible { opacity: 1; visibility: visible; transition-delay: 0s; }
-        .modal-content {
-            background-color: var(--bg-glass); backdrop-filter: blur(15px) saturate(180%); -webkit-backdrop-filter: blur(15px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 24px; border-radius: var(--border-radius-main);
-            width: 90%; max-width: 450px; /* Max width for modal on larger "phone" */
-            max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.visible .modal-content { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-title { font-size: 1.3em; font-weight: 700; }
-        .modal-close-button {
-            background: none; border: none; font-size: 1.8em; color: var(--text-secondary);
-            cursor: pointer; padding: 0; line-height: 1;
+        #time-controls button:hover {
+            background: rgba(52, 152, 219, 0.8);
         }
 
-        /* Create Spark Modal Specifics */
-        #createSparkModal .form-group { margin-bottom: 16px; }
-        #createSparkModal label { display: block; font-size: 0.9em; font-weight: 500; margin-bottom: 6px; color: var(--text-secondary); }
-        #createSparkModal .image-placeholder {
-            width: 100%; height: 150px; background-color: var(--bg-tertiary);
-            border: 2px dashed var(--border-color); border-radius: var(--border-radius-small);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--text-secondary); font-size: 0.9em; margin-bottom: 12px; cursor: pointer;
+        /* Scrollbar styling for info panel and search results */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        #createSparkModal .image-placeholder svg { width: 30px; height: 30px; fill: var(--text-secondary); margin-bottom: 8px; }
-
-        /* Pin Detail Modal Specifics */
-        #pinDetailModal .pin-detail-image {
-            width: 100%; max-height: 40vh; object-fit: contain;
-            border-radius: var(--border-radius-small); margin-bottom: 16px;
-            background-color: var(--bg-tertiary);
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
         }
-        #pinDetailModal .pin-detail-user { display: flex; align-items: center; margin-bottom: 12px; }
-        /* Reuse .pin-user-avatar */
-        #pinDetailModal .pin-detail-username { font-weight: 600; margin-left: 8px; }
-        #pinDetailModal .pin-detail-description { font-size: 0.95em; line-height: 1.5; margin-bottom: 20px; color: var(--text-secondary); }
-        #pinDetailModal .comments-section, #pinDetailModal .related-sparks-section { margin-top: 24px; }
-        #pinDetailModal .comment, #pinDetailModal .related-spark-item {
-            background-color: var(--bg-secondary); padding: 10px; border-radius: var(--border-radius-small);
-            margin-bottom: 8px; font-size: 0.9em;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(52, 152, 219, 0.8);
         }
 
-        /* Toast Notification */
-        #toast {
-            visibility: hidden; min-width: 240px;
-            background-color: var(--bg-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-primary); text-align: center;
-            border-radius: var(--border-radius-main); padding: 16px 24px;
-            position: fixed; z-index: 1002; left: 50%;
-            bottom: calc(var(--bottom-nav-height) + 5px); /* Closer to nav */
-            transform: translateX(-50%) translateY(10px); /* Start slightly lower */
-            font-size: 0.95em; box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-            opacity: 0; transition: all 0.3s cubic-bezier(0.215, 0.610, 0.355, 1); /* Smoother transition */
-        }
-        #toast.show {
-            visibility: visible; opacity: 1;
-            transform: translateX(-50%) translateY(0);
-            bottom: calc(var(--bottom-nav-height) + 15px);
-        }
     </style>
 </head>
 <body>
-
-    <div class="app-shell">
-        <header class="app-header">
-            <div class="app-header-logo">Idea<span class="sparkle">Spark</span></div>
-        </header>
-
-        <!-- Page Content Area (Dynamically switched) -->
-        <div id="homePage" class="page-content">
-            <div class="skeleton-pin-container" id="skeleton-loader-home"></div>
-            <div class="pin-container" id="pin-container-home" style="display:none;"></div>
-        </div>
-
-        <div id="discoverPage" class="page-content">
-            <div class="search-bar-container">
-                <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-                <input type="search" class="search-input" id="discoverSearchInput" placeholder="Search for sparks & ideas...">
-            </div>
-            <div class="mock-search-results" id="mockSearchResultsContainer"></div>
-            <div id="discoverDefaultContent">
-                <div class="section-title">Trending Now ✨</div>
-                <div class="category-tags">
-                    <span class="category-tag">AI Avatars</span><span class="category-tag">Bio-Integrated Design</span>
-                    <span class="category-tag">Sensory XR</span><span class="category-tag">Quantum Art</span>
-                    <span class="category-tag">NeuroTech Interfaces</span><span class="category-tag">Personalized Medicine</span>
-                </div>
-                <div class="section-title">Explore Categories</div>
-                <div class="category-tags">
-                    <span class="category-tag">Futurism</span><span class="category-tag">Innovation Labs</span>
-                    <span class="category-tag">Consciousness</span><span class="category-tag">Sustainable Futures</span>
-                    <span class="category-tag">Robotics</span><span class="category-tag">Digital Identity</span>
-                </div>
-            </div>
-        </div>
-
-        <div id="createPage" class="page-content">
-            <div class="section-title" style="text-align: center; margin-bottom: 24px;">Ignite Your Creativity</div>
-            <div class="create-options-grid">
-                <div class="create-option-card" id="openCreateSparkModalButton">
-                    <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63L2 11l6.18 5.37L6.81 22L12 17.31L17.19 22l-1.37-5.63L22 11l-7.19-2.37L12 2zm0 10.55L10.23 15.4L6.46 16l3.29 2.86L8.7 22.45L12 20.03l3.3 2.42l-1.05-3.59L17.54 16l-3.77-.6L12 12.55z"/></svg>
-                    <div><p>New Spark</p><span class="description">Share your latest idea or creation.</span></div>
-                </div>
-                <div class="create-option-card" data-create-type="board">
-                    <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zm0 8h6v6H4zm8-8h6v6h-6zm0 8h6v6h-6zM2 2v20h20V2H2zm18 18H4V4h16v16z"/></svg>
-                    <div><p>New Board</p><span class="description">Organize your sparks into collections.</span></div>
-                </div>
-                <div class="create-option-card" data-create-type="ai_generate">
-                    <span class="ai-sparkle"><svg viewBox="0 0 24 24"><path d="M19.64 7.03l-1.41-1.41L15.46 9.4l1.41 1.41L19.64 7.03m-5.66 1.41L12.56 7l-1.41 1.41L12.56 9.83l1.42-1.39M4.36 7.03l2.77 2.77L8.54 7l-1.41-1.41L4.36 7.03m11.09 9.19l2.77 2.77 1.41-1.41-2.77-2.77-1.41 1.41M12 22a1.5 1.5 0 01-1.5-1.5c0-.65.42-1.2 1-1.41V12h1v7.09c.58.21 1 .76 1 1.41A1.5 1.5 0 0112 22m-4.5-2c0 .65-.42 1.2-1 1.41V14h-1v7.09c-.58-.21-1-.76-1-1.41a1.5 1.5 0 013 0m9 0c0 .65-.42 1.2-1 1.41V14h-1v7.09c-.58-.21-1-.76-1-1.41a1.5 1.5 0 013 0M12 5a3 3 0 00-3 3h6a3 3 0 00-3-3z"/></svg></span>
-                    <div><p>AI Generate Image</p><span class="description">Let AI spark your visual imagination.</span></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="updatesPage" class="page-content">
-            <div class="section-title" style="margin-bottom: 20px;">Your Activity Pulse</div>
-            <div class="notification-list" id="notificationList"></div>
-        </div>
-
-        <div id="profilePage" class="page-content">
-            <div class="profile-header">
-                <div class="profile-avatar-large">I</div>
-                <div class="profile-name">Innovator One</div>
-                <div class="profile-username">@i_one_2025_pro</div>
-                <div class="profile-stats">
-                    <div class="stat-item"><span class="count">2.7K</span><span class="label">Followers</span></div>
-                    <div class="stat-item"><span class="count">412</span><span class="label">Following</span></div>
-                    <div class="stat-item"><span class="count">128</span><span class="label">Sparks</span></div>
-                </div>
-            </div>
-            <div class="profile-tabs">
-                <div class="profile-tab active" data-profile-tab="sparks">My Sparks</div>
-                <div class="profile-tab" data-profile-tab="boards">Boards</div>
-                <div class="profile-tab" data-profile-tab="saved">Saved</div>
-            </div>
-            <div id="profileSparksContent" class="profile-tab-content active-tab-content">
-                <div class="skeleton-pin-container" id="skeleton-loader-profile-sparks"></div>
-                <div class="pin-container" id="pin-container-profile-sparks" style="display:none;"></div>
-            </div>
-            <div id="profileBoardsContent" class="profile-tab-content">
-                <div class="board-card-container" id="board-card-container-profile"></div>
-            </div>
-            <div id="profileSavedContent" class="profile-tab-content">
-                <div class="skeleton-pin-container" id="skeleton-loader-profile-saved"></div>
-                <div class="pin-container" id="pin-container-profile-saved" style="display:none;"></div>
-            </div>
-        </div>
-
-        <!-- Bottom Navigation -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-page="homePage" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9l-8-6zm0 2.69L17.31 10H6.69L12 5.69zM7 19v-5H5v5h2zm10 0v-5h-2v5h2z"/></svg></button>
-            <button class="nav-item" data-page="discoverPage" aria-label="Discover"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></button>
-            <button class="nav-item" data-page="createPage" aria-label="Create"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></button>
-            <button class="nav-item" data-page="updatesPage" aria-label="Updates"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2-1H8v-5c0-2.21 1.79-4 4-4s4 1.79 4 4v5z"/></svg></button>
-            <button class="nav-item nav-item-profile" data-page="profilePage" aria-label="Profile"><div class="profile-avatar-nav">I</div></button>
-        </nav>
-
-        <!-- Create Spark Modal -->
-        <div class="modal-overlay" id="createSparkModalOverlay">
-            <div class="modal-content" id="createSparkModal">
-                <div class="modal-header">
-                    <h3 class="modal-title">Create New Spark</h3>
-                    <button class="modal-close-button" data-close-modal="createSparkModalOverlay">×</button>
-                </div>
-                <div class="form-group">
-                    <label for="sparkImage">Upload Image (mock)</label>
-                    <div class="image-placeholder" id="sparkImagePlaceholder">
-                        <svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86l-3 3.87L9 13.14 6 17h12l-3.86-5.14z"/></svg>
-                        Tap to select image
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="sparkTitle">Title</label>
-                    <input type="text" id="sparkTitle" class="input-field" placeholder="e.g., My Awesome Creation">
-                </div>
-                <div class="form-group">
-                    <label for="sparkDescription">Description</label>
-                    <textarea id="sparkDescription" class="input-field" placeholder="Tell us more about your spark..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="sparkBoard">Select Board (mock)</label>
-                    <select id="sparkBoard" class="input-field">
-                        <option value="b1">Future Tech Ideas</option>
-                        <option value="b2">AI Art Gallery</option>
-                        <option value="b3">Personal Projects</option>
-                    </select>
-                </div>
-                <button class="button-primary" id="publishSparkButton" style="width:100%; margin-top:8px;">Publish Spark</button>
-            </div>
-        </div>
-
-        <!-- Pin Detail Modal -->
-        <div class="modal-overlay" id="pinDetailModalOverlay">
-            <div class="modal-content" id="pinDetailModal">
-                <div class="modal-header">
-                    <h3 class="modal-title" id="pinDetailTitle">Spark Detail</h3>
-                    <button class="modal-close-button" data-close-modal="pinDetailModalOverlay">×</button>
-                </div>
-                <img src="" alt="Pin image" class="pin-detail-image" id="pinDetailImage">
-                <div class="pin-detail-user">
-                    <span class="pin-user-avatar" id="pinDetailUserAvatar"></span>
-                    <span class="pin-detail-username" id="pinDetailUserName"></span>
-                </div>
-                <p class="pin-detail-description" id="pinDetailDescriptionText"></p>
-                <div class="comments-section">
-                    <h4>Comments (mock)</h4>
-                    <div class="comment"><strong>UserX:</strong> Amazing concept! 🤯</div>
-                    <div class="comment"><strong>CreativeMind:</strong> Love the color palette.</div>
-                </div>
-                <div class="related-sparks-section">
-                    <h4>Related Sparks (mock)</h4>
-                    <div class="related-spark-item" id="relatedSparksContainer">
-                        <!-- Related sparks will be injected here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="toast">A message will show here</div>
+    <div id="loading-screen">
+        <div id="loading-spinner"></div>
+        <div id="loading-text">Initializing Celestial Sphere...</div>
     </div>
 
+    <div id="info-panel">
+        <button class="close-button" onclick="hideInfoPanel()">×</button>
+        <h2 id="sat-name">Satellite Name</h2>
+        <p><strong>NORAD ID:</strong> <span id="sat-norad-id"></span></p>
+        <p><strong>Int'l Designator:</strong> <span id="sat-intl-des"></span></p>
+        <p><strong>Launch Date:</strong> <span id="sat-launch-date"></span></p>
+        <p><strong>Country:</strong> <span id="sat-country"></span></p>
+        <p><strong>Altitude:</strong> <span id="sat-altitude"></span> km</p>
+        <p><strong>Velocity:</strong> <span id="sat-velocity"></span> km/s</p>
+        <p><strong>Period:</strong> <span id="sat-period"></span> minutes</p>
+        <p><strong>Latitude:</strong> <span id="sat-lat"></span>°</p>
+        <p><strong>Longitude:</strong> <span id="sat-lon"></span>°</p>
+    </div>
+
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search satellites (e.g., ISS)">
+        <ul id="search-results"></ul>
+    </div>
+
+    <div id="timeline-container">
+        <div id="time-controls">
+            <button id="time-rewind"><<</button>
+            <button id="time-play-pause">Play</button>
+            <button id="time-forward">>></button>
+            <button id="time-reset">Reset</button>
+            <span>Speed: <span id="time-speed">1x</span></span>
+        </div>
+        <input type="range" id="timeline-slider" min="0" max="1440" value="0" step="1">
+        <div id="time-display">Current Time: N/A</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.1.3/satellite.min.js"></script>
+
     <script>
-    // --- App State & Elements ---
-    const pages = document.querySelectorAll('.page-content');
-    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
-    const toastElement = document.getElementById('toast');
-    let activePageId = 'homePage'; // Set initial page
-    const savedPins = new Set();
-    let allPinsData = []; // Central store for all pins
+        let scene, camera, renderer, earth, clouds, stars;
+        let satellites = [];
+        let satelliteObjects = new Map(); // Map NORAD ID to Three.js object
+        const EARTH_RADIUS_KM = 6371;
+        const SCALE_FACTOR = 1 / EARTH_RADIUS_KM; // Scale down to Three.js units (1 Earth radius = 1 unit)
+        let INTERSECTED;
+        let raycaster, mouse;
+        let controls; // Will be OrbitControls, need to embed or link
+        let loadingScreen = document.getElementById('loading-screen');
+        let loadingText = document.getElementById('loading-text');
+        let infoPanel = document.getElementById('info-panel');
 
-    // Pin Containers
-    const pinContainerHome = document.getElementById('pin-container-home');
-    const pinContainerProfileSparks = document.getElementById('pin-container-profile-sparks');
-    const pinContainerProfileSaved = document.getElementById('pin-container-profile-saved');
-    const boardContainerProfile = document.getElementById('board-card-container-profile');
+        let searchInput = document.getElementById('search-input');
+        let searchResultsList = document.getElementById('search-results');
 
-    // Skeleton Loaders
-    const skeletonLoaderHome = document.getElementById('skeleton-loader-home');
-    const skeletonLoaderProfileSparks = document.getElementById('skeleton-loader-profile-sparks');
-    const skeletonLoaderProfileSaved = document.getElementById('skeleton-loader-profile-saved');
-
-    // Modals
-    const createSparkModalOverlay = document.getElementById('createSparkModalOverlay');
-    const pinDetailModalOverlay = document.getElementById('pinDetailModalOverlay');
-
-
-    // --- Sample Data ---
-    const initialPinsData = [
-        { id: 's1', imageUrl: 'https://picsum.photos/seed/is_adv1/300/450', title: 'Cryosleep Chamber Design', user: 'AstroSleeper', avatar: 'A', description: 'Concept for long-duration space travel hibernation pods with neural monitoring.', boardId: 'b1' },
-        { id: 's2', imageUrl: 'https://picsum.photos/seed/is_adv2/300/520', title: 'Haptic Feedback Suit', user: 'VRRealist', avatar: 'V', description: 'Full-body suit providing realistic touch sensations for immersive VR.', boardId: 'b1' },
-        { id: 's3', imageUrl: 'https://picsum.photos/seed/is_adv3/300/400', title: 'AI-Generated Symphony', user: 'MuseAI', avatar: 'M', description: 'A complete orchestral piece composed entirely by an advanced AI.', boardId: 'b2' },
-        { id: 's4', imageUrl: 'https://picsum.photos/seed/is_adv4/300/550', title: 'Floating Hydroponic Farms', user: 'EcoSustain', avatar: 'E', description: 'Vertical farms built on buoyant platforms for urban food production.', boardId: 'b3' },
-        { id: 's5', imageUrl: 'https://picsum.photos/seed/is_adv5/300/480', title: 'Digital Consciousness Upload', user: 'TranshumanistX', avatar: 'T', description: 'Exploring the theoretical framework for transferring human consciousness to a digital substrate.', boardId: 'b1' },
-        { id: 's6', imageUrl: 'https://picsum.photos/seed/is_adv6/300/420', title: 'Bio-Luminescent Pathways', user: 'GlowingPaths', avatar: 'G', description: 'Using genetically engineered flora to create naturally lit walkways in cities.', boardId: 'b3' },
-        { id: 's7', imageUrl: 'https://picsum.photos/seed/is_adv7/300/500', title: 'Personalized Dream Weaver', user: 'LucidDreamer', avatar: 'L', description: 'A device that monitors brainwaves to influence and sculpt dream narratives.', boardId: 'b2' },
-        { id: 's8', imageUrl: 'https://picsum.photos/seed/is_adv8/300/380', title: 'Sentient AI Companion UI', user: 'AI_FriendDev', avatar: 'F', description: 'User interface concepts for interacting with a highly advanced, empathetic AI.', boardId: 'b2' },
-    ];
-    allPinsData = [...initialPinsData]; // Initialize central store
-
-    const userSparksIds = ['s1', 's3', 's6']; // User created these
-    const userSavedInitialIds = ['s2', 's4', 's7'];  // User saved these
-    userSavedInitialIds.forEach(id => savedPins.add(id));
-
-    const sampleNotifications = [
-        { type: 'like', user: 'VRRealist', item: 'Cryosleep Chamber Design', time: '2m ago', icon: '❤️'},
-        { type: 'comment', user: 'EcoSustain', item: 'Haptic Feedback Suit', text: 'Imagine this for training simulations!', time: '30m ago', icon: '💬'},
-        { type: 'follow', user: 'MuseAI', time: '2h ago', icon: '👤'},
-        { type: 'board', user: 'AstroSleeper', item: 'Future Concepts', spark: 'Floating Hydroponic Farms', time: '6h ago', icon: '➕'},
-        { type: 'new_spark', user: 'TranshumanistX', item: 'Digital Consciousness Upload', time: '1d ago', icon: '✨'}
-    ];
-
-    const sampleBoards = [
-        { id: 'b1', name: 'Future Tech Ideas', coverImage: 'https://picsum.photos/seed/board_cover1/200/150', pinCount: 3 },
-        { id: 'b2', name: 'AI Art & Creations', coverImage: 'https://picsum.photos/seed/board_cover2/200/150', pinCount: 3 },
-        { id: 'b3', name: 'Sustainable Innovations', coverImage: 'https://picsum.photos/seed/board_cover3/200/150', pinCount: 2 },
-    ];
-
-    // --- Skeleton Loader ---
-    function showSkeleton(container, count = 4) {
-        container.innerHTML = '';
-        for (let i = 0; i < count; i++) {
-            const skeleton = `
-                <div class="skeleton-pin">
-                    <div class="skeleton-pin-img"></div>
-                    <div class="skeleton-pin-content">
-                        <div class="skeleton-pin-title"></div>
-                        <div class="skeleton-pin-user"></div>
-                    </div>
-                </div>`;
-            container.innerHTML += skeleton;
-        }
-        container.style.display = 'grid';
-    }
-
-    async function loadWithSkeleton(pinContainerElement, skeletonElement, dataLoaderFn) {
-        pinContainerElement.style.display = 'none';
-        showSkeleton(skeletonElement);
-        await new Promise(resolve => setTimeout(resolve, 700)); // Simulate network delay
-        await dataLoaderFn();
-        skeletonElement.style.display = 'none';
-        pinContainerElement.style.display = 'grid';
-    }
+        let currentTime = new Date();
+        let timeScale = 1; // 1 = real-time, >1 = faster, <1 = slower
+        let timePaused = false;
+        const timelineSlider = document.getElementById('timeline-slider');
+        const timeDisplay = document.getElementById('time-display');
+        const timePlayPauseBtn = document.getElementById('time-play-pause');
+        const timeRewindBtn = document.getElementById('time-rewind');
+        const timeForwardBtn = document.getElementById('time-forward');
+        const timeResetBtn = document.getElementById('time-reset');
+        const timeSpeedDisplay = document.getElementById('time-speed');
+        let initialTime = new Date();
 
 
-    // --- Pin Creation & Management ---
-    function createPinElement(pinData) {
-        const pinDiv = document.createElement('div');
-        pinDiv.classList.add('pin');
-        pinDiv.dataset.id = pinData.id;
-
-        const img = document.createElement('img');
-        img.src = pinData.imageUrl;
-        img.alt = pinData.title;
-        img.loading = 'lazy';
-
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('pin-content');
-        const titleH3 = document.createElement('h3');
-        titleH3.classList.add('pin-title');
-        titleH3.textContent = pinData.title;
-        const userDiv = document.createElement('div');
-        userDiv.classList.add('pin-user');
-        const avatarSpan = document.createElement('span');
-        avatarSpan.classList.add('pin-user-avatar');
-        avatarSpan.textContent = pinData.avatar || pinData.user.charAt(0).toUpperCase();
-        const userNameSpan = document.createElement('span');
-        userNameSpan.textContent = pinData.user;
-        userDiv.append(avatarSpan, userNameSpan);
-        contentDiv.append(titleH3, userDiv);
-
-        const saveButton = document.createElement('button');
-        saveButton.classList.add('pin-save-button');
-        
-        function updateSaveButtonState() {
-            if (savedPins.has(pinData.id)) {
-                saveButton.textContent = 'Saved';
-                saveButton.classList.add('saved');
-            } else {
-                saveButton.textContent = 'Save';
-                saveButton.classList.remove('saved');
-            }
-        }
-        updateSaveButtonState();
-
-        saveButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (savedPins.has(pinData.id)) {
-                savedPins.delete(pinData.id);
-                showToast(`"${pinData.title}" unsaved.`);
-            } else {
-                savedPins.add(pinData.id);
-                showToast(`"${pinData.title}" saved!`);
-            }
-            updateSaveButtonState();
-            if (activePageId === 'profilePage' && document.getElementById('profileSavedContent').classList.contains('active-tab-content')) {
-                loadProfileSavedPinsContent();
-            }
-        });
-
-        pinDiv.append(img, contentDiv, saveButton);
-        pinDiv.addEventListener('click', () => openPinDetailModal(pinData.id));
-        return pinDiv;
-    }
-
-    function renderPins(container, data) {
-        container.innerHTML = '';
-        data.forEach(pinData => {
-            const pinElement = createPinElement(pinData);
-            container.appendChild(pinElement);
-        });
-    }
-
-    // --- Page Navigation ---
-    function switchPage(pageId) {
-        const oldPage = document.getElementById(activePageId);
-        const newPage = document.getElementById(pageId);
-
-        if (oldPage) oldPage.classList.remove('active');
-        if (newPage) newPage.classList.add('active');
-        
-        activePageId = pageId;
-        navItems.forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
-
-        // Load content for the new page with skeleton
-        if (pageId === 'homePage') loadWithSkeleton(pinContainerHome, skeletonLoaderHome, loadHomePageContent);
-        else if (pageId === 'discoverPage') loadDiscoverPageContent(); // No skeleton for discover for now
-        else if (pageId === 'createPage') { /* No specific load needed beyond modal setup */ }
-        else if (pageId === 'updatesPage') loadUpdatesPageContent();
-        else if (pageId === 'profilePage') switchProfileTab('sparks'); // Default to 'sparks' on profile
-    }
-
-    navItems.forEach(item => {
-        item.addEventListener('click', () => switchPage(item.dataset.page));
-    });
-
-    // --- Modal Management ---
-    function openModal(overlayId) {
-        document.getElementById(overlayId).classList.add('visible');
-    }
-    function closeModal(overlayId) {
-        document.getElementById(overlayId).classList.remove('visible');
-    }
-    document.querySelectorAll('[data-close-modal]').forEach(btn => {
-        btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
-    });
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal(overlay.id);
-        });
-    });
-
-    // --- Toast Notification ---
-    let toastTimeout;
-    function showToast(message) {
-        if (toastTimeout) clearTimeout(toastTimeout);
-        toastElement.textContent = message;
-        toastElement.classList.add('show');
-        toastTimeout = setTimeout(() => {
-            toastElement.classList.remove('show');
-        }, 3000);
-    }
-
-    // --- Page Specific Load Functions ---
-    async function loadHomePageContent() { renderPins(pinContainerHome, allPinsData); }
-    function loadDiscoverPageContent() {
-        document.getElementById('discoverSearchInput').value = '';
-        document.getElementById('mockSearchResultsContainer').innerHTML = '';
-        document.getElementById('discoverDefaultContent').style.display = 'block';
-    }
-    function loadUpdatesPageContent() {
-        const notificationList = document.getElementById('notificationList');
-        notificationList.innerHTML = '';
-        sampleNotifications.forEach(notif => {
-            const item = document.createElement('div');
-            item.classList.add('notification-item');
-            const icon = document.createElement('div');
-            icon.classList.add('notification-icon');
-            if (notif.type === 'comment') icon.classList.add('comment');
-            icon.textContent = notif.icon;
-            const textDiv = document.createElement('div');
-            textDiv.classList.add('notification-text');
-            const p1 = document.createElement('p');
-            if (notif.type === 'like') p1.innerHTML = `<strong>${notif.user}</strong> liked your spark <strong>${notif.item}</strong>.`;
-            else if (notif.type === 'comment') p1.innerHTML = `<strong>${notif.user}</strong> commented on <strong>${notif.item}</strong>: "${notif.text}"`;
-            else if (notif.type === 'follow') p1.innerHTML = `<strong>${notif.user}</strong> started following you.`;
-            else if (notif.type === 'board') p1.innerHTML = `<strong>${notif.user}</strong> added your spark <strong>${notif.spark}</strong> to their board <strong>${notif.item}</strong>.`;
-            else if (notif.type === 'new_spark') p1.innerHTML = `<strong>${notif.user}</strong> created a new spark: <strong>${notif.item}</strong>.`;
-            const timeP = document.createElement('p'); timeP.classList.add('time'); timeP.textContent = notif.time;
-            textDiv.append(p1, timeP); item.append(icon, textDiv);
-            item.onclick = () => showToast(`Opening notification from ${notif.user} (mock)`);
-            notificationList.appendChild(item);
-        });
-    }
-
-    // Discover Page Logic
-    const discoverSearchInput = document.getElementById('discoverSearchInput');
-    const mockSearchResultsContainer = document.getElementById('mockSearchResultsContainer');
-    const discoverDefaultContent = document.getElementById('discoverDefaultContent');
-    discoverSearchInput.addEventListener('input', function() {
-        const query = this.value.trim().toLowerCase();
-        if (query.length > 1) {
-            mockSearchResultsContainer.innerHTML = '';
-            discoverDefaultContent.style.display = 'none';
-            const results = allPinsData.filter(pin => pin.title.toLowerCase().includes(query) || pin.user.toLowerCase().includes(query) || (pin.description && pin.description.toLowerCase().includes(query)));
-            if (results.length > 0) {
-                results.slice(0, 5).forEach(res => {
-                    const item = document.createElement('div'); item.classList.add('result-item');
-                    item.textContent = `Spark: ${res.title} by ${res.user}`;
-                    item.onclick = () => openPinDetailModal(res.id);
-                    mockSearchResultsContainer.appendChild(item);
-                });
-            } else {
-                mockSearchResultsContainer.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding: 10px;">No sparks found for "${this.value}"</p>`;
-            }
-        } else {
-            mockSearchResultsContainer.innerHTML = '';
-            discoverDefaultContent.style.display = 'block';
-        }
-    });
-    document.querySelectorAll('.category-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-            discoverSearchInput.value = tag.textContent;
-            discoverSearchInput.dispatchEvent(new Event('input'));
-            showToast(`Exploring ${tag.textContent}`);
-        });
-    });
-
-    // Create Page & Create Spark Modal Logic
-    document.getElementById('openCreateSparkModalButton').addEventListener('click', () => {
-        // Reset form
-        document.getElementById('sparkTitle').value = '';
-        document.getElementById('sparkDescription').value = '';
-        document.getElementById('sparkImagePlaceholder').innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86l-3 3.87L9 13.14 6 17h12l-3.86-5.14z"/></svg>Tap to select image';
-        openModal('createSparkModalOverlay');
-    });
-    document.getElementById('sparkImagePlaceholder').addEventListener('click', () => {
-        showToast('Mock image selection!');
-        document.getElementById('sparkImagePlaceholder').innerHTML = '<svg viewBox="0 0 24 24" fill="#4CAF50"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>Image Selected (mock_image.jpg)';
-    });
-    document.getElementById('publishSparkButton').addEventListener('click', () => {
-        const title = document.getElementById('sparkTitle').value;
-        const description = document.getElementById('sparkDescription').value;
-        const boardId = document.getElementById('sparkBoard').value;
-        if (!title.trim()) {
-            showToast('Please enter a title for your spark.');
-            return;
-        }
-        const newSpark = {
-            id: 's' + (allPinsData.length + 1) + Date.now(), // Unique enough for demo
-            imageUrl: `https://picsum.photos/seed/custom${Date.now()}/300/${Math.floor(Math.random() * 200) + 350}`,
-            title: title,
-            user: 'Innovator One', // Current user
-            avatar: 'I',
-            description: description,
-            boardId: boardId
+        // Embed OrbitControls (simplified version for brevity or use CDN if allowed)
+        // For a true single file, you'd paste the OrbitControls.js code here.
+        // For this example, let's assume we can load it from CDN for development.
+        // If not, this part needs manual embedding of the library.
+        const orbitControlsScript = document.createElement('script');
+        orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
+        orbitControlsScript.onload = () => {
+            init();
+            animate();
         };
-        allPinsData.unshift(newSpark); // Add to beginning of all pins
-        userSparksIds.unshift(newSpark.id); // Add to user's sparks
-        showToast(`Spark "${title}" published!`);
-        closeModal('createSparkModalOverlay');
-        if (activePageId === 'homePage') loadWithSkeleton(pinContainerHome, skeletonLoaderHome, loadHomePageContent);
-        if (activePageId === 'profilePage' && document.getElementById('profileSparksContent').classList.contains('active-tab-content')) {
-             loadWithSkeleton(pinContainerProfileSparks, skeletonLoaderProfileSparks, loadProfileSparksContent);
-        }
-    });
-    document.querySelectorAll('.create-option-card[data-create-type]').forEach(card => {
-        card.addEventListener('click', () => {
-            const type = card.dataset.createType;
-            if (type === 'board') showToast('Opening New Board creator (mock)');
-            else if (type === 'ai_generate') showToast('Initiating AI Image Generation (mock)... ✨');
-        });
-    });
+        document.head.appendChild(orbitControlsScript);
 
-    // Pin Detail Modal Logic
-    function openPinDetailModal(pinId) {
-        const pinData = allPinsData.find(p => p.id === pinId);
-        if (!pinData) return;
 
-        document.getElementById('pinDetailTitle').textContent = pinData.title;
-        document.getElementById('pinDetailImage').src = pinData.imageUrl;
-        document.getElementById('pinDetailImage').alt = pinData.title;
-        document.getElementById('pinDetailUserAvatar').textContent = pinData.avatar || pinData.user.charAt(0).toUpperCase();
-        document.getElementById('pinDetailUserName').textContent = pinData.user;
-        document.getElementById('pinDetailDescriptionText').textContent = pinData.description || "No description available for this spark.";
-        
-        // Mock related sparks
-        const relatedSparksContainer = document.getElementById('relatedSparksContainer');
-        relatedSparksContainer.innerHTML = '';
-        allPinsData.filter(p => p.id !== pinId).slice(0,2).forEach(relatedPin => {
-            const item = document.createElement('div'); item.classList.add('related-spark-item');
-            item.textContent = `${relatedPin.title} by ${relatedPin.user}`;
-            item.onclick = () => { closeModal('pinDetailModalOverlay'); openPinDetailModal(relatedPin.id); }; // Chain modals
-            relatedSparksContainer.appendChild(item);
-        });
+        async function init() {
+            loadingText.innerText = "Setting up 3D scene...";
+            scene = new THREE.Scene();
 
-        openModal('pinDetailModalOverlay');
-    }
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 1000);
+            camera.position.z = 3;
 
-    // Profile Page Logic
-    const profileTabs = document.querySelectorAll('.profile-tab');
-    const profileTabContents = document.querySelectorAll('.profile-tab-content');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
 
-    async function loadProfileSparksContent() {
-        const userSparksData = allPinsData.filter(pin => userSparksIds.includes(pin.id));
-        renderPins(pinContainerProfileSparks, userSparksData);
-    }
-    async function loadProfileSavedPinsContent() {
-        const actualSavedPinsData = allPinsData.filter(pin => savedPins.has(pin.id));
-        renderPins(pinContainerProfileSaved, actualSavedPinsData);
-        if (actualSavedPinsData.length === 0 && pinContainerProfileSaved) {
-            pinContainerProfileSaved.innerHTML = `<p style="text-align:center; color: var(--text-secondary); padding: 20px;">No saved sparks yet. Explore and save some!</p>`;
-        }
-    }
-    function loadProfileBoardsContent() {
-        boardContainerProfile.innerHTML = '';
-        sampleBoards.forEach(board => {
-            const card = document.createElement('div');
-            card.classList.add('board-card');
-            card.innerHTML = `
-                <img src="${board.coverImage}" alt="${board.name} cover" class="board-card-cover">
-                <div class="board-card-name">${board.name} (${board.pinCount})</div>
-            `;
-            card.onclick = () => showToast(`Opening board: ${board.name} (mock)`);
-            boardContainerProfile.appendChild(card);
-        });
-    }
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Soft white light
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            directionalLight.position.set(5, 3, 5);
+            scene.add(directionalLight);
 
-    function switchProfileTab(tabId) {
-        profileTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.profileTab === tabId));
-        profileTabContents.forEach(content => {
-            // Using classList for display and then triggering load with skeleton
-            content.classList.remove('active-tab-content');
-            if (content.id === `profile${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Content`) {
-                content.classList.add('active-tab-content'); // Show it immediately
+            // Earth
+            loadingText.innerText = "Loading Earth textures...";
+            const textureLoader = new THREE.TextureLoader();
+            const earthTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg', () => {
+                loadingText.innerText = "Creating Earth...";
+            });
+            const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
+            const earthGeometry = new THREE.SphereGeometry(1, 64, 64); // Earth radius = 1 unit
+            earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(earth);
+
+            // Clouds (optional, adds realism)
+            const cloudTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_2048.png', () => {
+                 loadingText.innerText = "Adding atmosphere...";
+            });
+            const cloudMaterial = new THREE.MeshPhongMaterial({
+                map: cloudTexture,
+                transparent: true,
+                opacity: 0.3,
+                blending: THREE.AdditiveBlending
+            });
+            const cloudGeometry = new THREE.SphereGeometry(1.01, 64, 64); // Slightly larger than Earth
+            clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+            scene.add(clouds);
+
+            // Stars (simple particle system)
+            loadingText.innerText = "Generating starfield...";
+            const starGeometry = new THREE.BufferGeometry();
+            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.005 });
+            const starVertices = [];
+            for (let i = 0; i < 10000; i++) {
+                const x = THREE.MathUtils.randFloatSpread(100); // Spread them far out
+                const y = THREE.MathUtils.randFloatSpread(100);
+                const z = THREE.MathUtils.randFloatSpread(100);
+                starVertices.push(x, y, z);
             }
-        });
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+
+
+            // OrbitControls (after it's loaded)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 1.2; // Don't go inside the Earth
+            controls.maxDistance = 50;
+
+            // Raycasting for satellite selection
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            window.addEventListener('mousemove', onMouseMove, false);
+            window.addEventListener('click', onClick, false);
+
+            // Load Satellites
+            await loadSatellites();
+
+            // Time controls
+            setupTimeControls();
+            updateTimeDisplay();
+
+            // Search functionality
+            searchInput.addEventListener('input', handleSearch);
+            searchResultsList.addEventListener('click', handleSearchResultClick);
+            document.addEventListener('click', (event) => { // Hide results if clicked outside
+                if (!searchInput.contains(event.target) && !searchResultsList.contains(event.target)) {
+                    searchResultsList.style.display = 'none';
+                }
+            });
+
+
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function setupTimeControls() {
+            initialTime = new Date(currentTime); // Store the initial load time
+
+            timelineSlider.addEventListener('input', (event) => {
+                const minutesOffset = parseInt(event.target.value);
+                currentTime = new Date(initialTime.getTime() + minutesOffset * 60000);
+                if (timePaused) updateSatellitePositions(); // Manually update if paused
+                updateTimeDisplay();
+            });
+
+            timePlayPauseBtn.addEventListener('click', () => {
+                timePaused = !timePaused;
+                timePlayPauseBtn.textContent = timePaused ? "Play" : "Pause";
+            });
+
+            timeRewindBtn.addEventListener('click', () => {
+                timeScale = Math.max(0.1, timeScale / 2);
+                updateTimeSpeedDisplay();
+            });
+
+            timeForwardBtn.addEventListener('click', () => {
+                timeScale = Math.min(1024, timeScale * 2); // Max speed 1024x
+                updateTimeSpeedDisplay();
+            });
             
-        if (tabId === 'sparks') loadWithSkeleton(pinContainerProfileSparks, skeletonLoaderProfileSparks, loadProfileSparksContent);
-        else if (tabId === 'boards') loadProfileBoardsContent(); // No skeleton for boards for now
-        else if (tabId === 'saved') loadWithSkeleton(pinContainerProfileSaved, skeletonLoaderProfileSaved, loadProfileSavedPinsContent);
-    }
-    profileTabs.forEach(tab => {
-        tab.addEventListener('click', () => switchProfileTab(tab.dataset.profileTab));
-    });
+            timeResetBtn.addEventListener('click', () => {
+                currentTime = new Date(initialTime);
+                timeScale = 1;
+                timePaused = false;
+                timePlayPauseBtn.textContent = "Pause";
+                timelineSlider.value = 0;
+                updateTimeSpeedDisplay();
+                updateTimeDisplay();
+            });
+        }
 
-    // Initial Load
-    document.addEventListener('DOMContentLoaded', () => {
-        switchPage('homePage'); // Load initial page
-    });
+        function updateTimeSpeedDisplay() {
+            timeSpeedDisplay.textContent = `${timeScale}x`;
+        }
 
+        function updateTimeDisplay() {
+            timeDisplay.textContent = `Current Time: ${currentTime.toUTCString()}`;
+            // Update slider position based on currentTime relative to initialTime
+            const diffMinutes = (currentTime.getTime() - initialTime.getTime()) / 60000;
+            timelineSlider.value = Math.round(Math.max(0, Math.min(1440, diffMinutes))); // Clamp to 0-1440 range
+        }
+
+
+        async function loadSatellites() {
+            loadingText.innerText = "Fetching satellite TLE data...";
+            try {
+                // Using a CORS proxy for Celestrak if running locally and hitting CORS issues.
+                // For production, host TLEs on your own server or use a proper API.
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // Simple proxy
+                const tleUrl = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle';
+                // const response = await fetch(proxyUrl + tleUrl);
+                const response = await fetch(tleUrl); // Try direct first, proxy if fails
+                
+                if (!response.ok) {
+                    console.error(`Failed to fetch TLEs: ${response.status} ${response.statusText}. Trying with proxy...`);
+                    const proxyResponse = await fetch(proxyUrl + tleUrl);
+                    if(!proxyResponse.ok) {
+                         throw new Error(`Failed to fetch TLEs even with proxy: ${proxyResponse.status} ${proxyResponse.statusText}`);
+                    }
+                    var tleData = await proxyResponse.text();
+                } else {
+                    var tleData = await response.text();
+                }
+
+
+                loadingText.innerText = "Parsing TLE data...";
+                const tleLines = tleData.trim().split('\n');
+                let currentSatData = {};
+
+                for (let i = 0; i < tleLines.length; i += 3) {
+                    const name = tleLines[i].trim();
+                    const tle1 = tleLines[i+1].trim();
+                    const tle2 = tleLines[i+2].trim();
+
+                    if (!name || !tle1 || !tle2) continue;
+
+                    try {
+                        const satrec = satellite.twoline2satrec(tle1, tle2);
+                        // Basic metadata extraction from TLE. More detailed info usually needs separate database.
+                        const noradId = tle2.substring(2, 7).trim();
+                        const intlDes = tle1.substring(9, 17).trim();
+                        // Year and day for launch date (approximate, from intl designator)
+                        let launchYear = parseInt(intlDes.substring(0, 2));
+                        launchYear += (launchYear < 57) ? 2000 : 1900; // COSPAR ID year convention
+                        const launchDay = parseInt(intlDes.substring(2,5)); // Day of year
+                        const launchDate = new Date(launchYear, 0); // Jan 1st of launch year
+                        launchDate.setDate(launchDay);
+
+
+                        satellites.push({
+                            name: name,
+                            satrec: satrec,
+                            noradId: noradId,
+                            intlDes: intlDes,
+                            launchDate: launchDate.toISOString().split('T')[0],
+                            // Placeholder for country, would need external db
+                            country: getCountryFromIntlDes(intlDes) || "Unknown"
+                        });
+                    } catch (e) {
+                        console.warn(`Could not parse TLE for ${name}: ${e.message}`);
+                    }
+                }
+                loadingText.innerText = `Loaded ${satellites.length} satellites. Visualizing...`;
+                createSatelliteVisuals();
+
+            } catch (error) {
+                loadingText.innerText = "Error loading satellite data. Displaying Earth only.";
+                console.error("Error loading satellite data:", error);
+                // Can try a fallback or local TLE data here
+            }
+        }
+        
+        function getCountryFromIntlDes(intlDes) {
+            // This is a very simplified lookup. Real data is more complex.
+            // Data from https://en.wikipedia.org/wiki/International_Designator
+            // This is not exhaustive and just for demo.
+            const prefixes = {
+                'US': 'United States', 'SU': 'Russia (Soviet Union)', 'F': 'France', 'CN': 'China',
+                'J': 'Japan', 'I': 'Italy', 'IN': 'India', 'CA': 'Canada', 'DE': 'Germany',
+                'UK': 'United Kingdom', 'ES': 'Spain', 'AR': 'Argentina', 'BR': 'Brazil', 'AU': 'Australia',
+                'KR': 'South Korea', 'IL': 'Israel', 'UAE': 'United Arab Emirates', 'EU': 'ESA'
+                // ... many more
+            };
+            const countryCode = intlDes.substring(intlDes.length - 3, intlDes.length - 1); // Last part often indicates country
+            return prefixes[countryCode.toUpperCase()] || null; // This is VERY naive
+        }
+
+
+        function createSatelliteVisuals() {
+            const satMaterial = new THREE.MeshBasicMaterial({ color: 0xffcc00, wireframe: false }); // Bright yellow for visibility
+            // For many satellites, Points or InstancedMesh is better.
+            // We'll use simple spheres for a smaller set.
+            const satGeometry = new THREE.SphereGeometry(0.005, 8, 8); // Small sphere
+
+            satellites.forEach(sat => {
+                const satMesh = new THREE.Mesh(satGeometry, satMaterial.clone()); // Clone material to change color on hover
+                satMesh.userData = sat; // Store sat data in the mesh
+                scene.add(satMesh);
+                satelliteObjects.set(sat.noradId, satMesh);
+            });
+            updateSatellitePositions(); // Initial position update
+        }
+
+        function updateSatellitePositions() {
+            if (satellites.length === 0 || timePaused && !manualUpdateCall) return;
+            if (timePaused && arguments.length > 0 && arguments[0] === true) {
+                // This is a manual call while paused, proceed.
+            } else if (timePaused) {
+                return; // Skip regular update if paused and not a manual call.
+            }
+
+
+            const gmst = satellite.gstime(currentTime);
+
+            satellites.forEach(sat => {
+                const satMesh = satelliteObjects.get(sat.noradId);
+                if (!satMesh) return;
+
+                try {
+                    const positionAndVelocity = satellite.propagate(sat.satrec, currentTime);
+                    const positionEci = positionAndVelocity.position;
+
+                    if (!positionEci) {
+                        // console.warn(`No position data for ${sat.name} at ${currentTime}`);
+                        satMesh.visible = false; // Hide if propagation fails
+                        return;
+                    }
+                    satMesh.visible = true;
+
+                    // Convert ECI to ECF (Earth-Fixed) then to Geodetic for lat/lon/alt
+                    const positionEcf = satellite.eciToEcf(positionEci, gmst);
+                    const geodetic = satellite.eciToGeodetic(positionEci, gmst);
+
+                    // Store geodetic for info panel
+                    satMesh.userData.latitude = satellite.degreesLat(geodetic.latitude);
+                    satMesh.userData.longitude = satellite.degreesLong(geodetic.longitude);
+                    satMesh.userData.altitude = geodetic.height; // km
+
+                    // Calculate velocity magnitude
+                    const vx = positionAndVelocity.velocity.x;
+                    const vy = positionAndVelocity.velocity.y;
+                    const vz = positionAndVelocity.velocity.z;
+                    satMesh.userData.velocity = Math.sqrt(vx*vx + vy*vy + vz*vz); // km/s
+
+                    // Orbital period (from satrec mean motion)
+                    const meanMotionRadPerMin = sat.satrec.no * 60 * 24 / (2 * Math.PI); // revs per day to rad per min
+                    satMesh.userData.period = (2 * Math.PI) / sat.satrec.no; // minutes; sat.satrec.no is mean motion in radians/minute
+
+                    // For Three.js, we need coordinates relative to Earth's center in scaled units
+                    // The ECI position is already geocentric. We just need to scale and orient.
+                    // Three.js Y is up, Z is towards camera by default.
+                    // ECI: X towards vernal equinox, Z towards North Pole.
+                    // We need to rotate ECI to align with Three.js view (ECF-like but scaled)
+                    // Satellite.js ECI: (x, y, z) where z is along Earth's rotational axis.
+                    // Three.js: (x, y, z) where y is typically up.
+                    // So, map ECI (x,y,z) to Three.js (x, z, -y) and then apply Earth's rotation (gmst)
+                    // Or, more simply, use the ECF coordinates for plotting relative to a non-rotating Earth mesh
+                    // if Earth itself is rotated by GMST in the animate loop.
+                    // For this demo, let's plot ECI directly and rotate the Earth mesh.
+
+                    satMesh.position.set(
+                        positionEci.x * SCALE_FACTOR,
+                        positionEci.z * SCALE_FACTOR, // ECI Z (North) to Three.js Y (Up)
+                        -positionEci.y * SCALE_FACTOR  // ECI Y to Three.js -Z (depth)
+                    );
+
+
+                } catch (e) {
+                    // console.warn(`Error propagating ${sat.name}: ${e.message}`);
+                    satMesh.visible = false; // Hide if error
+                }
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(event) {
+            event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onClick(event) {
+            // Check if click was on UI elements
+            if (infoPanel.contains(event.target) || searchInput.contains(event.target) || searchResultsList.contains(event.target) || document.getElementById('timeline-container').contains(event.target)) {
+                return; // Don't deselect if clicking UI
+            }
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(Array.from(satelliteObjects.values()));
+
+            if (intersects.length > 0) {
+                const newIntersected = intersects[0].object;
+                if (INTERSECTED != newIntersected) {
+                    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+
+                    INTERSECTED = newIntersected;
+                    INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+                    INTERSECTED.material.color.setHex(0x00ff00); // Highlight green
+
+                    displaySatelliteInfo(INTERSECTED.userData);
+                    focusOnSatellite(INTERSECTED);
+                }
+            } else {
+                if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+                INTERSECTED = null;
+                hideInfoPanel();
+            }
+        }
+
+        function displaySatelliteInfo(satData) {
+            document.getElementById('sat-name').textContent = satData.name || 'N/A';
+            document.getElementById('sat-norad-id').textContent = satData.noradId || 'N/A';
+            document.getElementById('sat-intl-des').textContent = satData.intlDes || 'N/A';
+            document.getElementById('sat-launch-date').textContent = satData.launchDate || 'N/A';
+            document.getElementById('sat-country').textContent = satData.country || 'N/A';
+            document.getElementById('sat-altitude').textContent = satData.altitude ? satData.altitude.toFixed(2) : 'N/A';
+            document.getElementById('sat-velocity').textContent = satData.velocity ? satData.velocity.toFixed(2) : 'N/A';
+            document.getElementById('sat-period').textContent = satData.period ? satData.period.toFixed(2) : 'N/A';
+            document.getElementById('sat-lat').textContent = satData.latitude ? satData.latitude.toFixed(4) : 'N/A';
+            document.getElementById('sat-lon').textContent = satData.longitude ? satData.longitude.toFixed(4) : 'N/A';
+            infoPanel.classList.add('visible');
+        }
+
+        function hideInfoPanel() {
+            infoPanel.classList.remove('visible');
+        }
+        
+        let targetSatellite = null;
+        let isFocusing = false;
+
+        function focusOnSatellite(satelliteObject) {
+            targetSatellite = satelliteObject;
+            isFocusing = true;
+            // Smoothly move camera to satellite
+            // controls.target.copy(satelliteObject.position); // Set new target for OrbitControls
+            // The camera will then try to orbit this new target.
+            // We also want to move the camera itself to a good viewing distance.
+            // A simple approach:
+            // camera.lookAt(satelliteObject.position); // Ensure camera is looking at it
+            // And then animate camera.position
+            // More robust: use controls.target and let OrbitControls handle the view.
+        }
+
+        function handleSearch(event) {
+            const query = event.target.value.toLowerCase();
+            searchResultsList.innerHTML = '';
+            if (query.length < 2) {
+                searchResultsList.style.display = 'none';
+                return;
+            }
+
+            const results = satellites.filter(sat =>
+                sat.name.toLowerCase().includes(query) ||
+                sat.noradId.includes(query)
+            ).slice(0, 10); // Limit to 10 results
+
+            if (results.length > 0) {
+                results.forEach(sat => {
+                    const li = document.createElement('li');
+                    li.textContent = `${sat.name} (${sat.noradId})`;
+                    li.dataset.noradId = sat.noradId;
+                    searchResultsList.appendChild(li);
+                });
+                searchResultsList.style.display = 'block';
+            } else {
+                searchResultsList.style.display = 'none';
+            }
+        }
+
+        function handleSearchResultClick(event) {
+            if (event.target.tagName === 'LI') {
+                const noradId = event.target.dataset.noradId;
+                const satData = satellites.find(s => s.noradId === noradId);
+                const satObject = satelliteObjects.get(noradId);
+                if (satData && satObject) {
+                    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+                    INTERSECTED = satObject;
+                    INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+                    INTERSECTED.material.color.setHex(0x00ff00); // Highlight green
+
+                    displaySatelliteInfo(satData);
+                    focusOnSatellite(satObject);
+                    searchInput.value = satData.name; // Put full name in search bar
+                    searchResultsList.style.display = 'none'; // Hide results
+                }
+            }
+        }
+
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!timePaused) {
+                const now = new Date();
+                const elapsed = (now.getTime() - currentTime.getTime()) * timeScale;
+                currentTime = new Date(currentTime.getTime() + elapsed);
+                updateTimeDisplay(); // Update display based on new currentTime
+                updateSatellitePositions();
+            } else {
+                // If paused, we might still need to update if slider moved
+                // This is handled in slider event for manual update
+            }
+
+
+            // Earth and cloud rotation (visual, not tied to precise GMST for simplicity here)
+            earth.rotation.y += 0.0001; // Slow rotation for Earth
+            if (clouds) clouds.rotation.y += 0.0002; // Clouds rotate slightly faster
+
+            if (stars) stars.rotation.y += 0.00005;
+
+            if (controls) controls.update(); // Only if OrbitControls has been loaded
+
+            if (isFocusing && targetSatellite) {
+                // Smoothly move camera towards the satellite
+                const targetPosition = new THREE.Vector3();
+                targetSatellite.getWorldPosition(targetPosition); // Get world position of the satellite
+
+                // Target for orbit controls (what the camera looks at and orbits around)
+                controls.target.lerp(targetPosition, 0.05);
+
+                // Desired camera position: offset from the satellite
+                // Create a point slightly away from the satellite, in the direction of the current camera offset
+                const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+                offset.normalize().multiplyScalar(0.1); // desired distance from satellite
+                
+                const desiredCameraPosition = new THREE.Vector3().addVectors(targetPosition, offset);
+                camera.position.lerp(desiredCameraPosition, 0.05);
+                
+                // Stop focusing when close enough or after a certain time
+                if (camera.position.distanceTo(desiredCameraPosition) < 0.01 && controls.target.distanceTo(targetPosition) < 0.01) {
+                    isFocusing = false;
+                    // controls.target.copy(targetPosition); // Final snap
+                }
+            }
+
+
+            renderer.render(scene, camera);
+        }
     </script>
 </body>
 </html>
