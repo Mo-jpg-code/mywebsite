@@ -2,10 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinterest Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pinterest 2025 - Dark Mobile</title>
     <style>
         /* Global Resets & Base Styles */
+        :root {
+            --bg-primary: #121212; /* Deep dark grey for main background */
+            --bg-secondary: #1E1E1E; /* Slightly lighter for cards/elements */
+            --bg-tertiary: #2C2C2C; /* For interactive elements or accents */
+            --text-primary: #E0E0E0; /* Light grey for primary text */
+            --text-secondary: #B0B0B0; /* Dimmer grey for secondary text */
+            --accent-primary: #FF004C; /* A vibrant Pinterest-like red, slightly shifted for dark mode */
+            --accent-secondary: #00A3FF; /* A secondary accent for variety if needed */
+            --border-color: #383838; /* Subtle borders */
+            --header-height: 56px;
+            --bottom-nav-height: 60px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,561 +26,468 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
                          Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
                          sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
         }
 
-        body {
-            background-color: #fff; /* Pinterest main background can vary, often white */
-            color: #111;
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Prevent scroll on body, app-shell will handle it */
+            background-color: #000; /* Fallback for outer area */
         }
 
-        button {
-            cursor: pointer;
-            border: none;
-            background-color: transparent;
-            padding: 8px 12px;
-            border-radius: 24px;
-            font-weight: 600;
+        /* App Shell for 9:16 aspect ratio simulation on desktop */
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            max-width: 414px; /* iPhone 11 Pro Max width, good for 9:16 */
+            max-height: calc(414px * (16 / 9)); /* Maintain 9:16 */
+            margin: auto;
+            position: relative;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden; /* Contains all app content */
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #333; /* Simulates phone edges */
+            border-right: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
+        /* On actual mobile, we want it to take full width/height */
+         @media (max-width: 450px) { /* Approximate mobile breakpoint */
+            .app-shell {
+                max-width: 100%;
+                max-height: 100%;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+            }
+        }
+
 
         /* Header Styles */
-        .pinterest-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
+        .app-header {
+            height: var(--header-height);
             padding: 0 16px;
             display: flex;
             align-items: center;
-            background-color: #fff;
-            border-bottom: 1px solid #e0e0e0;
+            justify-content: space-between;
+            background-color: var(--bg-secondary); /* Slightly different from main bg */
+            border-bottom: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
+             /* Adjust for app-shell context */
+            max-width: inherit; /* Inherit max-width from app-shell */
+            margin: 0 auto; /* Center within app-shell's constraints */
         }
-
-        .pinterest-logo {
-            width: 32px;
-            height: 32px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23E60023"><path d="M12 1.07c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10S17.52 1.07 12 1.07zm3.92 14.75c-.4.08-.82.12-1.25.12-1.2 0-2.2-.45-2.82-1.22-.6-.75-.92-1.77-.92-2.95 0-1.08.25-1.98.72-2.7.48-.72 1.12-1.25 1.9-1.58.32-.12.68-.18 1.02-.18.6 0 1.1.12 1.5.32.4.22.72.52.95.9.22.38.35.8.35 1.25 0 .2-.02.4-.05.58-.05.2-.1.38-.2.55l-.52 1.9c-.08.28-.12.55-.12.8 0 .4.1.72.3.98.2.25.48.38.8.38.3 0 .58-.08.8-.22.22-.15.4-.35.52-.6l.12-.28c.08-.18.12-.38.12-.58 0-.72-.22-1.3-.65-1.78-.42-.48-.95-.72-1.58-.72-.35 0-.65.08-.9.22-.25.15-.42.35-.52.6-.1.25-.15.5-.15.78 0 .3.05.55.12.78.08.22.2.4.35.55.15.15.32.22.5.22.4 0 .72-.15.98-.42.25-.28.42-.6.52-.98l.6-2.2c.05-.2.08-.4.08-.6 0-.7-.25-1.3-.72-1.78-.48-.48-1.1-.72-1.8-.72-.72 0-1.3.18-1.78.52-.48.35-.8.8-.98 1.3-.18.5-.28 1.05-.28 1.65 0 1.3.35 2.4.98 3.3.65.9 1.5 1.38 2.58 1.38.5 0 .98-.1 1.4-.3.42-.2.78-.48 1.08-.82.3-.35.5-.75.6-1.2l.1-.42c.02-.1.02-.2.02-.3 0-.3-.08-.55-.22-.72-.15-.18-.35-.28-.6-.28-.25 0-.48.08-.65.22-.18.15-.3.35-.35.6l-.1.3c-.02.1-.05.2-.08.28-.02.08-.05.12-.08.15-.02.02-.05.05-.08.05-.1 0-.18-.02-.22-.08-.05-.05-.08-.12-.08-.2 0-.1.02-.2.08-.3l.35-1.25c.1-.38.15-.7.15-1 0-.5-.12-.95-.35-1.3-.22-.38-.5-.68-.82-.9-.32-.22-.68-.35-1.08-.35-.6 0-1.1.15-1.5.42-.4.28-.7.65-.9 1.1-.2.48-.3.98-.3 1.52 0 .7.18 1.3.52 1.78.35.48.8.8 1.3.98.2.08.4.12.6.12.5 0 .9-.12 1.22-.35.32-.22.55-.52.7-.9.08-.18.12-.38.12-.58h.02c.02.08.05.15.08.22.15.3.22.6.22.95 0 .6-.15 1.1-.42 1.52-.28.4-.6.72-.98.98-.38.25-.8.42-1.25.52z"/></svg>');
+         .app-header-logo {
+            width: 30px;
+            height: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FF004C"><path d="M12 1.07c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10S17.52 1.07 12 1.07zm3.92 14.75c-.4.08-.82.12-1.25.12-1.2 0-2.2-.45-2.82-1.22-.6-.75-.92-1.77-.92-2.95 0-1.08.25-1.98.72-2.7.48-.72 1.12-1.25 1.9-1.58.32-.12.68-.18 1.02-.18.6 0 1.1.12 1.5.32.4.22.72.52.95.9.22.38.35.8.35 1.25 0 .2-.02.4-.05.58-.05.2-.1.38-.2.55l-.52 1.9c-.08.28-.12.55-.12.8 0 .4.1.72.3.98.2.25.48.38.8.38.3 0 .58-.08.8-.22.22-.15.4-.35.52-.6l.12-.28c.08-.18.12-.38.12-.58 0-.72-.22-1.3-.65-1.78-.42-.48-.95-.72-1.58-.72-.35 0-.65.08-.9.22-.25.15-.42.35-.52.6-.1.25-.15.5-.15.78 0 .3.05.55.12.78.08.22.2.4.35.55.15.15.32.22.5.22.4 0 .72-.15.98-.42.25-.28.42-.6.52-.98l.6-2.2c.05-.2.08-.4.08-.6 0-.7-.25-1.3-.72-1.78-.48-.48-1.1-.72-1.8-.72-.72 0-1.3.18-1.78.52-.48.35-.8.8-.98 1.3-.18.5-.28 1.05-.28 1.65 0 1.3.35 2.4.98 3.3.65.9 1.5 1.38 2.58 1.38.5 0 .98-.1 1.4-.3.42-.2.78-.48 1.08-.82.3-.35.5-.75.6-1.2l.1-.42c.02-.1.02-.2.02-.3 0-.3-.08-.55-.22-.72-.15-.18-.35-.28-.6-.28-.25 0-.48.08-.65.22-.18.15-.3.35-.35.6l-.1.3c-.02.1-.05.2-.08.28-.02.08-.05.12-.08.15-.02.02-.05.05-.08.05-.1 0-.18-.02-.22-.08-.05-.05-.08-.12-.08-.2 0-.1.02-.2.08-.3l.35-1.25c.1-.38.15-.7.15-1 0-.5-.12-.95-.35-1.3-.22-.38-.5-.68-.82-.9-.32-.22-.68-.35-1.08-.35-.6 0-1.1.15-1.5.42-.4.28-.7.65-.9 1.1-.2.48-.3.98-.3 1.52 0 .7.18 1.3.52 1.78.35.48.8.8 1.3.98.2.08.4.12.6.12.5 0 .9-.12 1.22-.35.32-.22.55-.52.7-.9.08-.18.12-.38.12-.58h.02c.02.08.05.15.08.22.15.3.22.6.22.95 0 .6-.15 1.1-.42 1.52-.28.4-.6.72-.98.98-.38.25-.8.42-1.25.52z"/></svg>');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            margin-right: 8px;
         }
-        .pinterest-logo:hover {
-            opacity: 0.8;
-        }
-
-        .nav-button {
-            padding: 12px 16px;
-            border-radius: 24px;
-            font-weight: 700;
-            font-size: 16px;
-        }
-        .nav-button.active {
-            background-color: #111;
-            color: #fff;
-        }
-        .nav-button:not(.active):hover {
-            background-color: #f0f0f0;
-        }
-
-        .search-container {
-            flex-grow: 1;
-            margin: 0 16px;
-            position: relative;
-        }
-        .search-icon-prefix {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #767676;
-            pointer-events: none; /* Allows click through to input */
-        }
-        .search-icon-prefix svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-        .search-bar {
-            width: 100%;
-            height: 48px;
-            padding: 0 16px 0 48px; /* Left padding for icon */
+        .header-search-button {
+            background: none;
             border: none;
-            background-color: #efefef;
-            border-radius: 24px;
-            font-size: 16px;
-            outline: none;
-        }
-        .search-bar:focus {
-            background-color: #e0e0e0;
-            /* box-shadow: 0 0 0 2px #007bff; /* Example focus ring */
-        }
-
-        .header-icons {
-            display: flex;
-            align-items: center;
-        }
-        .icon-button {
-            background-color: transparent;
-            border: none;
+            color: var(--text-primary);
             padding: 8px;
-            border-radius: 50%;
-            margin-left: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        .icon-button svg {
+        .header-search-button svg {
             width: 24px;
             height: 24px;
-            fill: #5f5f5f; /* Pinterest's dark grey for icons */
-        }
-        .icon-button:hover {
-            background-color: #f0f0f0;
-        }
-        .profile-icon {
-            width: 28px;
-            height: 28px;
-            background-color: #e0e0e0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            color: #5f5f5f;
-        }
-
-        /* Dropdown Menu (Generic) */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #fff;
-            min-width: 220px; /* Adjusted width */
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
-            border-radius: 16px; /* More Pinterest-like */
-            padding: 8px 0; /* Vertical padding for the container */
-            z-index: 1001;
-            right: 0; /* Align to the right */
-            top: calc(100% + 10px); /* Position below the button with some gap */
-        }
-        .dropdown-content a, .dropdown-content .dropdown-item {
-            color: #111;
-            padding: 10px 16px; /* Standard padding for items */
-            text-decoration: none;
-            display: block;
-            font-size: 16px;
-            font-weight: normal; /* Normal weight for dropdown items */
-        }
-        .dropdown-content a:hover, .dropdown-content .dropdown-item:hover {
-            background-color: #f0f0f0;
-        }
-        .dropdown-content .section-title {
-            padding: 8px 16px 4px;
-            font-size: 12px;
-            color: #767676;
-            text-transform: uppercase;
-            font-weight: normal;
-        }
-        .dropdown-content .separator {
-            height: 1px;
-            background-color: #e0e0e0;
-            margin: 8px 0;
-        }
-        .dropdown.show .dropdown-content {
-            display: block;
-        }
-
-        /* Create Dropdown Specifics */
-        #create-dropdown-content .dropdown-item {
-            font-weight: 700; /* Bold for create options */
+            fill: currentColor;
         }
 
         /* Main Content Area */
-        .pinterest-main-content {
-            padding-top: 100px; /* Header height + some margin */
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-bottom: 20px;
+        .app-main-content {
+            flex-grow: 1;
+            padding: 16px;
+            padding-top: calc(var(--header-height) + 16px);
+            padding-bottom: calc(var(--bottom-nav-height) + 16px);
+            overflow-y: auto; /* Enable scrolling for content */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
 
         .pin-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); /* Pinterest-like column width */
-            gap: 16px; /* Gap between pins */
-            align-items: start; /* Important for masonry-like effect with CSS grid */
+            display: grid; /* Using grid for two columns on mobile */
+            grid-template-columns: repeat(2, 1fr); /* Two columns */
+            gap: 10px; /* Gap between pins */
+            align-items: start;
         }
 
         .pin {
             position: relative;
-            border-radius: 16px; /* Rounded corners for pins */
+            background-color: var(--bg-secondary);
+            border-radius: 16px;
             overflow: hidden;
             cursor: pointer;
-            break-inside: avoid-column; /* For CSS column-based masonry, not strictly needed for grid */
-            margin-bottom: 16px; /* if not using grid gap effectively */
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            margin-bottom: 0; /* Grid gap handles spacing */
         }
         .pin img {
             width: 100%;
             height: auto;
             display: block;
-            border-radius: 16px; /* Ensure image itself has rounded corners if it peeks */
+            border-top-left-radius: 16px; /* For image only, not the whole pin card */
+            border-top-right-radius: 16px;
+            background-color: var(--bg-tertiary); /* Placeholder bg for image loading */
+        }
+        .pin-content {
+            padding: 8px 12px 12px;
+        }
+        .pin-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .pin-user {
+            display: flex;
+            align-items: center;
+            font-size: 0.75em;
+            color: var(--text-secondary);
+        }
+        .pin-user-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--accent-secondary);
+            margin-right: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: bold;
+            color: var(--bg-primary);
+        }
+        .pin-options {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            padding: 4px;
+            display: none; /* Hidden by default, show on demand or hover (desktop) */
+        }
+        .pin:hover .pin-options { /* Show on hover for desktop for example */
+            display: flex;
+        }
+        .pin-options svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-primary);
+        }
+        .pin-save-button-overlay { /* The main red save button */
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: var(--accent-primary);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .pin:hover .pin-save-button-overlay {
+             opacity: 1;
+        }
+        /* For touch, the save button might be always visible or appear on long-press - simplified here to hover */
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            height: var(--bottom-nav-height);
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            /* Adjust for app-shell context */
+            max-width: inherit; /* Inherit max-width from app-shell */
+            margin: 0 auto; /* Center within app-shell's constraints */
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 4px 0;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            color: var(--accent-primary);
+        }
+        .nav-item svg {
+            width: 26px;
+            height: 26px;
+            fill: currentColor;
+            margin-bottom: 2px;
+        }
+        .nav-item-label {
+            font-size: 0.65em; /* Very small labels, or can be removed */
+            display: none; /* Pinterest mobile often doesn't show labels */
+        }
+        .nav-item.active .nav-item-label {
+            /* display: block; */ /* Optionally show label for active item */
+        }
+        .nav-item-profile .profile-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--text-secondary); /* Placeholder */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--bg-primary);
+            font-size: 0.9em;
+        }
+        .nav-item.active .nav-item-profile .profile-avatar {
+            border: 2px solid var(--accent-primary);
         }
 
-        .pin-overlay {
-            position: absolute;
+
+        /* Search Overlay (Example of a modal-like interaction) */
+        .search-overlay {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-            display: flex;
+            background-color: rgba(0,0,0,0.85); /* Darker overlay */
+            z-index: 1001; /* Above header */
+            display: none; /* Hidden by default */
             flex-direction: column;
-            justify-content: space-between;
-            padding: 16px;
-            border-radius: 16px; /* Match pin */
+            align-items: center;
+            padding-top: var(--header-height);
+            color: var(--text-primary);
         }
-        .pin:hover .pin-overlay {
-            opacity: 1;
-        }
-
-        .pin-save-button {
-            background-color: #e60023; /* Pinterest Red */
-            color: white;
+        .search-overlay input {
+            width: 90%;
+            max-width: 380px;
             padding: 12px 16px;
+            font-size: 1.1em;
             border-radius: 24px;
-            font-weight: bold;
-            align-self: flex-end; /* Position to top right */
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            margin-top: 20px;
+            outline: none;
+        }
+        .search-overlay input::placeholder {
+            color: var(--text-secondary);
+        }
+        .close-search-button {
+            position: absolute;
+            top: calc(var(--header-height) / 2 - 16px); /* Vertically center in conceptual header area */
+            right: 16px; /* In app-shell, this will be relative to shell edge */
+            background: none;
             border: none;
+            font-size: 24px;
+            color: var(--text-primary);
             cursor: pointer;
-            font-size: 16px;
-        }
-        .pin-save-button:hover {
-            background-color: #ad081b; /* Darker red */
+            padding: 8px;
         }
 
-        .pin-bottom-bar {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end; /* Or space-between if there's text */
-        }
-        .pin-bottom-bar .icon-button svg {
-            fill: white; /* Icons on overlay should be white */
-            width: 20px;
-            height: 20px;
-        }
-        .pin-bottom-bar .icon-button {
-            background-color: rgba(0,0,0,0.4); /* Semi-transparent background for better visibility */
-        }
-        .pin-bottom-bar .icon-button:hover {
-            background-color: rgba(0,0,0,0.6);
-        }
-
-        /* Floating Action Button (FAB) - e.g., for Help or Add */
-        .fab-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 999;
-        }
-        .fab-button {
-            background-color: #e0e0e0; /* Light grey, often white on Pinterest */
-            color: #111;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            border: none;
-        }
-        .fab-button svg {
-            width: 24px;
-            height: 24px;
-            fill: #111;
-        }
-        .fab-button:hover {
-            background-color: #d0d0d0;
-        }
-        
         /* Toast Notification */
         #toast {
             visibility: hidden;
-            min-width: 250px;
-            background-color: #333;
-            color: #fff;
+            min-width: 200px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
             text-align: center;
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: 20px;
+            padding: 12px 20px;
             position: fixed;
-            z-index: 1002;
+            z-index: 1002; /* Above everything */
             left: 50%;
-            bottom: 30px;
+            bottom: calc(var(--bottom-nav-height) + 20px); /* Above bottom nav */
             transform: translateX(-50%);
-            font-size: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 0.9em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 0.3s ease, bottom 0.3s ease, visibility 0.3s ease;
         }
 
         #toast.show {
             visibility: visible;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            opacity: 1;
+            bottom: calc(var(--bottom-nav-height) + 30px);
         }
 
-        @keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-
-        @keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .nav-button.home-text { display: none; } /* Hide "Home" text */
-            .nav-button.create-text { display: none; } /* Hide "Create" text on button, it's in dropdown */
-            .search-container { margin: 0 8px; }
-            .pinterest-header { padding: 0 8px; }
-            .header-icons .icon-button { margin-left: 4px; }
-             .pin-container {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 10px;
-            }
-            .pinterest-main-content {
-                padding-left: 8px;
-                padding-right: 8px;
-            }
-        }
-         @media (max-width: 480px) {
-            .search-bar { font-size: 14px; height: 40px; }
-            .search-icon-prefix svg { width: 16px; height: 16px; }
-            .search-icon-prefix { left: 12px; }
-            .search-bar { padding-left: 38px; }
-            .icon-button svg { width: 20px; height: 20px; }
-            .profile-icon { width: 24px; height: 24px; font-size: 12px; }
-            .pinterest-logo { width: 28px; height: 28px; }
-            .nav-button { padding: 10px 12px; font-size: 14px; }
-        }
 
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="pinterest-header">
-        <a href="#" class="pinterest-logo" aria-label="Pinterest"></a>
-        <button class="nav-button active home-text">Home</button>
-        
-        <div class="dropdown">
-            <button class="nav-button create-text" id="create-button" aria-haspopup="true" aria-expanded="false">
-                Create
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-left: 4px; vertical-align: middle;"><path d="M12 15.5a1 1 0 0 1-.71-.29l-4-4a1 1 0 1 1 1.42-1.42L12 13.1l3.29-3.31a1 1 0 0 1 1.42 1.42l-4 4a1 1 0 0 1-.71.29z"></path></svg>
+    <div class="app-shell">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="app-header-logo" aria-label="Pinterest"></div>
+            <button class="header-search-button" id="openSearchButton" aria-label="Search">
+                <svg viewBox="0 0 24 24"><path d="M10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6m13.12 2.88-4.26-4.26A9.842 9.842 0 0 0 20 10c0-5.52-4.48-10-10-10S0 4.48 0 10s4.48 10 10 10c1.67 0 3.24-.41 4.62-1.14l4.26 4.26a3 3 0 0 0 4.24 0 3 3 0 0 0 0-4.24"></path></svg>
             </button>
-            <div class="dropdown-content" id="create-dropdown-content" aria-labelledby="create-button">
-                <a href="#" class="dropdown-item">Create Idea Pin</a>
-                <a href="#" class="dropdown-item">Create Pin</a>
-            </div>
-        </div>
+        </header>
 
-        <div class="search-container">
-            <div class="search-icon-prefix">
-                <svg aria-hidden="true" aria-label="Search" role="img" viewBox="0 0 24 24"><path d="M10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6m13.12 2.88-4.26-4.26A9.842 9.842 0 0 0 20 10c0-5.52-4.48-10-10-10S0 4.48 0 10s4.48 10 10 10c1.67 0 3.24-.41 4.62-1.14l4.26 4.26a3 3 0 0 0 4.24 0 3 3 0 0 0 0-4.24"></path></svg>
+        <!-- Main Content Grid -->
+        <main class="app-main-content">
+            <div class="pin-container" id="pin-container">
+                <!-- Pins will be injected here by JavaScript -->
             </div>
-            <input type="search" class="search-bar" placeholder="Search">
-        </div>
+        </main>
 
-        <div class="header-icons">
-            <button class="icon-button" aria-label="Notifications">
-                <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"></path></svg>
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="home" aria-label="Home">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+                <span class="nav-item-label">Home</span>
             </button>
-            <button class="icon-button" aria-label="Messages">
-                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
+            <button class="nav-item" data-tab="search-tab" aria-label="Search"> <!-- Changed data-tab to avoid conflict -->
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+                <span class="nav-item-label">Search</span>
             </button>
-            
-            <div class="dropdown">
-                <button class="icon-button profile-icon-wrapper" id="profile-button" aria-label="Profile" aria-haspopup="true" aria-expanded="false">
-                    <span class="profile-icon">P</span> <!-- Placeholder initial -->
-                </button>
-                 <div class="dropdown-content" id="profile-dropdown-content" aria-labelledby="profile-button">
-                    <div class="section-title">Currently in</div>
-                    <a href="#" class="dropdown-item" style="display: flex; align-items: center;">
-                        <span class="profile-icon" style="width: 32px; height: 32px; margin-right: 12px; font-size: 16px;">P</span>
-                        <div>
-                            <div style="font-weight: 600;">ProfileName</div>
-                            <div style="font-size: 14px; color: #767676;">Personal</div>
-                            <div style="font-size: 14px; color: #767676;">user@example.com</div>
-                        </div>
-                    </a>
-                    <div class="separator"></div>
-                    <div class="section-title">Your accounts</div>
-                    <a href="#" class="dropdown-item">Add account</a>
-                    <a href="#" class="dropdown-item">Convert to business</a>
-                    <div class="separator"></div>
-                    <div class="section-title">More options</div>
-                    <a href="#" class="dropdown-item">Settings</a>
-                    <a href="#" class="dropdown-item">Tune your home feed</a>
-                    <a href="#" class="dropdown-item">Install the Windows app</a>
-                    <a href="#" class="dropdown-item">Get help</a>
-                    <a href="#" class="dropdown-item">See terms of service</a>
-                    <a href="#" class="dropdown-item">See privacy policy</a>
-                    <a href="#" class="dropdown-item">Log out</a>
-                </div>
-            </div>
-            <div class="dropdown">
-                 <button class="icon-button" id="options-arrow-button" aria-label="More options" aria-haspopup="true" aria-expanded="false">
-                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 15.5a1 1 0 0 1-.71-.29l-4-4a1 1 0 1 1 1.42-1.42L12 13.1l3.29-3.31a1 1 0 0 1 1.42 1.42l-4 4a1 1 0 0 1-.71.29z"></path></svg>
-                 </button>
-                 <!-- This dropdown content is the same as profile dropdown for this example -->
-                 <div class="dropdown-content" id="options-arrow-dropdown-content" aria-labelledby="options-arrow-button">
-                     <div class="section-title">Currently in</div>
-                     <a href="#" class="dropdown-item" style="display: flex; align-items: center;">
-                         <span class="profile-icon" style="width: 32px; height: 32px; margin-right: 12px; font-size: 16px;">P</span>
-                         <div>
-                             <div style="font-weight: 600;">ProfileName</div>
-                             <div style="font-size: 14px; color: #767676;">Personal</div>
-                             <div style="font-size: 14px; color: #767676;">user@example.com</div>
-                         </div>
-                     </a>
-                     <div class="separator"></div>
-                     <a href="#" class="dropdown-item">Log out</a>
-                 </div>
-            </div>
-        </div>
-    </header>
+            <button class="nav-item" data-tab="create" aria-label="Create Pin">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
+                <span class="nav-item-label">Create</span>
+            </button>
+            <button class="nav-item" data-tab="updates" aria-label="Updates">
+                 <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
+                <span class="nav-item-label">Updates</span>
+            </button>
+            <button class="nav-item nav-item-profile" data-tab="profile" aria-label="Profile">
+                <div class="profile-avatar">P</div> <!-- Placeholder initial -->
+            </button>
+        </nav>
 
-    <!-- Main Content Grid -->
-    <main class="pinterest-main-content">
-        <div class="pin-container" id="pin-container">
-            <!-- Pins will be injected here by JavaScript -->
+        <!-- Search Overlay -->
+        <div class="search-overlay" id="searchOverlay">
+            <button class="close-search-button" id="closeSearchButton" aria-label="Close search">×</button>
+            <input type="search" placeholder="Search for ideas">
+            <!-- Search results or suggestions would go here -->
         </div>
-    </main>
 
-    <!-- Floating Action Button (e.g., Help) -->
-    <div class="fab-container">
-        <button class="fab-button" aria-label="Help">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"></path></svg>
-        </button>
+        <!-- Toast Notification -->
+        <div id="toast">A message will show here</div>
     </div>
-
-    <!-- Toast Notification -->
-    <div id="toast">A message will show here</div>
 
 
     <script>
-        // --- Sample Pin Data ---
-        // In a real app, this would come from an API
+        // --- Sample Pin Data (more varied heights for masonry) ---
         const samplePins = [
-            { id: 1, imageUrl: 'https://picsum.photos/seed/p1/236/350', title: 'Mountain Escape' },
-            { id: 2, imageUrl: 'https://picsum.photos/seed/p2/236/420', title: 'City Lights' },
-            { id: 3, imageUrl: 'https://picsum.photos/seed/p3/236/300', title: 'Forest Trail' },
-            { id: 4, imageUrl: 'https://picsum.photos/seed/p4/236/450', title: 'Beach Vibes' },
-            { id: 5, imageUrl: 'https://picsum.photos/seed/p5/236/380', title: 'Abstract Art' },
-            { id: 6, imageUrl: 'https://picsum.photos/seed/p6/236/320', title: 'Cozy Interior' },
-            { id: 7, imageUrl: 'https://picsum.photos/seed/p7/236/400', title: 'Street Food' },
-            { id: 8, imageUrl: 'https://picsum.photos/seed/p8/236/280', title: 'Vintage Car' },
-            { id: 9, imageUrl: 'https://picsum.photos/seed/p9/236/480', title: 'Cute Animals' },
-            { id: 10, imageUrl: 'https://picsum.photos/seed/p10/236/360', title: 'Tech Gadgets' },
-            { id: 11, imageUrl: 'https://picsum.photos/seed/p11/236/330', title: 'Gardening Tips' },
-            { id: 12, imageUrl: 'https://picsum.photos/seed/p12/236/410', title: 'Fashion Trends' },
-            { id: 13, imageUrl: 'https://picsum.photos/seed/p13/236/290', title: 'DIY Crafts' },
-            { id: 14, imageUrl: 'https://picsum.photos/seed/p14/236/460', title: 'Workout Routine' },
-            { id: 15, imageUrl: 'https://picsum.photos/seed/p15/236/370', title: 'Travel Destinations' },
-            { id: 16, imageUrl: 'https://picsum.photos/seed/p16/236/310', title: 'Recipe Ideas' },
-            { id: 17, imageUrl: 'https://picsum.photos/seed/p17/236/430', title: 'Book Recommendations' },
-            { id: 18, imageUrl: 'https://picsum.photos/seed/p18/236/340', title: 'Home Organization' },
-            { id: 19, imageUrl: 'https://picsum.photos/seed/p19/236/470', title: 'Photography Skills' },
-            { id: 20, imageUrl: 'https://picsum.photos/seed/p20/236/390', title: 'Mindfulness Practice' },
+            { id: 1, imageUrl: 'https://picsum.photos/seed/m1/250/350', title: 'Quiet Lake Getaway', user: 'Traveler', avatar: 'T' },
+            { id: 2, imageUrl: 'https://picsum.photos/seed/m2/250/420', title: 'Urban Jungle Decor', user: 'HomeStylist', avatar: 'H' },
+            { id: 3, imageUrl: 'https://picsum.photos/seed/m3/250/300', title: 'Minimalist Desk Setup', user: 'ProductivityGuru', avatar: 'P' },
+            { id: 4, imageUrl: 'https://picsum.photos/seed/m4/250/450', title: 'Coastal Road Trip', user: 'AdventureSeeker', avatar: 'A' },
+            { id: 5, imageUrl: 'https://picsum.photos/seed/m5/250/380', title: 'Neon Genesis Art', user: 'ArtFan', avatar: 'A' },
+            { id: 6, imageUrl: 'https://picsum.photos/seed/m6/250/320', title: 'Futuristic Kitchen', user: 'DesignForward', avatar: 'D' },
+            { id: 7, imageUrl: 'https://picsum.photos/seed/m7/250/400', title: 'Gourmet Street Tacos', user: 'Foodie', avatar: 'F' },
+            { id: 8, imageUrl: 'https://picsum.photos/seed/m8/250/280', title: 'Classic Sports Car', user: 'Motorhead', avatar: 'M' },
+            { id: 9, imageUrl: 'https://picsum.photos/seed/p9/250/480', title: 'Cyberpunk Cityscape', user: 'FutureArt', avatar: 'F' },
+            { id: 10, imageUrl: 'https://picsum.photos/seed/p10/250/360', title: 'Sustainable Fashion', user: 'EcoChic', avatar: 'E' },
+            { id: 11, imageUrl: 'https://picsum.photos/seed/p11/250/330', title: 'Vertical Garden Inspo', user: 'GreenThumb', avatar: 'G' },
+            { id: 12, imageUrl: 'https://picsum.photos/seed/p12/250/410', title: 'AI Generated Patterns', user: 'AlgoArtist', avatar: 'A' },
+            { id: 13, imageUrl: 'https://picsum.photos/seed/p13/250/290', title: 'DIY Smart Home', user: 'TechHacker', avatar: 'T' },
+            { id: 14, imageUrl: 'https://picsum.photos/seed/p14/250/460', title: 'Holographic UI Concepts', user: 'UXPro', avatar: 'U' },
+            { id: 15, imageUrl: 'https://picsum.photos/seed/p15/250/370', title: 'Mars Colony Design', user: 'SpaceDreamer', avatar: 'S' },
+            { id: 16, imageUrl: 'https://picsum.photos/seed/p16/250/310', title: 'Lab-Grown Burger Recipe', user: 'FutureFood', avatar: 'F' },
         ];
 
         const pinContainer = document.getElementById('pin-container');
         const toastElement = document.getElementById('toast');
+        const searchOverlay = document.getElementById('searchOverlay');
+        const openSearchButton = document.getElementById('openSearchButton');
+        const closeSearchButton = document.getElementById('closeSearchButton');
+        const bottomNavItems = document.querySelectorAll('.bottom-nav .nav-item');
+
 
         // --- Function to create a single pin element ---
         function createPinElement(pinData) {
             const pinDiv = document.createElement('div');
             pinDiv.classList.add('pin');
-            pinDiv.setAttribute('tabindex', '0'); // For accessibility
+            pinDiv.setAttribute('tabindex', '0');
             pinDiv.setAttribute('aria-label', `Pin: ${pinData.title}`);
 
             const img = document.createElement('img');
             img.src = pinData.imageUrl;
             img.alt = pinData.title;
-            // To help with masonry-like layout, you might need to set specific heights or aspect ratios
-            // For now, we let the grid handle it. Randomizing height for more visual variety:
-            const randomHeightSegment = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4
-            // img.style.height = `${randomHeightSegment * 100}px`; // This helps masonry but not always ideal
-            // img.style.objectFit = 'cover';
+            img.loading = 'lazy'; // Lazy load images
 
-            const overlayDiv = document.createElement('div');
-            overlayDiv.classList.add('pin-overlay');
+            const pinContentDiv = document.createElement('div');
+            pinContentDiv.classList.add('pin-content');
 
-            const saveButton = document.createElement('button');
-            saveButton.classList.add('pin-save-button');
-            saveButton.textContent = 'Save';
-            saveButton.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent pin click event
-                showToast(`"${pinData.title}" saved (mock)!`);
-                // In a real app, you'd call an API to save this pin
-                // and maybe change button text to "Saved" or update UI.
-            });
+            const title = document.createElement('h3');
+            title.classList.add('pin-title');
+            title.textContent = pinData.title;
 
-            const bottomBar = document.createElement('div');
-            bottomBar.classList.add('pin-bottom-bar');
-            
-            const shareButton = document.createElement('button');
-            shareButton.classList.add('icon-button');
-            shareButton.setAttribute('aria-label', 'Share');
-            shareButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg>`;
-            shareButton.addEventListener('click', (e) => {
+            const userDiv = document.createElement('div');
+            userDiv.classList.add('pin-user');
+            const avatar = document.createElement('span');
+            avatar.classList.add('pin-user-avatar');
+            avatar.textContent = pinData.avatar || pinData.user.charAt(0).toUpperCase();
+            const userName = document.createElement('span');
+            userName.textContent = pinData.user;
+            userDiv.appendChild(avatar);
+            userDiv.appendChild(userName);
+
+            pinContentDiv.appendChild(title);
+            pinContentDiv.appendChild(userDiv);
+
+            // "Save" button shown on hover (desktop simulation)
+            const saveButtonOverlay = document.createElement('button');
+            saveButtonOverlay.classList.add('pin-save-button-overlay');
+            saveButtonOverlay.textContent = 'Save';
+            saveButtonOverlay.addEventListener('click', (e) => {
                 e.stopPropagation();
-                showToast('Share (mock)');
+                showToast(`"${pinData.title}" saved (mock)!`);
             });
 
-            const moreButton = document.createElement('button');
-            moreButton.classList.add('icon-button');
-            moreButton.setAttribute('aria-label', 'More options');
-            moreButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>`;
-            moreButton.addEventListener('click', (e) => {
+            // Options icon (ellipsis) - simplified for this version
+            const optionsButton = document.createElement('button');
+            optionsButton.classList.add('pin-options');
+            optionsButton.setAttribute('aria-label', 'More options');
+            optionsButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>`;
+            optionsButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 showToast('More options (mock)');
             });
 
-            bottomBar.appendChild(shareButton);
-            bottomBar.appendChild(moreButton);
-
-            overlayDiv.appendChild(saveButton);
-            overlayDiv.appendChild(bottomBar);
 
             pinDiv.appendChild(img);
-            pinDiv.appendChild(overlayDiv);
+            pinDiv.appendChild(pinContentDiv);
+            pinDiv.appendChild(saveButtonOverlay);
+            // pinDiv.appendChild(optionsButton); // Options button can be added if needed
 
             pinDiv.addEventListener('click', () => {
-                // In a real app, this would open the Pin detail view
-                console.log('Pin clicked:', pinData.title);
                 showToast(`Opening "${pinData.title}" (mock)`);
             });
             
-            // Set a dynamic height for the pin image's parent to help with grid layout
-            // This is a very simplified masonry-like effect helper.
-            // Real Pinterest uses more sophisticated JS for masonry.
+            // Dynamic row span for masonry-like effect with CSS Grid
+            // This is a simplified approach. True JS masonry is more complex.
             img.onload = () => {
-                 const aspectRatio = img.naturalWidth / img.naturalHeight;
-                 // Calculate height based on fixed width (236px)
-                 // const pinWidth = 236;
-                 // const calculatedHeight = pinWidth / aspectRatio;
-                 // pinDiv.style.gridRowEnd = `span ${Math.ceil(calculatedHeight / 10) + 2}`; // Adjust 10 for grid-auto-rows unit
-                 // The CSS grid `align-items: start;` handles variable heights quite well.
+                // Example: const rowSpan = Math.ceil(img.height / 10) + 5;
+                // pinDiv.style.gridRowEnd = `span ${rowSpan}`;
+                // For 2-column mobile, often explicit row spans are not strictly needed
+                // if image heights vary enough naturally.
             };
-
 
             return pinDiv;
         }
@@ -588,84 +508,78 @@
             toastElement.classList.add('show');
             toastTimeout = setTimeout(() => {
                 toastElement.classList.remove('show');
-            }, 3000);
+            }, 2500);
         }
 
-        // --- Dropdown Menu Logic ---
-        function setupDropdowns() {
-            const dropdowns = document.querySelectorAll('.dropdown');
-
-            dropdowns.forEach(dropdown => {
-                const button = dropdown.querySelector('button[aria-haspopup="true"]');
-                const content = dropdown.querySelector('.dropdown-content');
-
-                if (button && content) {
-                    button.addEventListener('click', (event) => {
-                        event.stopPropagation();
-                        const isExpanded = button.getAttribute('aria-expanded') === 'true';
-                        // Close all other open dropdowns first
-                        closeAllDropdowns(dropdown);
-                        
-                        if (isExpanded) {
-                            content.style.display = 'none';
-                            button.setAttribute('aria-expanded', 'false');
-                        } else {
-                            content.style.display = 'block';
-                            button.setAttribute('aria-expanded', 'true');
-                        }
-                    });
-                }
+        // --- Bottom Navigation Logic ---
+        bottomNavItems.forEach(item => {
+            item.addEventListener('click', () => {
+                bottomNavItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const tab = item.dataset.tab;
+                handleTabChange(tab);
             });
-
-            // Close dropdowns if clicking outside
-            document.addEventListener('click', (event) => {
-                closeAllDropdowns();
-            });
-        }
-
-        function closeAllDropdowns(exceptThisDropdown = null) {
-            document.querySelectorAll('.dropdown').forEach(d => {
-                if (d === exceptThisDropdown) return;
-                const btn = d.querySelector('button[aria-haspopup="true"]');
-                const cnt = d.querySelector('.dropdown-content');
-                if (btn && cnt) {
-                    cnt.style.display = 'none';
-                    btn.setAttribute('aria-expanded', 'false');
-                }
-            });
-        }
-        
-        // --- Search Bar Interaction ---
-        const searchBar = document.querySelector('.search-bar');
-        searchBar.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                if (this.value.trim() !== '') {
-                    showToast(`Searching for: "${this.value}" (mock)`);
-                    // In a real app, you'd trigger a search here
-                    this.value = ''; // Clear after "search"
-                }
-            }
         });
 
+        function handleTabChange(tabName) {
+            console.log('Switched to tab:', tabName);
+            // In a real app, you'd load content for this tab
+            if (tabName === 'search-tab') { // Distinguish from main search button
+                openSearchOverlay();
+            } else if (tabName === 'home') {
+                 pinContainer.style.display = 'grid'; // Assuming pins are home content
+                 showToast('Home feed');
+            } else if (tabName === 'create') {
+                showToast('Create Pin (mock action)');
+            } else if (tabName === 'updates') {
+                showToast('Updates / Messages (mock)');
+            } else if (tabName === 'profile') {
+                showToast('Profile Page (mock)');
+            }
+            // If search overlay is open and we navigate away via bottom bar, close it
+            if (tabName !== 'search-tab' && searchOverlay.style.display === 'flex') {
+                closeSearchOverlay();
+            }
+        }
+
+        // --- Search Overlay Logic ---
+        function openSearchOverlay() {
+            searchOverlay.style.display = 'flex';
+            searchOverlay.querySelector('input').focus();
+            // Make search nav item active if not already
+            document.querySelector('.nav-item[data-tab="search-tab"]').classList.add('active');
+        }
+        function closeSearchOverlay() {
+            searchOverlay.style.display = 'none';
+             // If closing search, revert to home tab or last active non-search tab
+            const homeTab = document.querySelector('.nav-item[data-tab="home"]');
+            if(homeTab && !homeTab.classList.contains('active')) {
+                 bottomNavItems.forEach(i => i.classList.remove('active'));
+                 homeTab.classList.add('active');
+            }
+        }
+
+        openSearchButton.addEventListener('click', openSearchOverlay);
+        closeSearchButton.addEventListener('click', closeSearchOverlay);
+        searchOverlay.addEventListener('click', (e) => { // Close if clicking outside input area (on the dark backdrop)
+            if (e.target === searchOverlay) {
+                closeSearchOverlay();
+            }
+        });
+        searchOverlay.querySelector('input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim() !== '') {
+                showToast(`Searching for: "${this.value.trim()}"`);
+                this.value = '';
+                // closeSearchOverlay(); // Optionally close after search
+            }
+        });
+        
 
         // --- Initialize ---
         document.addEventListener('DOMContentLoaded', () => {
             loadPins();
-            setupDropdowns();
-
-            // Mock search functionality
-            const searchInput = document.querySelector('.search-bar');
-            if (searchInput) {
-                searchInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && searchInput.value.trim() !== '') {
-                        showToast(`Searching for "${searchInput.value.trim()}" (mock)...`);
-                        // Here you would typically redirect to a search results page
-                        // or dynamically load search results.
-                        // For this clone, we just show a toast.
-                        searchInput.value = ''; // Optionally clear input
-                    }
-                });
-            }
+            // Set initial active tab (Home) correctly, as it's set in HTML already
+            document.querySelector('.nav-item[data-tab="home"]').classList.add('active');
         });
 
     </script>
