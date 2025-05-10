@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Hide & Collect - Advanced Agent</title>
+    <title>AI Hide & Collect - Advanced Agent (Self-Speed Control)</title>
     <style>
-        /* ... (CSS largely same as previous, ensure good contrast for stats) ... */
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #121212; color: #e0e0e0; margin: 0; padding: 5px; overscroll-behavior: none; }
         .controls { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 6px; background-color: #222; border-radius: 5px; width: calc(100% - 10px); max-width: 880px; box-sizing: border-box;}
         .controls div { display: flex; flex-direction: column; align-items: center; }
         .controls label { font-size: 0.75em; margin-bottom: 1px; color: #bbb;}
         .controls input[type="range"] { width: 90px; }
         .controls span { font-size: 0.75em; color: #ccc; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 450px; } /* Slightly wider game */
+        .container { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 450px; }
         canvas { border: 1px solid #333; background-color: #1c1c1c; max-width: 100%; height: auto; display: block; }
         #gameCanvas { background-color: #283848; }
         #aiVisionCanvas { background-color: #252525; }
@@ -21,9 +20,9 @@
         h1 {font-size: 1.4em; color: #fff;} h2 { font-size: 0.9em; color: #ddd;}
         .player-speed-indicator { font-weight: bold; }
 
-        @media (min-width: 800px) { /* Wider screens */
+        @media (min-width: 800px) {
             .container { flex-direction: row; align-items: flex-start; max-width: 900px; }
-            .game-area { flex: 3; } /* Give more space to game */
+            .game-area { flex: 3; }
             .ai-info { flex: 2; }
             .controls input[type="range"] { width: 110px; }
         }
@@ -41,11 +40,11 @@
     <div class="container">
         <div class="game-area">
             <h2>Game World (<span class="player-speed-indicator" id="playerSpeedIndicator">NORMAL</span>)</h2>
-            <canvas id="gameCanvas" width="360" height="540"></canvas> <!-- Slightly larger canvas -->
+            <canvas id="gameCanvas" width="360" height="540"></canvas>
         </div>
         <div class="ai-info">
             <h2>AI "Vision" & Model</h2>
-            <canvas id="aiVisionCanvas" width="180" height="180"></canvas> <!-- Slightly larger vision -->
+            <canvas id="aiVisionCanvas" width="180" height="180"></canvas>
             <div class="stats">
                 <h2>Stats</h2>
                 <p>Episode: <span id="episode">0</span></p>
@@ -55,7 +54,7 @@
                 <p>Q-Table Size: <span id="qTableSize">0</span></p>
                 <p>Env. Model (S-A pairs): <span id="modelSize">0</span></p>
                 <p>Total Steps: <span id="totalSteps">0</span></p>
-                 <p>Avg. Reward / Ep: <span id="avgReward">N/A</span></p>
+                <p>Avg. Reward / Ep: <span id="avgReward">N/A</span></p>
             </div>
         </div>
     </div>
@@ -67,7 +66,6 @@
         const aiVisionCanvas = document.getElementById('aiVisionCanvas');
         const aiVisionCtx = aiVisionCanvas.getContext('2d');
         const playerSpeedIndicatorEl = document.getElementById('playerSpeedIndicator');
-        // ... (other DOM elements)
         const episodeEl = document.getElementById('episode');
         const cookiesEl = document.getElementById('cookies');
         const punishmentsEl = document.getElementById('punishments');
@@ -77,7 +75,6 @@
         const modelSizeEl = document.getElementById('modelSize');
         const totalStepsEl = document.getElementById('totalSteps');
         const avgRewardEl = document.getElementById('avgReward');
-
         const speedControl = document.getElementById('speedControl');
         const speedValue = document.getElementById('speedValue');
         const planningStepsControl = document.getElementById('planningStepsControl');
@@ -86,21 +83,21 @@
         const fastSpeedCostValue = document.getElementById('fastSpeedCostValue');
 
         // --- Game Constants & Config ---
-        const PLAYER_SIZE = 12; // Smaller player for more nuanced movement
+        const PLAYER_SIZE = 12; 
         const HUNTER_SIZE = 12;
         const COIN_RADIUS = 6;
         const NORMAL_SPEED_MULTIPLIER = 1.0;
-        const FAST_SPEED_MULTIPLIER = 1.75; // Significantly faster
-        const BASE_MOVE_SPEED = PLAYER_SIZE; // Base unit of movement
-        const HUNTER_BASE_SPEED = PLAYER_SIZE * 0.9; // Hunter slightly slower than player's normal
+        const FAST_SPEED_MULTIPLIER = 1.75; 
+        const BASE_MOVE_SPEED = PLAYER_SIZE; 
+        const HUNTER_BASE_SPEED = PLAYER_SIZE * 0.9; 
         let MAX_STEPS_PER_EPISODE = 400;
-        let FAST_ACTION_COST = 0.1; // Penalty for choosing a fast action
+        let FAST_ACTION_COST = 0.1; 
 
         // --- Game Objects & State ---
         let player = { x: 50, y: 50, width: PLAYER_SIZE, height: PLAYER_SIZE, color: 'deepskyblue', currentSpeedMultiplier: NORMAL_SPEED_MULTIPLIER };
         let hunter = { x: gameCanvas.width - 50, y: gameCanvas.height - 50, width: HUNTER_SIZE, height: HUNTER_SIZE, color: 'crimson', lastDx:0, lastDy:0 };
         let coins = [];
-        let obstacles = [ /* ... (More complex obstacle layout) ... */
+        let obstacles = [ 
             { x: 0, y: 100, width: gameCanvas.width/3, height: 20, color: '#4a4a4a' },
             { x: gameCanvas.width * 2/3, y: 100, width: gameCanvas.width/3, height: 20, color: '#4a4a4a' },
             { x: gameCanvas.width/2 - 10, y: 0, width: 20, height: gameCanvas.height/4, color: '#4a4a4a' },
@@ -116,18 +113,19 @@
         let qTable = {};
         let envModel = {}; 
         let observedStateActions = []; 
-        let prioritizedSweepingQueue = []; // For Dyna-Q+ {priority, s, a, r, s_prime, done}
+        let prioritizedSweepingQueue = []; 
 
-        const LEARNING_RATE = 0.15; // Slightly higher LR
-        const DISCOUNT_FACTOR = 0.95; // Higher discount for more foresight
+        const LEARNING_RATE = 0.15; 
+        const PLANNING_LEARNING_RATE_PRIO = LEARNING_RATE * 0.75;
+        const PLANNING_LEARNING_RATE_RANDOM = LEARNING_RATE * 0.5;
+        const DISCOUNT_FACTOR = 0.95; 
         let epsilon = 1.0;
-        const EPSILON_DECAY = 0.99995; // Slower decay for larger action/state space
-        const MIN_EPSILON = 0.02;    // Lower min epsilon
+        const EPSILON_DECAY = 0.99995; 
+        const MIN_EPSILON = 0.02;    
         let numPlanningSteps = 50;    
-        const PRIORITY_QUEUE_MAX_SIZE = 500; // Limit size of priority queue
+        const PRIORITY_QUEUE_MAX_SIZE = 500; 
+        const KAPPA_EXPLORATION_BONUS = 0.05; // For Dyna-Q+ style model exploration
 
-
-        // Expanded Actions: {direction_dx, direction_dy, speed_multiplier, name}
         const baseActions = [
             { dx: 0, dy: -1, name: "Up" }, { dx: 0, dy: 1, name: "Down" },
             { dx: -1, dy: 0, name: "Left" }, { dx: 1, dy: 0, name: "Right" },
@@ -136,26 +134,23 @@
         const ACTIONS = [];
         baseActions.forEach(ba => {
             ACTIONS.push({ ...ba, speedMultiplier: NORMAL_SPEED_MULTIPLIER, name: ba.name + " (N)" });
-            if (ba.name !== "Stay") { // No fast stay
+            if (ba.name !== "Stay") { 
                 ACTIONS.push({ ...ba, speedMultiplier: FAST_SPEED_MULTIPLIER, name: ba.name + " (F)" });
             }
         });
-        // If Stay is only normal, ACTIONS.length will be 9. If Stay also has fast (no benefit), then 10.
-        // Current: Stay is only normal speed. So 4*2 (Move N/F) + 1 (Stay N) = 9 actions.
 
         let scoreCookies = 0, scorePunishments = 0, episodeCount = 0;
         let currentStepsInEpisode = 0, cumulativeTotalSteps = 0;
         let totalRewardCollectedThisEpisode = 0;
         let episodeRewardsHistory = [];
         const AVG_REWARD_HISTORY_LENGTH = 50;
-
-
         let simIntervalId = null, currentSimSpeed = 30;
         
         // --- Helper & State Discretization ---
         function rectCollision(r1, r2) { return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x && r1.y < r2.y + r2.height && r1.y + r1.height > r2.y; }
-        function spawnCoin() { /* ... (same, ensure good placement) ... */ 
-             let coinX, coinY, validPosition;
+        
+        function spawnCoin() { 
+            let coinX, coinY, validPosition;
             const maxAttempts = 100; let attempts = 0;
             do {
                 validPosition = true; attempts++;
@@ -166,115 +161,135 @@
                 if (Math.hypot(coinX - (player.x+player.width/2), coinY - (player.y+player.height/2)) < PLAYER_SIZE * 5 + COIN_RADIUS) validPosition = false;
                 if (Math.hypot(coinX - (hunter.x+hunter.width/2), coinY - (hunter.y+hunter.height/2)) < HUNTER_SIZE * 5 + COIN_RADIUS) validPosition = false;
             } while (!validPosition && attempts < maxAttempts);
-            if (!validPosition) { coinX = gameCanvas.width * Math.random(); coinY = gameCanvas.height * Math.random(); }
+            if (!validPosition) { // Fallback, try to avoid obstacles at least
+                attempts = 0;
+                do {
+                    coinX = COIN_RADIUS + Math.random() * (gameCanvas.width - 2 * COIN_RADIUS);
+                    coinY = COIN_RADIUS + Math.random() * (gameCanvas.height - 2 * COIN_RADIUS);
+                    validPosition = true;
+                    for (const obs of obstacles) { if (coinX > obs.x && coinX < obs.x + obs.width && coinY > obs.y && coinY < obs.y + obs.height) { validPosition = false; break; } }
+                    attempts++;
+                } while(!validPosition && attempts < maxAttempts);
+                if (!validPosition) {coinX = gameCanvas.width/2; coinY = gameCanvas.height/2;} // Absolute fallback
+            }
             coins = [{ x: coinX, y: coinY, radius: COIN_RADIUS, color: 'gold' }];
         }
 
         function getAngleCategory(dx, dy, numCategories = 8) { const angle = Math.atan2(dy, dx) + Math.PI; return Math.floor(angle / (2 * Math.PI / numCategories)) % numCategories; }
+        
         function getDistanceCategory(dist, refSize, numCategories = 4) {
             if (numCategories === 4) { // VeryClose, Close, Medium, Far
                 if (dist < refSize * 1.5) return 0; if (dist < refSize * 4) return 1; 
                 if (dist < refSize * 8) return 2; return 3;
+            } else if (numCategories === 3) { // For cover: Close, Medium, Far/None
+                if (dist < refSize * 2.5) return 0; // Tuned for cover
+                if (dist < refSize * 6) return 1; 
+                return 2; 
             }
-            return 0; // Default
+            // Fallback generic categorization
+            const step = (refSize * 10) / numCategories; // Max relevant distance considered as refSize * 10
+            for (let i = 0; i < numCategories; i++) {
+                if (dist < (i + 1) * step) return i;
+            }
+            return numCategories - 1;
         }
+
         function probeClearSteps(entity, unitDirX, unitDirY, moveSpeed, maxProbeSteps = 2) {
-             let clearSteps = 0;
+            let clearSteps = 0;
             for (let i = 1; i <= maxProbeSteps; i++) {
                 const probeRect = { x: entity.x + unitDirX * i * moveSpeed, y: entity.y + unitDirY * i * moveSpeed, width: entity.width, height: entity.height };
                 if (probeRect.x < 0 || probeRect.x + probeRect.width > gameCanvas.width || probeRect.y < 0 || probeRect.y + probeRect.height > gameCanvas.height) break;
-                if (obstacles.some(obs => rectCollision(probeRect, obs))) break;
+                let collision = false;
+                for (const obs of obstacles) { if (rectCollision(probeRect, obs)) { collision = true; break; } }
+                if (collision) break;
                 clearSteps++;
             }
             if (clearSteps === 0) return 0; if (clearSteps === 1) return 1; return 2; // 0, 1, 2+
         }
-        function isPathClear(e1, e2, obsArr, e1Size) { /* ... (robust LoS check) ... */
+
+        function isPathClear(e1, e2, obsArr, e1ProbeSize) { 
             const e1cx = e1.x + e1.width/2, e1cy = e1.y + e1.height/2;
             const e2cx = e2.x + (e2.radius ? e2.radius : e2.width/2), e2cy = e2.y + (e2.radius ? e2.radius : e2.height/2);
             const dx = e2cx-e1cx, dy = e2cy-e1cy, dist = Math.hypot(dx,dy);
-            if(dist < e1Size/2) return true;
-            const samples = Math.max(3, Math.ceil(dist / (e1Size/2))); // Increased samples
+            if(dist < e1ProbeSize/2) return true; // Already overlapping or very close
+            const samples = Math.max(3, Math.ceil(dist / (e1ProbeSize/1.5))); // Increased samples slightly
             for(let i=0; i<=samples; ++i){
                 const t = i/samples;
-                const pr = {x: e1cx + t*dx - e1Size/4, y: e1cy + t*dy - e1Size/4, width: e1Size/2, height: e1Size/2}; // Smaller probe
-                if(obsArr.some(o => rectCollision(pr,o))) return false;
+                const pr = {x: e1cx + t*dx - e1ProbeSize/4, y: e1cy + t*dy - e1ProbeSize/4, width: e1ProbeSize/2, height: e1ProbeSize/2};
+                for(const o of obsArr){ if(rectCollision(pr,o)) return false;}
             }
             return true;
         }
         
-        // New: Distance to nearest cover FROM HUNTER'S perspective
         function distToCover(playerEntity, hunterEntity, obstaclesArr) {
-            let minDist = Infinity;
-            const pLOS = isPathClear(hunterEntity, playerEntity, obstaclesArr, hunterEntity.width);
-            if (!pLOS) return 0; // Already covered
+            const playerIsVisibleToHunter = isPathClear(hunterEntity, playerEntity, obstaclesArr, hunterEntity.width/2); // Use smaller probe for hunter vision
+            if (!playerIsVisibleToHunter) return 0; // Player is already effectively in cover
 
+            let minDist = Infinity;
+            const pCx = playerEntity.x + playerEntity.width / 2;
+            const pCy = playerEntity.y + playerEntity.height / 2;
+            
             for (const obs of obstaclesArr) {
-                // Check if obstacle is between player and hunter
-                // Simple check: midpoint of obs vs line between player and hunter
+                // Consider multiple points on the obstacle's perimeter facing the player as potential cover spots
+                // For simplicity, we'll stick to checking if moving to the obstacle's "shadow" is feasible
+                // Midpoint of obstacle:
                 const obsMidX = obs.x + obs.width / 2;
                 const obsMidY = obs.y + obs.height / 2;
+
+                // Create a temporary player at the obstacle's midpoint to check if it provides cover
+                const tempPlayerAtObsMid = { ...playerEntity, x: obsMidX - playerEntity.width/2, y: obsMidY - playerEntity.height/2 };
                 
-                const hx = hunterEntity.x + hunterEntity.width/2;
-                const hy = hunterEntity.y + hunterEntity.height/2;
-                const px = playerEntity.x + playerEntity.width/2;
-                const py = playerEntity.y + playerEntity.height/2;
-
-                // Dot product check if obstacle is roughly "between" them
-                const dotPlayer = (obsMidX - px) * (hx - px) + (obsMidY - py) * (hy - py);
-                const dotHunter = (obsMidX - hx) * (px - hx) + (obsMidY - hy) * (py - hy);
-
-                if (dotPlayer > 0 && dotHunter > 0) { // Obstacle is between player and hunter path
-                    // Check if path from player to obstacle midpoint is clear
-                    if(isPathClear(playerEntity, {x: obsMidX -1, y: obsMidY -1, width:2, height:2}, obstaclesArr, playerEntity.width)){
-                         minDist = Math.min(minDist, Math.hypot(obsMidX - px, obsMidY - py));
+                // Check 1: Does this obstacle point actually block LOS from hunter?
+                if (!isPathClear(hunterEntity, tempPlayerAtObsMid, obstaclesArr, hunterEntity.width/2)) {
+                    // Check 2: Can player reach this point (e.g., obstacle midpoint)?
+                    // Use a small radius for the target point to avoid issues with exact coordinates
+                    if (isPathClear(playerEntity, { x: obsMidX, y: obsMidY, radius: 1 }, obstaclesArr, playerEntity.width/2)) {
+                         minDist = Math.min(minDist, Math.hypot(obsMidX - pCx, obsMidY - pCy));
                     }
                 }
             }
-            if (minDist === Infinity) return getDistanceCategory(gameCanvas.width, PLAYER_SIZE); // Max dist if no cover found
-            return getDistanceCategory(minDist, PLAYER_SIZE, 3); // 0: very close cover, 1: mid, 2: far/none
+            if (minDist === Infinity) return getDistanceCategory(gameCanvas.width, PLAYER_SIZE, 3); 
+            return getDistanceCategory(minDist, PLAYER_SIZE, 3); 
         }
-
 
         function getDiscretizedState() {
             const pCx = player.x + player.width/2, pCy = player.y + player.height/2;
             const hCx = hunter.x + hunter.width/2, hCy = hunter.y + hunter.height/2;
 
             const relHx = hCx - pCx, relHy = hCy - pCy;
-            const hAngle = getAngleCategory(relHx, relHy);
-            const hDist = getDistanceCategory(Math.hypot(relHx, relHy), PLAYER_SIZE);
+            const hAngle = getAngleCategory(relHx, relHy, 8); // 8 angle categories for hunter
+            const hDist = getDistanceCategory(Math.hypot(relHx, relHy), PLAYER_SIZE, 4); // 4 dist categories
 
-            let cAngle = 0, cDist = 3; // Default if no coin
+            let cAngle = 0, cDist = 3; // Default if no coin (e.g. far away)
             if (coins.length > 0) {
                 const coin = coins[0];
                 const relCx = coin.x - pCx, relCy = coin.y - pCy;
-                cAngle = getAngleCategory(relCx, relCy);
-                cDist = getDistanceCategory(Math.hypot(relCx, relCy), PLAYER_SIZE);
+                cAngle = getAngleCategory(relCx, relCy, 8); // 8 angle categories for coin
+                cDist = getDistanceCategory(Math.hypot(relCx, relCy), PLAYER_SIZE, 4);
             }
             
-            const currentMoveSpeed = player.currentSpeedMultiplier * BASE_MOVE_SPEED;
-            const clearN = probeClearSteps(player, 0, -1, currentMoveSpeed);
-            const clearS = probeClearSteps(player, 0, 1, currentMoveSpeed);
-            const clearE = probeClearSteps(player, 1, 0, currentMoveSpeed);
-            const clearW = probeClearSteps(player, -1, 0, currentMoveSpeed);
+            const currentMoveSpeedUnit = BASE_MOVE_SPEED; // Probing based on normal speed unit
+            const clearN = probeClearSteps(player, 0, -1, currentMoveSpeedUnit);
+            const clearS = probeClearSteps(player, 0, 1, currentMoveSpeedUnit);
+            const clearE = probeClearSteps(player, 1, 0, currentMoveSpeedUnit);
+            const clearW = probeClearSteps(player, -1, 0, currentMoveSpeedUnit);
 
-            const coinLOS = (coins.length > 0) ? (isPathClear(player, coins[0], obstacles, PLAYER_SIZE) ? 0:1) : 1;
-            const hunterLOS = isPathClear(hunter, player, obstacles, HUNTER_SIZE) ? 0:1; // Is player visible to hunter?
+            const coinLOS = (coins.length > 0) ? (isPathClear(player, coins[0], obstacles, PLAYER_SIZE/2) ? 0:1) : 1; // 0=LOS, 1=No LOS
+            const hunterLOS = isPathClear(hunter, player, obstacles, HUNTER_SIZE/2) ? 0:1; // 0=Hunter sees Player, 1=Not
             
-            // New feature: Hunter's last move direction (relative to world N=0, E=1, S=2, W=3, Stay=4)
-            let hunterLastMoveDir = 4; // Stay
-            if (hunter.lastDx !== 0 || hunter.lastDy !== 0) {
-                hunterLastMoveDir = getAngleCategory(hunter.lastDx, hunter.lastDy, 4); // 4 sectors
+            let hunterLastMoveCat = 4; // N,E,S,W,Stay (0-3, 4)
+            if (Math.abs(hunter.lastDx) > 0.01 || Math.abs(hunter.lastDy) > 0.01) { // If hunter moved significantly
+                hunterLastMoveCat = getAngleCategory(hunter.lastDx, hunter.lastDy, 4); 
             }
 
-            const coverDist = distToCover(player, hunter, obstacles);
+            const coverDistCat = distToCover(player, hunter, obstacles); // 0,1,2 for cover distance
 
-            // Player speed is now part of action, not state. But AI needs to know consequences.
-            // The state is what AI *perceives* before choosing an action.
-            return `${hAngle}_${hDist}_${cAngle}_${cDist}_${clearN}_${clearS}_${clearE}_${clearW}_${coinLOS}_${hunterLOS}_${hunterLastMoveDir}_${coverDist}`;
+            return `${hAngle}_${hDist}_${cAngle}_${cDist}_${clearN}_${clearS}_${clearE}_${clearW}_${coinLOS}_${hunterLOS}_${hunterLastMoveCat}_${coverDistCat}`;
         }
 
         // --- Q-Learning, Model, Planning (Dyna-Q with Prioritized Sweeping) ---
         function ensureQValue(state) { if (!qTable[state]) { qTable[state] = Array(ACTIONS.length).fill(0); qTableSizeEl.textContent = Object.keys(qTable).length; } }
+        
         function chooseAction(state) {
             ensureQValue(state);
             if (Math.random() < epsilon) return Math.floor(Math.random() * ACTIONS.length);
@@ -284,19 +299,24 @@
         }
 
         function updateQTable(state, actionIdx, reward, nextState, done, learningRateToUse = LEARNING_RATE) {
-            ensureQValue(state); ensureQValue(nextState);
+            ensureQValue(state); 
+            if (!done) ensureQValue(nextState); 
+            
             const oldQ = qTable[state][actionIdx];
             const futureQ = done ? 0 : (qTable[nextState] ? Math.max(...qTable[nextState]) : 0);
             const newQ = oldQ + learningRateToUse * (reward + DISCOUNT_FACTOR * futureQ - oldQ);
             qTable[state][actionIdx] = newQ;
-            return Math.abs(newQ - oldQ); // Return TD error for prioritization
+            return Math.abs(newQ - oldQ); 
         }
 
         function updateModel(state, actionIdx, reward, nextState) {
-            if (!envModel[state]) { envModel[state] = {}; modelSizeEl.textContent = Object.keys(envModel).length; }
+            if (!envModel[state]) { 
+                envModel[state] = {}; 
+            }
             if (!envModel[state][actionIdx]) {
-                envModel[state][actionIdx] = { nsc: {}, tr: 0, ec: 0 }; // nsc: next_state_counts, tr: total_reward, ec: experience_count
+                envModel[state][actionIdx] = { nsc: {}, tr: 0, ec: 0 }; 
                 observedStateActions.push({s: state, a: actionIdx});
+                 modelSizeEl.textContent = observedStateActions.length; // Count S-A pairs
             }
             const mE = envModel[state][actionIdx];
             mE.tr += reward; mE.ec++;
@@ -305,118 +325,195 @@
         
         function prioritizedPlanningStep() {
             if (prioritizedSweepingQueue.length === 0) return;
+            prioritizedSweepingQueue.sort((a, b) => b.priority - a.priority); 
+            const { s, a, r, s_prime, done } = prioritizedSweepingQueue.shift(); 
 
-            // Simple: sort by priority (TD error) and pick highest. More complex: use a heap.
-            prioritizedSweepingQueue.sort((a, b) => b.priority - a.priority);
-            const { s, a, r, s_prime, done } = prioritizedSweepingQueue.shift(); // Get highest priority
-
-            // Model update based on this "replayed" experience (though model was already updated from real)
-            // Q-update using the replayed experience
-            updateQTable(s, a, r, s_prime, done, LEARNING_RATE * 0.5); // Can use a smaller LR for planning updates
+            const model_entry = envModel[s]?.[a];
+            let exploration_bonus = 0;
+            if (KAPPA_EXPLORATION_BONUS > 0 && model_entry && model_entry.ec > 0) {
+                exploration_bonus = KAPPA_EXPLORATION_BONUS / Math.sqrt(model_entry.ec);
+            }
+            updateQTable(s, a, r + exploration_bonus, s_prime, done, PLANNING_LEARNING_RATE_PRIO);
         }
         
-        function randomPlanningStep() { // Fallback if priority queue is empty or for broader updates
+        function randomPlanningStep() { 
             if(observedStateActions.length === 0) return;
-            const {s, a} = observedStateActions[Math.floor(Math.random() * observedStateActions.length)];
-            const mE = envModel[s]?.[a];
+            const randIdx = Math.floor(Math.random() * observedStateActions.length);
+            const {s, a} = observedStateActions[randIdx];
+            const mE = envModel[s]?.[a]; 
             if(!mE || mE.ec === 0) return;
-            const r_m = mE.tr / mE.ec;
+
+            const r_m = mE.tr / mE.ec; 
+            
             let s_prime_m = null, maxCount = 0;
             for(const [next_s, count] of Object.entries(mE.nsc)){ if(count > maxCount){ maxCount = count; s_prime_m = next_s; }}
-            if(s_prime_m === null) return;
+            if(s_prime_m === null) return; 
             
-            // Heuristic for done: if s_prime_m is a state where hunter caught player or coin collected (needs parsing state string or a better way)
-            // For now, assume not done for random planning.
-            updateQTable(s, a, r_m, s_prime_m, false, LEARNING_RATE * 0.5);
+            let exploration_bonus = 0;
+            if (KAPPA_EXPLORATION_BONUS > 0 && mE.ec > 0) { 
+                exploration_bonus = KAPPA_EXPLORATION_BONUS / Math.sqrt(mE.ec);
+            }
+            updateQTable(s, a, r_m + exploration_bonus, s_prime_m, false, PLANNING_LEARNING_RATE_RANDOM);
         }
-
 
         // --- Game Logic ---
         function resetGame() {
             totalRewardCollectedThisEpisode = 0;
-            // ... (spawning, episode count, epsilon update)
             player.currentSpeedMultiplier = NORMAL_SPEED_MULTIPLIER;
             playerSpeedIndicatorEl.textContent = "NORMAL";
             playerSpeedIndicatorEl.style.color = "lime";
 
             let attempts = 0; const maxSpawnAttempts = 50;
             do { player.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - PLAYER_SIZE*3); player.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - PLAYER_SIZE*3); attempts++; } while (obstacles.some(obs => rectCollision(player, obs)) && attempts < maxSpawnAttempts);
+            if (attempts >= maxSpawnAttempts) { player.x = PLAYER_SIZE; player.y = PLAYER_SIZE; } // Fallback
+            
             attempts = 0;
-            do { hunter.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - HUNTER_SIZE*3); hunter.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - HUNTER_SIZE*3); attempts++; } while ((obstacles.some(obs => rectCollision(hunter, obs)) || Math.hypot(player.x-hunter.x, player.y-hunter.y) < gameCanvas.width/2) && attempts < maxSpawnAttempts); // Hunter further away
+            do { hunter.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - HUNTER_SIZE*3); hunter.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - HUNTER_SIZE*3); attempts++; } 
+            while ((obstacles.some(obs => rectCollision(hunter, obs)) || Math.hypot(player.x-hunter.x, player.y-hunter.y) < gameCanvas.width/3) && attempts < maxSpawnAttempts); // Hunter further away
+            if (attempts >= maxSpawnAttempts) { hunter.x = gameCanvas.width - HUNTER_SIZE*2; hunter.y = gameCanvas.height - HUNTER_SIZE*2; } // Fallback
 
             spawnCoin(); currentStepsInEpisode = 0; episodeCount++;
             episodeEl.textContent = episodeCount; cookiesEl.textContent = scoreCookies; punishmentsEl.textContent = scorePunishments;
             if (epsilon > MIN_EPSILON) epsilon *= EPSILON_DECAY;
             epsilonEl.textContent = epsilon.toFixed(4);
 
-            // Update average reward display
             if (episodeRewardsHistory.length > 0) {
                 const sum = episodeRewardsHistory.reduce((a, b) => a + b, 0);
                 avgRewardEl.textContent = (sum / episodeRewardsHistory.length).toFixed(2);
+            } else {
+                avgRewardEl.textContent = "N/A";
             }
         }
 
-        function moveEntity(entity, dxMultiplier, dyMultiplier, speedMultiplierVal) {
-            const moveSpeed = speedMultiplierVal * BASE_MOVE_SPEED;
-            const moveX = dxMultiplier * moveSpeed;
-            const moveY = dyMultiplier * moveSpeed;
-            // ... (rest of moveEntity logic for collision and boundary checks, same as before)
+        function moveEntity(entity, dxNorm, dyNorm, speedMultiplierVal) {
+            const moveDist = speedMultiplierVal * (entity === player ? BASE_MOVE_SPEED : HUNTER_BASE_SPEED);
+            const moveX = dxNorm * moveDist;
+            const moveY = dyNorm * moveDist;
+            
             const oldX = entity.x, oldY = entity.y;
             let newX = entity.x + moveX, newY = entity.y + moveY;
+
             if (newX < 0) newX = 0; if (newX + entity.width > gameCanvas.width) newX = gameCanvas.width - entity.width;
             if (newY < 0) newY = 0; if (newY + entity.height > gameCanvas.height) newY = gameCanvas.height - entity.height;
+            
             let finalX = oldX, finalY = oldY;
-            let tempX = {...entity, x:newX, y:oldY}; if(!obstacles.some(o=>rectCollision(tempX,o))) finalX=newX;
-            let tempY = {...entity, x:oldX, y:newY}; if(!obstacles.some(o=>rectCollision(tempY,o))) finalY=newY;
-            if(dxMultiplier!==0 && dyMultiplier!==0 && finalX===newX && finalY===newY){ // Valid diagonal attempt
-                let tempXY = {...entity, x:newX, y:newY};
-                if(obstacles.some(o=>rectCollision(tempXY,o))){ // Diagonal blocked, revert to slide
-                    // Keep which ever axis didn't cause the block if moving from original pos
-                    tempX = {...entity, x:newX, y:oldY}; if(obstacles.some(o=>rectCollision(tempX,o))) finalX = oldX; else finalX = newX;
-                    tempY = {...entity, x:oldX, y:newY}; if(obstacles.some(o=>rectCollision(tempY,o))) finalY = oldY; else finalY = newY;
-                } else { finalX = newX; finalY = newY; } // Diagonal clear
+            
+            // Try moving X then Y to allow sliding
+            let tempRectX = {...entity, x: newX};
+            let collisionX = false;
+            for(const obs of obstacles) { if(rectCollision(tempRectX, obs)) { collisionX = true; break;}}
+            if(!collisionX) finalX = newX;
+
+            let tempRectY = {...entity, y: newY};
+            let collisionY = false;
+            for(const obs of obstacles) { if(rectCollision(tempRectY, obs)) { collisionY = true; break;}}
+            if(!collisionY) finalY = newY;
+
+            // If full diagonal move was intended but one axis was blocked, use the unblocked one.
+            // If both were intended to move and both were blocked individually, try to see if moving only one allows progress.
+            // If intended move was diagonal (both dxNorm, dyNorm non-zero)
+            if (dxNorm !== 0 && dyNorm !== 0) {
+                // If full diagonal move (finalX=newX, finalY=newY after individual checks) is blocked by a corner:
+                let tempRectXY = {...entity, x:newX, y:newY};
+                let collisionXY = false;
+                 for(const obs of obstacles) { if(rectCollision(tempRectXY, obs)) { collisionXY = true; break;}}
+
+                if(collisionXY){ // Diagonal is blocked
+                    // Prefer moving along the axis that was individually clear, if one was
+                    if(!collisionX && collisionY) { // X was clear, Y was not
+                        finalY = oldY; // Don't move Y
+                    } else if (collisionX && !collisionY) { // Y was clear, X was not
+                        finalX = oldX; // Don't move X
+                    } else { // Both individually blocked or diagonal created new block
+                        finalX = oldX; finalY = oldY; // No move if cannot slide cleanly
+                    }
+                } else { // Diagonal is clear
+                    finalX = newX; finalY = newY;
+                }
+            } else { // Single axis move
+                 if(collisionX && dxNorm !==0) finalX = oldX;
+                 if(collisionY && dyNorm !==0) finalY = oldY;
             }
+
+
             entity.x = finalX; entity.y = finalY;
-            if(entity === hunter){ hunter.lastDx = finalX - oldX; hunter.lastDy = finalY - oldY;} // Store hunter's actual move
-            return (finalX === oldX && finalY === oldY && (dxMultiplier !==0 || dyMultiplier !==0) );
+            if(entity === hunter){ hunter.lastDx = finalX - oldX; hunter.lastDy = finalY - oldY;}
+            return (finalX === oldX && finalY === oldY && (dxNorm !==0 || dyNorm !==0) ); // Stuck
         }
 
         function updateGame(actionIndex) {
             const action = ACTIONS[actionIndex];
             lastActionEl.textContent = action.name;
-            player.currentSpeedMultiplier = action.speedMultiplier; // AI sets its speed!
-            playerSpeedIndicatorEl.textContent = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "FAST" : "NORMAL";
+            player.currentSpeedMultiplier = action.speedMultiplier; 
+            playerSpeedIndicatorEl.textContent = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "FAST" : "orangered";
             playerSpeedIndicatorEl.style.color = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "orangered" : "lime";
 
-
-            let reward = -0.01; // Very small existence penalty
-            if (action.speedMultiplier === FAST_SPEED_MULTIPLIER) {
-                reward -= FAST_ACTION_COST; // Cost for using fast speed
-            }
+            let reward = -0.01; 
+            if (action.speedMultiplier === FAST_SPEED_MULTIPLIER) reward -= FAST_ACTION_COST; 
 
             const playerStuck = moveEntity(player, action.dx, action.dy, player.currentSpeedMultiplier);
-            if (playerStuck) reward -= 0.1; // Small bump penalty
+            if (playerStuck) reward -= 0.1; 
 
-            // Hunter movement (smarter hunter could be next step)
+            // Hunter movement
             const hTargetX = player.x + player.width/2, hTargetY = player.y + player.height/2;
             const hCurrX = hunter.x + hunter.width/2, hCurrY = hunter.y + hunter.height/2;
-            let hdx=0, hdy=0;
-            if (Math.abs(hTargetX-hCurrX) > HUNTER_BASE_SPEED/3) hdx = Math.sign(hTargetX-hCurrX);
-            if (Math.abs(hTargetY-hCurrY) > HUNTER_BASE_SPEED/3) hdy = Math.sign(hTargetY-hCurrY);
-            moveEntity(hunter, hdx, hdy, NORMAL_SPEED_MULTIPLIER); // Hunter uses its own base speed system
+            let hdxNorm=0, hdyNorm=0;
+            const diffX = hTargetX - hCurrX; const diffY = hTargetY - hCurrY;
+            const distToPlayer = Math.hypot(diffX, diffY);
+
+            if (distToPlayer > HUNTER_BASE_SPEED / 2) { // Only move if not extremely close
+                hdxNorm = diffX / distToPlayer; 
+                hdyNorm = diffY / distToPlayer; 
+            }
+            moveEntity(hunter, hdxNorm, hdyNorm, NORMAL_SPEED_MULTIPLIER); // Hunter speed is fixed
+
+            // --- Reward Shaping for Hunter Proximity (after moves) ---
+            const currentPerceptionParts = getDiscretizedState().split('_');
+            if (currentPerceptionParts.length >= 12) {
+                const hDist_val = parseInt(currentPerceptionParts[1]);       
+                const hunterLOS_val = parseInt(currentPerceptionParts[9]);   
+                if (hunterLOS_val === 0 && hDist_val <= 1) { 
+                    reward -= 0.25; 
+                }
+            }
+            // --- End Reward Shaping ---
 
             // Collisions & game end conditions
-            if (rectCollision(player, hunter)) { reward -= 25; scorePunishments++; totalRewardCollectedThisEpisode += reward; return { reward, done: true }; }
-            if (coins.length > 0) { const c = coins[0]; if (Math.hypot((player.x+player.width/2)-c.x, (player.y+player.height/2)-c.y) < player.width/2+c.radius) { reward += 30; scoreCookies++; coins.splice(0,1); spawnCoin(); totalRewardCollectedThisEpisode += reward; return { reward, done: true };}}
+            if (rectCollision(player, hunter)) { 
+                const finalReward = -25; 
+                scorePunishments++; 
+                totalRewardCollectedThisEpisode += finalReward; 
+                return { reward: finalReward, done: true }; 
+            }
+            if (coins.length > 0) { 
+                const c = coins[0]; 
+                if (Math.hypot((player.x+player.width/2)-c.x, (player.y+player.height/2)-c.y) < player.width/2+c.radius) { 
+                    const finalReward = 30; 
+                    scoreCookies++; 
+                    coins.splice(0,1); 
+                    totalRewardCollectedThisEpisode += finalReward; 
+                    return { reward: finalReward, done: true };
+                }
+            }
             
-            currentStepsInEpisode++; cumulativeTotalSteps++; totalStepsEl.textContent = cumulativeTotalSteps;
-            totalRewardCollectedThisEpisode += reward;
-            if (currentStepsInEpisode >= MAX_STEPS_PER_EPISODE) { reward -= 15; scorePunishments++; totalRewardCollectedThisEpisode += reward; return { reward, done: true }; }
+            totalRewardCollectedThisEpisode += reward; // Accumulate step reward if not terminal by catch/cookie
+
+            currentStepsInEpisode++; 
+            cumulativeTotalSteps++; 
+            totalStepsEl.textContent = cumulativeTotalSteps;
+
+            if (currentStepsInEpisode >= MAX_STEPS_PER_EPISODE) { 
+                const timeoutPenalty = -15;
+                reward += timeoutPenalty; // Add to current step's reward
+                scorePunishments++; 
+                totalRewardCollectedThisEpisode += timeoutPenalty; // Adjust total episode reward
+                return { reward: reward, done: true }; 
+            }
             return { reward, done: false };
         }
 
         // --- Drawing ---
-        function drawGame() { /* ... (player color based on speed choice, hunter color) ... */
+        function drawGame() { 
             gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             obstacles.forEach(obs => { gameCtx.fillStyle = obs.color; gameCtx.fillRect(obs.x, obs.y, obs.width, obs.height); });
             coins.forEach(c => { gameCtx.beginPath(); gameCtx.arc(c.x, c.y, c.radius, 0, Math.PI*2); gameCtx.fillStyle = c.color; gameCtx.fill(); });
@@ -424,22 +521,24 @@
             gameCtx.fillRect(player.x, player.y, player.width, player.height);
             gameCtx.fillStyle = hunter.color; gameCtx.fillRect(hunter.x, hunter.y, hunter.width, hunter.height);
         }
-        function drawAiVision() { /* ... (Display more state features if possible, or keep concise) ... */
+        function drawAiVision() { 
             aiVisionCtx.clearRect(0,0,aiVisionCanvas.width, aiVisionCanvas.height);
             const stateStr = getDiscretizedState();
-            const parts = stateStr.split('_'); // HAng_HDis_CAng_CDis_N_S_E_W_CLOS_HLOS_HLM_CoverD
+            const parts = stateStr.split('_'); // HAng,HDis,CAng,CDis,ClrN,S,E,W,CLOS,HLOS,HLM,CovD
             aiVisionCtx.fillStyle = '#ccc'; aiVisionCtx.font = '9px monospace';
             let y=10, lh=10;
             if(parts.length >= 12){
                 aiVisionCtx.fillText(`H:${parts[0]}A ${parts[1]}D | C:${parts[2]}A ${parts[3]}D`, 3, y); y+=lh;
-                aiVisionCtx.fillText(`ClrN:${parts[4]} S:${parts[5]} E:${parts[6]} W:${parts[7]}`, 3, y); y+=lh;
-                aiVisionCtx.fillText(`LOS C:${parts[8]=='0'?'Y':'N'} H:${parts[9]=='0'?'Y':'N'} HLM:${parts[10]} Cov:${parts[11]}`, 3, y); y+=lh;
+                aiVisionCtx.fillText(`ClrNESW:${parts[4]}${parts[5]}${parts[6]}${parts[7]}`, 3, y); y+=lh;
+                aiVisionCtx.fillText(`LOS C:${parts[8]=='0'?'Y':'N'} H:${parts[9]=='0'?'Y':'N'}`, 3, y); y+=lh;
+                aiVisionCtx.fillText(`HLM:${parts[10]} CovD:${parts[11]}`, 3, y); y+=lh;
             } else { aiVisionCtx.fillText(stateStr.substring(0,30),3,y); y+=lh; if(stateStr.length>30)aiVisionCtx.fillText(stateStr.substring(30),3,y);y+=lh;}
             
-            const mapScale = 0.22; const mapOffX = 5; const mapOffY = y + 5;
+            const mapScale = Math.min( (aiVisionCanvas.width - 10) / gameCanvas.width, (aiVisionCanvas.height - y - 5) / gameCanvas.height );
+            const mapOffX = 5; const mapOffY = y + 5;
             aiVisionCtx.save(); aiVisionCtx.translate(mapOffX, mapOffY); aiVisionCtx.scale(mapScale,mapScale);
             aiVisionCtx.globalAlpha = 0.6; aiVisionCtx.fillStyle = '#555'; obstacles.forEach(o=>aiVisionCtx.fillRect(o.x,o.y,o.width,o.height));
-            if(coins.length>0){aiVisionCtx.beginPath();aiVisionCtx.arc(coins[0].x,coins[0].y,coins[0].radius/mapScale*0.7,0,Math.PI*2);aiVisionCtx.fillStyle=coins[0].color;aiVisionCtx.fill();}
+            if(coins.length>0){aiVisionCtx.beginPath();aiVisionCtx.arc(coins[0].x,coins[0].y,coins[0].radius/(mapScale || 1)*0.8,0,Math.PI*2);aiVisionCtx.fillStyle=coins[0].color;aiVisionCtx.fill();} // Safe mapScale
             aiVisionCtx.fillStyle=hunter.color; aiVisionCtx.fillRect(hunter.x,hunter.y,hunter.width,hunter.height);
             aiVisionCtx.fillStyle=player.currentSpeedMultiplier === FAST_SPEED_MULTIPLIER ? 'orange' : player.color; aiVisionCtx.fillRect(player.x,player.y,player.width,player.height);
             aiVisionCtx.restore();
@@ -449,26 +548,28 @@
         function aiLoop() {
             const s = getDiscretizedState();
             const aIdx = chooseAction(s);
-            const gameOut = updateGame(aIdx); // {reward, done}
-            const s_prime = getDiscretizedState();
+            const gameOut = updateGame(aIdx); 
+            const s_prime = getDiscretizedState(); 
 
-            const tdError = updateQTable(s, aIdx, gameOut.reward, s_prime, gameOut.done);
-            updateModel(s, aIdx, gameOut.reward, s_prime);
+            const tdError = updateQTable(s, aIdx, gameOut.reward, s_prime, gameOut.done, LEARNING_RATE);
+            updateModel(s, aIdx, gameOut.reward, s_prime); 
 
-            // Add to priority queue for Dyna-Q+
-            if (tdError > 0.01) { // Only add if error is significant
+            if (tdError > 0.001) { 
                 prioritizedSweepingQueue.push({ priority: tdError, s, a: aIdx, r: gameOut.reward, s_prime, done: gameOut.done });
                 if (prioritizedSweepingQueue.length > PRIORITY_QUEUE_MAX_SIZE) {
-                    prioritizedSweepingQueue.sort((x, y) => x.priority - y.priority); // Keep highest priorities
+                    prioritizedSweepingQueue.sort((x, y) => x.priority - y.priority); 
                     prioritizedSweepingQueue.splice(0, prioritizedSweepingQueue.length - PRIORITY_QUEUE_MAX_SIZE);
                 }
             }
             
             for (let i = 0; i < numPlanningSteps; i++) {
-                if (Math.random() < 0.75 && prioritizedSweepingQueue.length > 0) { // Favor prioritized
+                if (prioritizedSweepingQueue.length === 0 && observedStateActions.length === 0) break; 
+                if (Math.random() < 0.85 && prioritizedSweepingQueue.length > 0) { 
                      prioritizedPlanningStep();
-                } else {
-                    randomPlanningStep(); // Ensure some random exploration in model
+                } else if (observedStateActions.length > 0) { 
+                    randomPlanningStep(); 
+                } else if (prioritizedSweepingQueue.length > 0) {
+                    prioritizedPlanningStep();
                 }
             }
 
