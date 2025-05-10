@@ -2,278 +2,349 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Satellite Tracker v2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Satellite Tracker</title>
     <style>
+        :root {
+            --primary-bg: #0a0a1a;
+            --panel-bg: rgba(25, 25, 50, 0.92);
+            --text-color: #e0e0e0;
+            --accent-color: #3498db;
+            --highlight-color: #58a6ff;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --button-bg: rgba(52, 152, 219, 0.6);
+            --button-hover-bg: rgba(52, 152, 219, 0.9);
+            --danger-color: rgba(231, 76, 60, 0.8);
+        }
+
         body {
             margin: 0;
-            overflow: hidden;
-            background-color: #0a0a1a; /* Dark space blue */
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            overflow: hidden; /* Critical for full-screen canvas */
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            overscroll-behavior: none; /* Prevent pull-to-refresh */
+            position: fixed; /* Prevent scrolling on iOS */
+            width: 100%;
+            height: 100%;
+        }
+
+        #app-container {
+            width: 100%;
+            height: 100%;
+            position: relative; /* For absolute positioning of overlays */
+        }
+
+        #renderer-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
 
         #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #0a0a1a;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--primary-bg); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
             transition: opacity 0.5s ease-out;
         }
-
         #loading-spinner {
-            border: 8px solid #222;
-            border-top: 8px solid #3498db; /* Blue accent */
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
+            border: 6px solid #333; border-top: 6px solid var(--accent-color);
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
         }
+        #loading-text { margin-top: 20px; font-size: 1.1em; color: #aaa; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #loading-text {
-            margin-top: 20px;
+        /* --- Panels --- */
+        .overlay-panel {
+            position: fixed;
+            background-color: var(--panel-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border-color); /* For bottom sheets */
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            color: var(--text-color);
+            z-index: 100;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-header {
+            padding: 12px 15px;
             font-size: 1.2em;
-            color: #aaa;
+            color: var(--highlight-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .panel-header .close-btn {
+            background: none; border: none; color: var(--text-color); font-size: 1.8em;
+            padding: 5px; line-height: 1; cursor: pointer;
         }
-
-        #info-panel {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background-color: rgba(20, 20, 40, 0.88);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 20px;
-            width: 320px;
-            max-height: calc(100vh - 180px); /* Adjust based on timeline height */
-            overflow-y: auto;
-            color: #e0e0e0;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            display: none;
-            z-index: 100;
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-            transform: translateY(100%);
-            opacity: 0;
-        }
-        #info-panel.visible {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        #info-panel h2 {
-            margin-top: 0;
-            color: #58a6ff;
-            font-size: 1.3em;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        #info-panel p { margin: 8px 0; font-size: 0.85em; line-height: 1.5; }
-        #info-panel strong { color: #88c0d0; }
-        #info-panel .close-button {
-            position: absolute; top: 15px; right: 15px; background: none; border: none;
-            color: #aaa; font-size: 1.5em; cursor: pointer; transition: color 0.2s;
-        }
-        #info-panel .close-button:hover { color: #fff; }
-        #follow-satellite-toggle {
-            background-color: rgba(52, 152, 219, 0.5); color: white; border: none;
-            padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 15px;
-            transition: background-color 0.2s; display: block; width: 100%;
-        }
-        #follow-satellite-toggle:hover { background-color: rgba(52, 152, 219, 0.8); }
-        #follow-satellite-toggle.following { background-color: rgba(231, 76, 60, 0.7); }
-        #follow-satellite-toggle.following:hover { background-color: rgba(231, 76, 60, 1); }
-
-
-        #search-container { position: fixed; top: 20px; left: 20px; z-index: 100; }
-        #search-input {
-            padding: 10px 15px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
-            background-color: rgba(20, 20, 40, 0.85); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-            color: #e0e0e0; width: 250px; font-size: 0.9em; outline: none;
-            transition: width 0.3s ease-in-out, box-shadow 0.3s ease;
-        }
-        #search-input:focus { width: 300px; box-shadow: 0 0 15px rgba(52, 152, 219, 0.5); }
-        #search-results {
-            list-style: none; padding: 0; margin: 5px 0 0 0; max-height: 200px; overflow-y: auto;
-            background-color: rgba(20, 20, 40, 0.95); border-radius: 5px; position: absolute; width: 100%;
-        }
-        #search-results li { padding: 8px 12px; cursor: pointer; transition: background-color 0.2s; font-size: 0.8em; }
-        #search-results li:hover { background-color: rgba(52, 152, 219, 0.3); }
-
-        #timeline-container {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 60%; max-width: 800px; background-color: rgba(20, 20, 40, 0.88);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px; padding: 10px 20px; z-index: 100;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); text-align: center;
-        }
-        #timeline-slider { width: 80%; cursor: pointer; margin: 5px 0; }
-        #time-display { margin-top: 0px; font-size: 0.85em; color: #ccc; }
-        #time-controls button {
-            background: rgba(52, 152, 219, 0.5); border: none; color: white;
-            padding: 5px 10px; margin: 0 3px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s;
-            font-size: 0.8em;
-        }
-        #time-controls button:hover { background: rgba(52, 152, 219, 0.8); }
-        #time-controls { margin-bottom: 5px;}
-
-
-        #filter-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 280px;
-            max-height: calc(100vh - 40px);
-            background-color: rgba(20, 20, 40, 0.88);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+        .panel-content {
             padding: 15px;
-            z-index: 100;
-            color: #e0e0e0;
+            flex-grow: 1;
             overflow-y: auto;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
-        #filter-panel h3 {
-            margin-top: 0; color: #58a6ff; font-size: 1.2em;
-            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 12px;
+
+        /* Info Panel (Bottom Sheet) */
+        #info-panel {
+            bottom: 0; left: 0; right: 0;
+            max-height: 65vh; /* Take up to 65% of screen height */
+            transform: translateY(100%); /* Initially hidden */
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
         }
-        .filter-group { margin-bottom: 15px; }
-        .filter-group label { display: block; margin-bottom: 5px; font-size: 0.85em; color: #aabbcc; }
+        #info-panel.visible { transform: translateY(0); }
+        #info-panel p { margin: 6px 0; font-size: 0.9em; line-height: 1.5; }
+        #info-panel strong { color: #a0c8ff; } /* Lighter highlight */
+        #follow-satellite-toggle {
+            background-color: var(--button-bg); color: white; border: none;
+            padding: 12px 15px; border-radius: 8px; cursor: pointer; margin-top: 15px;
+            transition: background-color 0.2s; display: block; width: 100%; font-size: 0.95em;
+        }
+        #follow-satellite-toggle:hover, #follow-satellite-toggle:active { background-color: var(--button-hover-bg); }
+        #follow-satellite-toggle.following { background-color: var(--danger-color); }
+
+        /* Filter Panel (Side Drawer - Right) */
+        #filter-panel {
+            top: 0; bottom: 0; right: 0;
+            width: 85vw; max-width: 320px;
+            transform: translateX(100%); /* Initially hidden */
+            border-top: none; border-left: 1px solid var(--border-color);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+        #filter-panel.visible { transform: translateX(0); }
+        .filter-group { margin-bottom: 18px; }
+        .filter-group label { display: block; margin-bottom: 6px; font-size: 0.9em; color: #aabbcc; }
         .filter-group select, .filter-group input[type="number"] {
-            width: calc(100% - 12px); padding: 6px; border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.2); background-color: rgba(10,10,20,0.7);
-            color: #e0e0e0; font-size: 0.8em;
+            width: 100%; padding: 10px; border-radius: 6px; box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.2); background-color: rgba(10,10,20,0.8);
+            color: var(--text-color); font-size: 0.9em;
         }
-        .filter-group input[type="number"] { width: calc(50% - 20px); }
+        .year-filter-inputs { display: flex; gap: 10px; }
         .filter-buttons button {
-            background: rgba(52, 152, 219, 0.5); border: none; color: white; padding: 8px 12px;
-            margin-right: 10px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; font-size: 0.85em;
+            background: var(--button-bg); border: none; color: white; padding: 12px 15px;
+            margin-top: 10px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;
+            font-size: 0.95em; width: calc(50% - 5px);
         }
-        .filter-buttons button:hover { background: rgba(52, 152, 219, 0.8); }
-        .filter-buttons button.clear { background: rgba(200, 80, 80, 0.6); }
-        .filter-buttons button.clear:hover { background: rgba(220, 100, 100, 0.8); }
+        .filter-buttons button:hover, .filter-buttons button:active { background: var(--button-hover-bg); }
+        .filter-buttons button.clear { background: rgba(200, 80, 80, 0.7); }
+        #visible-sat-count-container { font-size:0.85em; color:#8899aa; margin-top:15px; text-align: center; }
 
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 8px; }
+        /* Search Overlay (Full Screen or Top Part) */
+        #search-overlay {
+            top: 0; left: 0; right: 0; bottom: 0; /* Full screen */
+            transform: translateY(-100%); /* Initially hidden */
+            border-top: none; box-shadow: none;
+            border-radius: 0;
+            display: flex; flex-direction: column;
+        }
+        #search-overlay.visible { transform: translateY(0); }
+        #search-input-container {
+            padding: 10px; background-color: rgba(10,10,20,0.7); flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #search-input {
+            width: 100%; padding: 12px 15px; border-radius: 25px; box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.2); background-color: rgba(30,30,60,0.8);
+            color: var(--text-color); font-size: 1em; outline: none;
+        }
+        #search-results {
+            list-style: none; padding: 0; margin: 0;
+            flex-grow: 1; overflow-y: auto;
+        }
+        #search-results li {
+            padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer; transition: background-color 0.2s; font-size: 0.95em;
+        }
+        #search-results li:hover, #search-results li:active { background-color: rgba(52, 152, 219, 0.2); }
+        #search-results li:last-child { border-bottom: none; }
+
+        /* Timeline Container */
+        #timeline-container {
+            position: fixed;
+            bottom: 60px; /* Above main controls */
+            left: 10px; right: 10px;
+            background-color: var(--panel-bg);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 8px 12px; z-index: 90;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        #timeline-slider { width: 100%; cursor: pointer; margin: 5px 0; }
+        #time-display { font-size: 0.75em; color: #ccc; margin-bottom: 5px; }
+        #time-controls button {
+            background: var(--button-bg); border: none; color: white;
+            padding: 6px 10px; margin: 0 3px; border-radius: 6px; cursor: pointer;
+            font-size: 0.8em; min-width: 36px;
+        }
+        #time-controls { display: flex; justify-content: center; width: 100%;}
+        #time-speed { font-size: 0.8em; color: #ccc; margin-left: 8px;}
+
+
+        /* Main Controls Bar (Bottom Fixed) */
+        #main-controls-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 50px;
+            background-color: var(--primary-bg); /* Solid, distinct from panels */
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 200; /* Above other panels if they are partially visible */
+            padding: 0 10px;
+        }
+        .control-button {
+            background: none; border: none; color: var(--text-color);
+            font-size: 1.6em; /* For icon-like text */
+            padding: 10px 15px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .control-button:hover, .control-button:active { opacity: 1; color: var(--highlight-color); }
+
+        /* Scrollbar styling for panels */
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: rgba(52, 152, 219, 0.5); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(52, 152, 219, 0.8); }
+        ::-webkit-scrollbar-thumb { background: rgba(52, 152, 219, 0.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(52, 152, 219, 0.7); }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div id="loading-spinner"></div>
-        <div id="loading-text">Initializing Celestial Sphere...</div>
-    </div>
+    <div id="app-container">
+        <div id="renderer-container"></div> <!-- Three.js canvas will go here -->
 
-    <div id="info-panel">
-        <button class="close-button" onclick="hideInfoPanel()">×</button>
-        <h2 id="sat-name">Satellite Name</h2>
-        <p><strong>NORAD ID:</strong> <span id="sat-norad-id"></span></p>
-        <p><strong>Int'l Designator:</strong> <span id="sat-intl-des"></span></p>
-        <p><strong>Launch Date:</strong> <span id="sat-launch-date"></span> (<span id="sat-launch-year"></span>)</p>
-        <p><strong>Country:</strong> <span id="sat-country"></span></p>
-        <p><strong>Orbit Type:</strong> <span id="sat-orbit-type"></span></p>
-        <p><strong>Constellation:</strong> <span id="sat-constellation"></span></p>
-        <p><strong>Altitude:</strong> <span id="sat-altitude"></span> km</p>
-        <p><strong>Velocity:</strong> <span id="sat-velocity"></span> km/s</p>
-        <p><strong>Period:</strong> <span id="sat-period"></span> minutes</p>
-        <p><strong>Inclination:</strong> <span id="sat-inclination"></span>°</p>
-        <p><strong>Latitude:</strong> <span id="sat-lat"></span>°</p>
-        <p><strong>Longitude:</strong> <span id="sat-lon"></span>°</p>
-        <button id="follow-satellite-toggle" onclick="toggleFollowSatellite()">Follow Satellite</button>
-    </div>
+        <div id="loading-screen">
+            <div id="loading-spinner"></div>
+            <div id="loading-text">Initializing Celestial Sphere...</div>
+        </div>
 
-    <div id="search-container">
-        <input type="text" id="search-input" placeholder="Search satellites (e.g., ISS, Starlink)">
-        <ul id="search-results"></ul>
-    </div>
+        <div id="info-panel" class="overlay-panel">
+            <div class="panel-header">
+                <span id="sat-name-header">Satellite Info</span>
+                <button class="close-btn" onclick="hideInfoPanel()">×</button>
+            </div>
+            <div class="panel-content">
+                <p><strong>Name:</strong> <span id="sat-name"></span></p>
+                <p><strong>NORAD ID:</strong> <span id="sat-norad-id"></span></p>
+                <p><strong>Int'l Des:</strong> <span id="sat-intl-des"></span></p>
+                <p><strong>Launch:</strong> <span id="sat-launch-date"></span> (<span id="sat-launch-year"></span>)</p>
+                <p><strong>Country:</strong> <span id="sat-country"></span></p>
+                <p><strong>Orbit:</strong> <span id="sat-orbit-type"></span></p>
+                <p><strong>Constellation:</strong> <span id="sat-constellation"></span></p>
+                <p><strong>Altitude:</strong> <span id="sat-altitude"></span> km</p>
+                <p><strong>Velocity:</strong> <span id="sat-velocity"></span> km/s</p>
+                <p><strong>Period:</strong> <span id="sat-period"></span> min</p>
+                <p><strong>Inclination:</strong> <span id="sat-inclination"></span>°</p>
+                <p><strong>Lat/Lon:</strong> <span id="sat-lat"></span>° / <span id="sat-lon"></span>°</p>
+                <button id="follow-satellite-toggle" onclick="toggleFollowSatellite()">Follow Satellite</button>
+            </div>
+        </div>
 
-    <div id="timeline-container">
-        <div id="time-controls">
-            <button id="time-rewind"><<</button>
-            <button id="time-play-pause">Play</button>
-            <button id="time-forward">>></button>
-            <button id="time-reset">Reset</button>
-            <span>Speed: <span id="time-speed">1x</span></span>
+        <div id="filter-panel" class="overlay-panel">
+            <div class="panel-header">
+                <span>Filters</span>
+                <button class="close-btn" onclick="toggleFilterPanel(false)">×</button>
+            </div>
+            <div class="panel-content">
+                <div class="filter-group">
+                    <label for="filter-launch-year-min">Launch Year:</label>
+                    <div class="year-filter-inputs">
+                        <input type="number" id="filter-launch-year-min" min="1957" placeholder="Min">
+                        <input type="number" id="filter-launch-year-max" min="1957" placeholder="Max">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-country">Country:</label>
+                    <select id="filter-country"><option value="">All</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-orbit-type">Orbit Type:</label>
+                    <select id="filter-orbit-type">
+                        <option value="">All</option> <option value="LEO">LEO</option> <option value="MEO">MEO</option>
+                        <option value="GEO">GEO</option> <option value="HEO">HEO</option> <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-constellation">Constellation:</label>
+                    <select id="filter-constellation"><option value="">All</option></select>
+                </div>
+                <div class="filter-buttons">
+                    <button id="apply-filters-btn">Apply</button>
+                    <button id="clear-filters-btn" class="clear">Clear</button>
+                </div>
+                 <p id="visible-sat-count-container">Visible: <span id="visible-sat-count">N/A</span></p>
+            </div>
         </div>
-        <input type="range" id="timeline-slider" min="0" max="1440" value="0" step="1"> <!-- Max 24 hours = 1440 mins -->
-        <div id="time-display">Current Time: N/A</div>
-    </div>
 
-    <div id="filter-panel">
-        <h3>Filters</h3>
-        <div class="filter-group">
-            <label for="filter-launch-year-min">Launch Year Min:</label>
-            <input type="number" id="filter-launch-year-min" min="1957" placeholder="1957">
-            <label for="filter-launch-year-max" style="display:inline-block; margin-left:5px;">Max:</label>
-            <input type="number" id="filter-launch-year-max" min="1957" placeholder="This Year">
+        <div id="search-overlay" class="overlay-panel">
+             <div class="panel-header">
+                <span>Search Satellites</span>
+                <button class="close-btn" onclick="toggleSearchOverlay(false)">×</button>
+            </div>
+            <div id="search-input-container">
+                <input type="text" id="search-input" placeholder="Search (e.g., ISS, Starlink)">
+            </div>
+            <ul id="search-results"></ul>
         </div>
-        <div class="filter-group">
-            <label for="filter-country">Country:</label>
-            <select id="filter-country"><option value="">All</option></select>
-        </div>
-        <div class="filter-group">
-            <label for="filter-orbit-type">Orbit Type:</label>
-            <select id="filter-orbit-type">
-                <option value="">All</option>
-                <option value="LEO">LEO</option>
-                <option value="MEO">MEO</option>
-                <option value="GEO">GEO</option>
-                <option value="HEO">HEO</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label for="filter-constellation">Constellation:</label>
-            <select id="filter-constellation"><option value="">All</option></select>
-        </div>
-        <div class="filter-buttons">
-            <button id="apply-filters-btn">Apply Filters</button>
-            <button id="clear-filters-btn" class="clear">Clear Filters</button>
-        </div>
-        <p style="font-size:0.75em; color:#778; margin-top:15px;">Satellites visible: <span id="visible-sat-count">N/A</span></p>
-    </div>
 
+        <div id="timeline-container">
+            <div id="time-display">Sim Time: N/A</div>
+            <input type="range" id="timeline-slider" min="0" max="1440" value="0" step="1">
+            <div id="time-controls">
+                <button id="time-rewind"><<</button>
+                <button id="time-play-pause">Play</button>
+                <button id="time-forward">>></button>
+                <button id="time-reset">Reset</button>
+                <span id="time-speed">1x</span>
+            </div>
+        </div>
+
+        <div id="main-controls-bar">
+            <button class="control-button" id="search-toggle-btn" title="Search"></button> <!-- Search Icon -->
+            <button class="control-button" id="filter-toggle-btn" title="Filter"></button> <!-- Filter Icon (adjust unicode) -->
+            <!-- Add more controls here if needed, e.g., a layers toggle -->
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.1.3/satellite.min.js"></script>
 
     <script>
-        let scene, camera, renderer, earth, clouds, stars;
-        let allSatellitesData = []; // Store raw data for filtering
-        let satelliteObjects = new Map(); // NORAD ID to Three.js object
+        // --- Global Variables & Constants ---
+        let scene, camera, renderer, earth, clouds, stars, controls;
+        let allSatellitesData = [];
+        let satelliteObjects = new Map();
         const EARTH_RADIUS_KM = 6371;
-        const MU_EARTH = 398600.4418; // km^3/s^2
+        const MU_EARTH = 398600.4418;
         const SCALE_FACTOR = 1 / EARTH_RADIUS_KM;
-        let INTERSECTED, targetSatelliteObject;
-        let raycaster, mouse;
-        let controls;
-        let loadingScreen = document.getElementById('loading-screen');
-        let loadingText = document.getElementById('loading-text');
-        let infoPanel = document.getElementById('info-panel');
-        let searchInput = document.getElementById('search-input');
-        let searchResultsList = document.getElementById('search-results');
+        let targetSatelliteObject; // The Three.js mesh of the selected satellite
+        let raycaster, pointer = new THREE.Vector2(); // Using "pointer" for generic input
 
+        // UI Elements
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingText = document.getElementById('loading-text');
+        const rendererContainer = document.getElementById('renderer-container');
+        const infoPanel = document.getElementById('info-panel');
+        const filterPanel = document.getElementById('filter-panel');
+        const searchOverlay = document.getElementById('search-overlay');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsList = document.getElementById('search-results');
+        const followSatelliteToggleBtn = document.getElementById('follow-satellite-toggle');
+
+        // Time related
         let currentTime = new Date();
         let timeScale = 1;
         let timePaused = false;
@@ -286,57 +357,83 @@
         const timeSpeedDisplay = document.getElementById('time-speed');
         let initialTime = new Date();
 
+        // State
         let focusedSatellitePathLine = null;
         let isFollowingSatellite = false;
-        const followSatelliteToggleBtn = document.getElementById('follow-satellite-toggle');
-
+        let isCameraAnimating = false;
+        let cameraFocusTargetPosition = new THREE.Vector3();
+        let desiredCameraPosition = new THREE.Vector3();
         const currentYear = new Date().getFullYear();
-        document.getElementById('filter-launch-year-min').max = currentYear;
-        document.getElementById('filter-launch-year-max').max = currentYear;
-        document.getElementById('filter-launch-year-max').placeholder = currentYear;
 
-
+        // --- Initialization ---
         const orbitControlsScript = document.createElement('script');
         orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
         orbitControlsScript.onload = () => {
-            init();
-            animate();
+            initApp();
+            animateApp();
         };
         document.head.appendChild(orbitControlsScript);
 
-        async function init() {
-            // ... (Scene, Camera, Renderer, Lights, Earth, Clouds, Stars setup - same as before)
+        function initApp() {
+            setupThreeJS();
+            loadSatellitesAndMetadata(); // Async
+            setupUIEventListeners();
+            setupTimeControls();
+            updateTimeDisplay();
+            document.getElementById('filter-launch-year-min').max = currentYear;
+            document.getElementById('filter-launch-year-max').max = currentYear;
+            document.getElementById('filter-launch-year-max').placeholder = currentYear;
+            document.getElementById('filter-launch-year-min').value = 1957;
+            document.getElementById('filter-launch-year-max').value = currentYear;
+
+            window.addEventListener('resize', onWindowResize, false);
+            // Use pointer events for wider compatibility (touch & mouse on dev desktop)
+            rendererContainer.addEventListener('pointerdown', onPointerDown, false);
+            // rendererContainer.addEventListener('pointermove', onPointerMove, false); // If hover effects are needed
+
+            hideLoadingScreen();
+        }
+
+        function hideLoadingScreen(){
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+        }
+
+        function setupThreeJS() {
             loadingText.innerText = "Setting up 3D scene...";
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 1000);
-            camera.position.z = 3; // Initial camera position
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 1000);
+            camera.position.z = 3.5; // Slightly further out for mobile view
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
+            rendererContainer.appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0x606080, 1.5); scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            const ambientLight = new THREE.AmbientLight(0x707090, 1.2); scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
             directionalLight.position.set(5, 3, 5); scene.add(directionalLight);
             
             loadingText.innerText = "Loading Earth textures...";
             const textureLoader = new THREE.TextureLoader();
+            // Consider smaller textures for mobile if necessary, but these are standard.
             const earthTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg');
-            const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture, specularMap: textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73776/world.topo.bathy.200412.3x1350x675.PPM'), specular: new THREE.Color('grey') });
-            const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
+            const earthSpecularMap = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73776/world.topo.bathy.200412.3x1350x675.PPM'); // Simplified specular
+            const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture, specularMap: earthSpecularMap, specular: new THREE.Color('grey')});
+            const earthGeometry = new THREE.SphereGeometry(1, 48, 48); // Slightly fewer segments
             earth = new THREE.Mesh(earthGeometry, earthMaterial); scene.add(earth);
             
             const cloudTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_2048.png');
-            const cloudMaterial = new THREE.MeshPhongMaterial({ map: cloudTexture, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
-            const cloudGeometry = new THREE.SphereGeometry(1.005, 64, 64); // Slightly larger for clouds
+            const cloudMaterial = new THREE.MeshPhongMaterial({ map: cloudTexture, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
+            const cloudGeometry = new THREE.SphereGeometry(1.008, 48, 48); // Clouds slightly higher, fewer segments
             clouds = new THREE.Mesh(cloudGeometry, cloudMaterial); scene.add(clouds);
 
             loadingText.innerText = "Generating starfield...";
             const starGeometry = new THREE.BufferGeometry();
-            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.005, sizeAttenuation: true });
+            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.006, sizeAttenuation: true });
             const starVertices = [];
-            for (let i = 0; i < 20000; i++) { // Increased star count
-                const r = Math.random() * 200 + 50; // distance from center
+            for (let i = 0; i < 8000; i++) { // Reduced star count for mobile
+                const r = Math.random() * 150 + 70;
                 const phi = Math.random() * Math.PI * 2;
                 const theta = Math.random() * Math.PI;
                 starVertices.push(r * Math.sin(theta) * Math.cos(phi), r * Math.sin(theta) * Math.sin(phi), r * Math.cos(theta));
@@ -345,91 +442,60 @@
             stars = new THREE.Points(starGeometry, starMaterial); scene.add(stars);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; controls.dampingFactor = 0.05;
-            controls.minDistance = 1.1; controls.maxDistance = 100;
+            controls.enableDamping = true; controls.dampingFactor = 0.08; // Slightly more damping for touch
+            controls.minDistance = 1.15; controls.maxDistance = 80;
+            controls.enablePan = true; // Typically two-finger pan on mobile
 
             raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
-            // Set raycaster threshold for Points objects if used, for now use mesh threshold
-            // raycaster.params.Points.threshold = 0.01; 
-
-            window.addEventListener('mousemove', onMouseMove, false);
-            window.addEventListener('click', onClick, false);
-            window.addEventListener('resize', onWindowResize, false);
-            
-            await loadSatellitesAndMetadata();
-            setupFilterControls();
-            setupTimeControls();
-            updateTimeDisplay();
-
-            searchInput.addEventListener('input', handleSearch);
-            searchResultsList.addEventListener('click', handleSearchResultClick);
-            document.addEventListener('click', (event) => {
-                if (!searchInput.contains(event.target) && !searchResultsList.contains(event.target)) {
-                    searchResultsList.style.display = 'none';
-                }
-            });
-
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
-        }
-
-        function calculateAltitudeFromPeriod(periodMinutes) {
-            if (!periodMinutes || periodMinutes <= 0) return 0;
-            const T_seconds = periodMinutes * 60;
-            const a_cubed = (T_seconds * T_seconds * MU_EARTH) / (4 * Math.PI * Math.PI);
-            const a = Math.cbrt(a_cubed);
-            return a - EARTH_RADIUS_KM;
-        }
-
-        function inferConstellation(name) {
-            const lowerName = name.toLowerCase();
-            if (lowerName.includes('starlink')) return 'Starlink';
-            if (lowerName.includes('gps') || lowerName.includes('navstar')) return 'GPS';
-            if (lowerName.includes('glonass')) return 'GLONASS';
-            if (lowerName.includes('galileo')) return 'Galileo';
-            if (lowerName.includes('beidou') || lowerName.includes('compass')) return 'BeiDou';
-            if (lowerName.includes('iridium')) return 'Iridium';
-            if (lowerName.includes('oneweb')) return 'OneWeb';
-            if (lowerName.includes('planet') || lowerName.includes('skysat') || lowerName.includes('dove')) return 'Planet Labs';
-            return 'Other';
         }
         
-        function getCountryFromIntlDes(intlDesFull) {
-            // This remains a very simplified lookup based on common prefixes in COSPAR ID.
-            // A proper database is needed for accuracy.
-            // Example: 1998-067A -> 98 is launch year. Country code is usually from an external database.
-            // Some TLE distributors include country in the name or comments.
-            // For this demo, we'll stick to the naive approach for brevity.
-            const commonCountryCodes = {
-                'US': 'USA', 'SU': 'Russia (USSR)', 'F': 'France', 'CN': 'China', 'J': 'Japan', 'I': 'Italy',
-                'IN': 'India', 'CA': 'Canada', 'DE': 'Germany', 'UK': 'UK', 'ES': 'Spain', 'AR': 'Argentina',
-                'BR': 'Brazil', 'AU': 'Australia', 'KR': 'South Korea', 'IL': 'Israel', 'UAE': 'UAE', 'EU': 'ESA',
-                'AS': 'AsiaSat', 'SES': 'SES', 'INT': 'Intelsat', 'ITS': 'ITS', 'LU': 'Luxembourg'
-            };
-             // Check common patterns in names. This is highly unreliable for formal use.
-            const name = arguments[1] ? arguments[1].toUpperCase() : ""; // Pass satellite name as second argument
-            for (const code in commonCountryCodes) {
-                if (name.includes(code + "-") || name.includes(code + " ")) return commonCountryCodes[code];
+        function setupUIEventListeners() {
+            // Main Controls
+            document.getElementById('search-toggle-btn').addEventListener('click', () => toggleSearchOverlay(true));
+            document.getElementById('filter-toggle-btn').addEventListener('click', () => toggleFilterPanel(true));
+
+            // Filter Panel
+            document.getElementById('apply-filters-btn').addEventListener('click', () => {
+                applyFilters();
+                toggleFilterPanel(false); // Close panel after applying
+            });
+            document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
+
+            // Search
+            searchInput.addEventListener('input', handleSearch);
+            searchResultsList.addEventListener('click', handleSearchResultClick);
+
+            // Close info panel by clicking outside (on the renderer) if needed, or rely on X button
+            // This might conflict with satellite selection, so use X button primarily.
+        }
+
+        // --- UI Panel Management ---
+        function toggleSearchOverlay(show) {
+            searchOverlay.classList.toggle('visible', show);
+            if(show) searchInput.focus(); // Auto-focus search input
+        }
+        function toggleFilterPanel(show) {
+            filterPanel.classList.toggle('visible', show);
+        }
+        function showInfoPanel() { infoPanel.classList.add('visible'); }
+        function hideInfoPanel() {
+            infoPanel.classList.remove('visible');
+            // If deselectSatellite is not called elsewhere when closing panel
+            if (targetSatelliteObject) {
+                deselectSatellite(); // Ensure satellite is deselected when panel is manually closed
             }
-            if (intlDesFull) { // Try to get from last part of Intl Des for some cases like "F-" for France
-                 const parts = intlDesFull.split('-');
-                 if (parts.length > 1) {
-                     const potentialCode = parts[parts.length-1].replace(/[A-Z]+$/, '').substring(0,2); // try to get 2 letters before trailing letters
-                     if(commonCountryCodes[potentialCode]) return commonCountryCodes[potentialCode];
-                 }
-            }
-            return "Unknown";
         }
 
 
-        async function loadSatellitesAndMetadata() {
+        // --- Satellite Data & Visualization (largely same as V2, minor tweaks) ---
+        async function loadSatellitesAndMetadata() { /* ... same as V2 ... */
             loadingText.innerText = "Fetching satellite TLE data...";
             const uniqueCountries = new Set();
             const uniqueConstellations = new Set();
 
             try {
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                // NOTE: cors-anywhere is unreliable. For a real app, use your own proxy or TLE source.
+                const proxyUrl = 'https://corsproxy.io/?'; // Alternative proxy
                 const tleUrl = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle';
                 let tleData;
                 try {
@@ -438,7 +504,7 @@
                     tleData = await response.text();
                 } catch (e) {
                     console.warn("Direct fetch failed, trying proxy...", e.message);
-                    const proxyResponse = await fetch(proxyUrl + tleUrl);
+                    const proxyResponse = await fetch(proxyUrl + encodeURIComponent(tleUrl));
                     if(!proxyResponse.ok) throw new Error(`Proxy fetch failed: ${proxyResponse.status}`);
                     tleData = await proxyResponse.text();
                 }
@@ -459,83 +525,103 @@
                         let launchYear = parseInt(intlDes.substring(0, 2));
                         launchYear += (launchYear < 57) ? 2000 : 1900;
 
-                        const periodMinutes = (2 * Math.PI) / satrec.no; // `no` is mean motion in rad/min
+                        const periodMinutes = (2 * Math.PI) / satrec.no;
                         const approxAltitudeKm = calculateAltitudeFromPeriod(periodMinutes);
                         const inclinationDeg = satellite.degrees(satrec.inclo);
 
                         let orbitType = 'Other';
                         if (approxAltitudeKm < 2000) orbitType = 'LEO';
-                        else if (Math.abs(periodMinutes - 1436.07) < 30 && inclinationDeg < 15) orbitType = 'GEO'; // ~24hr period, low inclination
+                        else if (Math.abs(periodMinutes - 1436.07) < 30 && inclinationDeg < 15) orbitType = 'GEO';
                         else if (approxAltitudeKm >= 2000 && approxAltitudeKm < 35700) orbitType = 'MEO';
-                        else if (satrec.ecco > 0.25) orbitType = 'HEO'; // High eccentricity often HEO
+                        else if (satrec.ecco > 0.25) orbitType = 'HEO';
 
-                        const country = getCountryFromIntlDes(intlDes, name); // Pass name for better inference
+                        const country = getCountryFromIntlDes(intlDes, name);
                         const constellation = inferConstellation(name);
 
                         uniqueCountries.add(country);
                         uniqueConstellations.add(constellation);
                         
                         allSatellitesData.push({
-                            name, satrec, noradId, intlDes, launchDate: `${launchYear}-XX-XX`, // Date is approx
+                            name, satrec, noradId, intlDes, launchDate: `${launchYear}-XX-XX`,
                             launchYear, country, periodMinutes, approxAltitudeKm, inclinationDeg, orbitType, constellation,
-                            // Positional data will be added dynamically
                         });
-                    } catch (e) { console.warn(`Error processing TLE for ${name}: ${e.message}`); }
+                    } catch (e) { /* console.warn(`Error processing TLE for ${name}: ${e.message}`); */ }
                 }
                 
                 populateFilterDropdowns(uniqueCountries, uniqueConstellations);
-                createSatelliteVisuals(allSatellitesData); // Initially, all are candidates to be visible
-                applyFilters(); // Apply default/empty filters to show all & update count
+                createSatelliteVisuals(allSatellitesData);
+                applyFilters();
 
             } catch (error) {
-                loadingText.innerText = "Error loading satellite data. Displaying Earth only.";
+                loadingText.innerText = "Error loading satellite data.";
                 console.error("Error loading satellite data:", error);
             }
         }
-
-        function populateFilterDropdowns(countries, constellations) {
-            const countrySelect = document.getElementById('filter-country');
-            countries.forEach(c => { if(c !== "Unknown") countrySelect.add(new Option(c, c)); });
-            const constellSelect = document.getElementById('filter-constellation');
-            constellations.forEach(c => { if(c !== "Other") constellSelect.add(new Option(c,c)); });
+        function calculateAltitudeFromPeriod(periodMinutes) { /* ... same ... */ 
+            if (!periodMinutes || periodMinutes <= 0) return 0;
+            const T_seconds = periodMinutes * 60;
+            const a_cubed = (T_seconds * T_seconds * MU_EARTH) / (4 * Math.PI * Math.PI);
+            const a = Math.cbrt(a_cubed);
+            return a - EARTH_RADIUS_KM;
+        }
+        function inferConstellation(name) { /* ... same ... */
+            const lowerName = name.toLowerCase();
+            if (lowerName.includes('starlink')) return 'Starlink';
+            if (lowerName.includes('gps') || lowerName.includes('navstar')) return 'GPS';
+            if (lowerName.includes('glonass')) return 'GLONASS';
+            if (lowerName.includes('galileo')) return 'Galileo';
+            if (lowerName.includes('beidou') || lowerName.includes('compass')) return 'BeiDou';
+            if (lowerName.includes('iridium')) return 'Iridium';
+            if (lowerName.includes('oneweb')) return 'OneWeb';
+            if (lowerName.includes('planet') || lowerName.includes('skysat') || lowerName.includes('dove')) return 'Planet Labs';
+            return 'Other';
+        }
+        function getCountryFromIntlDes(intlDesFull, name) { /* ... same ... */
+            const commonCountryCodes = {
+                'US': 'USA', 'SU': 'Russia (USSR)', 'F': 'France', 'CN': 'China', 'J': 'Japan', 'I': 'Italy',
+                'IN': 'India', 'CA': 'Canada', 'DE': 'Germany', 'UK': 'UK', 'ES': 'Spain', 'AR': 'Argentina',
+                'BR': 'Brazil', 'AU': 'Australia', 'KR': 'South Korea', 'IL': 'Israel', 'UAE': 'UAE', 'EU': 'ESA',
+                'AS': 'AsiaSat', 'SES': 'SES', 'INT': 'Intelsat', 'ITS': 'ITS', 'LU': 'Luxembourg'
+            };
+            const upperName = name ? name.toUpperCase() : "";
+            for (const code in commonCountryCodes) {
+                if (upperName.includes(code + "-") || upperName.includes(code + " ")) return commonCountryCodes[code];
+            }
+            if (intlDesFull) {
+                 const parts = intlDesFull.split('-');
+                 if (parts.length > 1) {
+                     const potentialCode = parts[parts.length-1].replace(/[A-Z]+$/, '').substring(0,2);
+                     if(commonCountryCodes[potentialCode]) return commonCountryCodes[potentialCode];
+                 }
+            }
+            return "Unknown";
         }
 
-        function createSatelliteVisuals(satsData) {
+        function populateFilterDropdowns(countries, constellations) { /* ... same ... */
+            const countrySelect = document.getElementById('filter-country');
+            Array.from(countries).sort().forEach(c => { if(c !== "Unknown") countrySelect.add(new Option(c, c)); });
+            const constellSelect = document.getElementById('filter-constellation');
+            Array.from(constellations).sort().forEach(c => { if(c !== "Other") constellSelect.add(new Option(c,c)); });
+        }
+
+        function createSatelliteVisuals(satsData) { /* ... same ... */
             loadingText.innerText = `Visualizing ${satsData.length} satellites...`;
-            // Use Points for better performance with many objects
-            const pointGeometry = new THREE.BufferGeometry();
-            const positions = [];
-            const colors = []; // For individual point colors if needed later, or for selection
-            const sizes = [];
+            const satMaterial = new THREE.MeshBasicMaterial({ color: 0xffcc00 }); // Default yellow
+            const satSelectedMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green when selected
+
+            const satGeometry = new THREE.SphereGeometry(0.004, 5, 5); // Even smaller/simpler for mobile
 
             satsData.forEach(satData => {
-                positions.push(0,0,0); // Initial placeholder position
-                colors.push(1, 0.8, 0); // Default: yellow (R,G,B)
-                sizes.push(5); // Default size (will be affected by sizeAttenuation)
-
-                // We still need individual objects for raycasting if we don't use advanced point picking.
-                // For simplicity with raycasting and individual focus, we'll stick to Meshes for now,
-                // but acknowledge Points is better for drawing thousands.
-                // If performance is an issue, this is the first place to optimize.
-                const satMaterial = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
-                const satGeometry = new THREE.SphereGeometry(0.0035, 6, 6); // Smaller, simpler spheres
-                const satMesh = new THREE.Mesh(satGeometry, satMaterial);
-                satMesh.userData = satData; // Link back to full data
-                satMesh.visible = false; // Initially hidden, filters will make them visible
+                const satMesh = new THREE.Mesh(satGeometry, satMaterial.clone()); // Clone for individual color changes
+                satMesh.userData = { ...satData, defaultMaterial: satMaterial, selectedMaterial: satSelectedMaterial };
+                satMesh.visible = false;
                 scene.add(satMesh);
                 satelliteObjects.set(satData.noradId, satMesh);
             });
-            updateSatellitePositions(true); // Initial position update for all
+            updateSatellitePositions(true);
         }
         
-        function setupFilterControls() {
-            document.getElementById('apply-filters-btn').addEventListener('click', applyFilters);
-            document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
-            document.getElementById('filter-launch-year-min').value = 1957;
-            document.getElementById('filter-launch-year-max').value = currentYear;
-        }
-
-        function applyFilters() {
+        function applyFilters() { /* ... same logic ... */
             const minLaunchYear = parseInt(document.getElementById('filter-launch-year-min').value) || 1957;
             const maxLaunchYear = parseInt(document.getElementById('filter-launch-year-max').value) || currentYear;
             const countryFilter = document.getElementById('filter-country').value;
@@ -557,14 +643,9 @@
                 if (passesFilters) visibleCount++;
             });
             document.getElementById('visible-sat-count').textContent = `${visibleCount} / ${allSatellitesData.length}`;
-
-            // If currently focused satellite is filtered out, deselect it
-            if (targetSatelliteObject && !targetSatelliteObject.visible) {
-                deselectSatellite();
-            }
+            if (targetSatelliteObject && !targetSatelliteObject.visible) deselectSatellite();
         }
-
-        function clearFilters() {
+        function clearFilters() { /* ... same ... */
             document.getElementById('filter-launch-year-min').value = 1957;
             document.getElementById('filter-launch-year-max').value = currentYear;
             document.getElementById('filter-country').value = "";
@@ -573,60 +654,44 @@
             applyFilters();
         }
 
-        function updateSatellitePositions(forceUpdateAll = false) {
+        function updateSatellitePositions(forceUpdateAll = false) { /* ... same logic ... */
             if ((allSatellitesData.length === 0 || timePaused) && !forceUpdateAll) return;
-
             const gmst = satellite.gstime(currentTime);
 
             allSatellitesData.forEach(satData => {
                 const satMesh = satelliteObjects.get(satData.noradId);
-                if (!satMesh || (!satMesh.visible && !forceUpdateAll && satData !== targetSatelliteObject?.userData)) return; // Only update visible or focused ones unless forced
+                if (!satMesh || (!satMesh.visible && !forceUpdateAll && satData !== targetSatelliteObject?.userData)) return;
 
                 try {
                     const positionAndVelocity = satellite.propagate(satData.satrec, currentTime);
                     if (!positionAndVelocity.position || !positionAndVelocity.velocity) {
                         satMesh.visible = false; return;
                     }
-                    const positionEci = positionAndVelocity.position;
-                    const velocityEci = positionAndVelocity.velocity;
-
-                    const geodetic = satellite.eciToGeodetic(positionEci, gmst);
+                    const pEci = positionAndVelocity.position; const vEci = positionAndVelocity.velocity;
+                    const geodetic = satellite.eciToGeodetic(pEci, gmst);
                     satData.latitude = satellite.degreesLat(geodetic.latitude);
                     satData.longitude = satellite.degreesLong(geodetic.longitude);
                     satData.altitude = geodetic.height;
-                    satData.velocity = Math.sqrt(velocityEci.x**2 + velocityEci.y**2 + velocityEci.z**2);
+                    satData.velocity = Math.sqrt(vEci.x**2 + vEci.y**2 + vEci.z**2);
 
-                    satMesh.position.set(
-                        positionEci.x * SCALE_FACTOR,
-                        positionEci.z * SCALE_FACTOR, // ECI Z (North) to Three.js Y (Up)
-                        -positionEci.y * SCALE_FACTOR  // ECI Y to Three.js -Z (depth)
-                    );
-                    
-                    // If this is the actively followed satellite, update its path
+                    satMesh.position.set( pEci.x*SCALE_FACTOR, pEci.z*SCALE_FACTOR, -pEci.y*SCALE_FACTOR );
                     if (isFollowingSatellite && targetSatelliteObject && satData.noradId === targetSatelliteObject.userData.noradId) {
-                        if (focusedSatellitePathLine) drawOrbitPathForSatellite(satData); // Redraw path
+                        if (focusedSatellitePathLine) drawOrbitPathForSatellite(satData);
                     }
-
-                } catch (e) { 
-                    // console.warn(`Error propagating ${satData.name}: ${e.message}`);
-                    if(satMesh) satMesh.visible = false; 
-                }
+                } catch (e) { if(satMesh) satMesh.visible = false; }
             });
-
-            // Update info panel if a satellite is selected
-            if (targetSatelliteObject && targetSatelliteObject.visible) {
-                updateLiveInfoPanel(targetSatelliteObject.userData);
-            }
+            if (targetSatelliteObject && targetSatelliteObject.visible) updateLiveInfoPanel(targetSatelliteObject.userData);
         }
         
-        function setupTimeControls() { /* ... same as before ... */ 
+        // --- Time Controls (largely same) ---
+        function setupTimeControls() { /* ... same as V2 ... */ 
             initialTime = new Date(currentTime);
-            timelineSlider.max = 24 * 60; // 24 hours in minutes
+            timelineSlider.max = 24 * 60;
 
             timelineSlider.addEventListener('input', (event) => {
                 const minutesOffset = parseInt(event.target.value);
                 currentTime = new Date(initialTime.getTime() + minutesOffset * 60000);
-                updateSatellitePositions(true); // Force update all visible for slider scrub
+                updateSatellitePositions(true); 
                 updateTimeDisplay();
                 if (targetSatelliteObject) drawOrbitPathForSatellite(targetSatelliteObject.userData);
             });
@@ -650,28 +715,37 @@
         }
         function updateTimeSpeedDisplay() { timeSpeedDisplay.textContent = `${timeScale}x`; }
         function updateTimeDisplay() {
-            timeDisplay.textContent = `Sim Time: ${currentTime.toUTCString()}`;
+            timeDisplay.textContent = `Sim Time: ${currentTime.toLocaleTimeString()} UTC`; // More concise for mobile
             const diffMinutes = (currentTime.getTime() - initialTime.getTime()) / 60000;
             timelineSlider.value = Math.round(Math.max(0, Math.min(timelineSlider.max, diffMinutes)));
         }
 
-        function onWindowResize() { /* ... same as before ... */ 
+
+        // --- Interaction & Selection ---
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-        function onMouseMove(event) { /* ... same as before ... */ 
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        }
 
-        function onClick(event) {
-            // Prevent click-through on UI elements
-            const clickedOnUI = [infoPanel, searchInput, searchResultsList, document.getElementById('timeline-container'), document.getElementById('filter-panel')]
-                                .some(el => el.contains(event.target));
-            if (clickedOnUI) return;
+        function onPointerDown(event) {
+            // Check if the event target is one of the UI overlay elements. If so, ignore.
+            // This is a simple check; for more complex UIs, stopPropagation in panel event listeners might be needed.
+            let targetElement = event.target;
+            while(targetElement != null) {
+                if (targetElement.id === 'info-panel' || targetElement.id === 'filter-panel' || 
+                    targetElement.id === 'search-overlay' || targetElement.id === 'timeline-container' ||
+                    targetElement.id === 'main-controls-bar') {
+                    return; // Clicked on UI, not on canvas for selection
+                }
+                targetElement = targetElement.parentElement;
+            }
+            
+            // Normalize pointer position
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-            raycaster.setFromCamera(mouse, camera);
+            raycaster.setFromCamera(pointer, camera);
             const visibleSatelliteMeshes = Array.from(satelliteObjects.values()).filter(mesh => mesh.visible);
             const intersects = raycaster.intersectObjects(visibleSatelliteMeshes);
 
@@ -681,38 +755,43 @@
                     selectSatellite(newIntersectedObject);
                 }
             } else {
-                deselectSatellite();
+                // Only deselect if not clicking on the info panel itself or its controls (already handled by targetElement check)
+                 if (!infoPanel.classList.contains('visible')) { // Or if info panel isn't even open
+                    deselectSatellite();
+                }
             }
         }
-
+        
         function selectSatellite(satObject) {
-            if (targetSatelliteObject && targetSatelliteObject.material) { // Deselect previous
-                targetSatelliteObject.material.color.setHex(0xffcc00); // Reset to default color
+            if (targetSatelliteObject) { // Deselect previous
+                targetSatelliteObject.material = satObject.userData.defaultMaterial;
             }
             
             targetSatelliteObject = satObject;
-            targetSatelliteObject.material.color.setHex(0x00ff00); // Highlight green
+            targetSatelliteObject.material = satObject.userData.selectedMaterial;
 
             displaySatelliteInfo(targetSatelliteObject.userData);
             drawOrbitPathForSatellite(targetSatelliteObject.userData);
-            focusOnSatellite(targetSatelliteObject); // Initiates camera move
-            isFollowingSatellite = false; // Reset follow state, user must explicitly enable
+            focusOnSatelliteCamera(targetSatelliteObject);
+            isFollowingSatellite = false;
             updateFollowButton();
+            showInfoPanel();
         }
 
         function deselectSatellite() {
-            if (targetSatelliteObject && targetSatelliteObject.material) {
-                targetSatelliteObject.material.color.setHex(0xffcc00); // Reset color
+            if (targetSatelliteObject) {
+                targetSatelliteObject.material = targetSatelliteObject.userData.defaultMaterial;
             }
             targetSatelliteObject = null;
-            hideInfoPanel();
+            // hideInfoPanel(); // Let the X button or other UI interaction hide it.
             clearOrbitPath();
             isFollowingSatellite = false;
             updateFollowButton();
-            controls.autoRotate = false; // Stop any auto-rotation if it was on
+            controls.autoRotate = false;
         }
 
         function displaySatelliteInfo(satData) {
+            document.getElementById('sat-name-header').textContent = satData.name || 'Satellite Info';
             document.getElementById('sat-name').textContent = satData.name || 'N/A';
             document.getElementById('sat-norad-id').textContent = satData.noradId || 'N/A';
             document.getElementById('sat-intl-des').textContent = satData.intlDes || 'N/A';
@@ -721,55 +800,45 @@
             document.getElementById('sat-country').textContent = satData.country || 'N/A';
             document.getElementById('sat-orbit-type').textContent = satData.orbitType || 'N/A';
             document.getElementById('sat-constellation').textContent = satData.constellation || 'N/A';
-            updateLiveInfoPanel(satData); // For dynamic data like alt, vel
-            infoPanel.classList.add('visible');
+            updateLiveInfoPanel(satData);
         }
         
-        function updateLiveInfoPanel(satData){ // Updates fields that change with time
-            document.getElementById('sat-altitude').textContent = satData.altitude ? satData.altitude.toFixed(1) : 'N/A';
-            document.getElementById('sat-velocity').textContent = satData.velocity ? satData.velocity.toFixed(2) : 'N/A';
-            document.getElementById('sat-period').textContent = satData.periodMinutes ? satData.periodMinutes.toFixed(1) : 'N/A';
-            document.getElementById('sat-inclination').textContent = satData.inclinationDeg ? satData.inclinationDeg.toFixed(2) : 'N/A';
-            document.getElementById('sat-lat').textContent = satData.latitude ? satData.latitude.toFixed(3) : 'N/A';
-            document.getElementById('sat-lon').textContent = satData.longitude ? satData.longitude.toFixed(3) : 'N/A';
+        function updateLiveInfoPanel(satData){
+            document.getElementById('sat-altitude').textContent = satData.altitude ? satData.altitude.toFixed(0) : 'N/A';
+            document.getElementById('sat-velocity').textContent = satData.velocity ? satData.velocity.toFixed(1) : 'N/A';
+            document.getElementById('sat-period').textContent = satData.periodMinutes ? satData.periodMinutes.toFixed(0) : 'N/A';
+            document.getElementById('sat-inclination').textContent = satData.inclinationDeg ? satData.inclinationDeg.toFixed(1) : 'N/A';
+            document.getElementById('sat-lat').textContent = satData.latitude ? satData.latitude.toFixed(2) : 'N/A';
+            document.getElementById('sat-lon').textContent = satData.longitude ? satData.longitude.toFixed(2) : 'N/A';
         }
 
-        function hideInfoPanel() { infoPanel.classList.remove('visible'); }
-
-        function drawOrbitPathForSatellite(satData) {
+        function drawOrbitPathForSatellite(satData) { /* ... same, maybe fewer segments for mobile ... */
             if (!satData || !satData.satrec) return;
             clearOrbitPath();
 
             const points = [];
-            const segments = 120; // Number of points in the orbit path
-            const orbitDurationMinutes = satData.periodMinutes || 90; // Use actual period or default
+            const segments = 90; // Reduced segments for mobile performance
+            const orbitDurationMinutes = satData.periodMinutes || 90;
             const timeStepMinutes = orbitDurationMinutes / segments;
-            let tempTime = new Date(currentTime.getTime()); // Start path from current sim time
+            let tempTime = new Date(currentTime.getTime());
 
             for (let i = 0; i <= segments; i++) {
                 try {
-                    const positionAndVelocity = satellite.propagate(satData.satrec, tempTime);
-                    if (positionAndVelocity.position) {
-                        const pEci = positionAndVelocity.position;
-                        points.push(new THREE.Vector3(
-                            pEci.x * SCALE_FACTOR, 
-                            pEci.z * SCALE_FACTOR, 
-                            -pEci.y * SCALE_FACTOR
-                        ));
+                    const pnv = satellite.propagate(satData.satrec, tempTime);
+                    if (pnv.position) {
+                        points.push(new THREE.Vector3( pnv.position.x*SCALE_FACTOR, pnv.position.z*SCALE_FACTOR, -pnv.position.y*SCALE_FACTOR ));
                     }
-                } catch (e) { /* ignore propagation errors for path points */ }
+                } catch (e) { /* ignore */ }
                 tempTime = new Date(tempTime.getTime() + timeStepMinutes * 60000);
             }
-
             if (points.length > 1) {
                 const pathGeometry = new THREE.BufferGeometry().setFromPoints(points);
-                const pathMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 1, transparent: true, opacity: 0.7 });
+                const pathMaterial = new THREE.LineBasicMaterial({ color: 0x00dddd, linewidth: 1, transparent: true, opacity: 0.6 });
                 focusedSatellitePathLine = new THREE.Line(pathGeometry, pathMaterial);
                 scene.add(focusedSatellitePathLine);
             }
         }
-
-        function clearOrbitPath() {
+        function clearOrbitPath() { /* ... same ... */
             if (focusedSatellitePathLine) {
                 scene.remove(focusedSatellitePathLine);
                 focusedSatellitePathLine.geometry.dispose();
@@ -778,29 +847,20 @@
             }
         }
         
-        let cameraFocusTargetPosition = new THREE.Vector3();
-        let desiredCameraPosition = new THREE.Vector3();
-        let isCameraAnimating = false;
-
-        function focusOnSatellite(satelliteObject) {
+        function focusOnSatelliteCamera(satelliteObject) { /* ... same logic, ensure it refers to `targetSatelliteObject` correctly ... */
             if (!satelliteObject) return;
             isCameraAnimating = true;
-            // isFollowingSatellite = false; // Initially, just move to it, don't stick yet. User clicks "follow".
-            // updateFollowButton(); // Update button state
-            controls.autoRotate = false; // Stop autorotate if any
+            controls.autoRotate = false;
         }
         
-        function toggleFollowSatellite() {
+        function toggleFollowSatellite() { /* ... same ... */
             if (!targetSatelliteObject) return;
             isFollowingSatellite = !isFollowingSatellite;
             updateFollowButton();
-            if (isFollowingSatellite) {
-                isCameraAnimating = false; // Stop any one-time focus animation
-                controls.autoRotate = false;
-            }
+            if (isFollowingSatellite) isCameraAnimating = false; // Stop one-time focus anim
         }
         
-        function updateFollowButton() {
+        function updateFollowButton() { /* ... same ... */
             if (isFollowingSatellite && targetSatelliteObject) {
                 followSatelliteToggleBtn.textContent = "Stop Following";
                 followSatelliteToggleBtn.classList.add('following');
@@ -811,14 +871,15 @@
             followSatelliteToggleBtn.style.display = targetSatelliteObject ? 'block' : 'none';
         }
 
-        function handleSearch(event) { /* ... same as before, but uses allSatellitesData ... */
+        // --- Search Functionality (largely same) ---
+        function handleSearch(event) { /* ... same ... */
             const query = event.target.value.toLowerCase();
             searchResultsList.innerHTML = '';
-            if (query.length < 2) { searchResultsList.style.display = 'none'; return; }
+            if (query.length < 1) { return; } // Show results even for 1 char
 
             const results = allSatellitesData.filter(sat =>
                 sat.name.toLowerCase().includes(query) || sat.noradId.includes(query)
-            ).slice(0, 10); 
+            ).slice(0, 20); // Show more results for mobile list
 
             if (results.length > 0) {
                 results.forEach(sat => {
@@ -827,53 +888,49 @@
                     li.dataset.noradId = sat.noradId;
                     searchResultsList.appendChild(li);
                 });
-                searchResultsList.style.display = 'block';
-            } else { searchResultsList.style.display = 'none'; }
+            } else {
+                const li = document.createElement('li');
+                li.textContent = "No satellites found.";
+                li.style.cursor = "default";
+                searchResultsList.appendChild(li);
+            }
         }
-
-        function handleSearchResultClick(event) { /* ... same, ensure satObject from satelliteObjects map ... */
-            if (event.target.tagName === 'LI') {
+        function handleSearchResultClick(event) { /* ... same, ensure satObject exists ... */
+            if (event.target.tagName === 'LI' && event.target.dataset.noradId) {
                 const noradId = event.target.dataset.noradId;
                 const satObject = satelliteObjects.get(noradId);
                 if (satObject) {
-                    if (!satObject.visible) { // If filtered out, temporarily make it visible and re-apply filters later or adjust filters
-                        // Option 1: Alert user it's filtered out
-                        // alert(`${satObject.userData.name} is currently hidden by filters. Clear filters to view.`);
-                        // Option 2: Make it visible (might be confusing if filters are strict)
-                        // satObject.visible = true; // Or better, adjust filters to include it
-                        // For now, let's just select it if it's found, focus will still work if visible
-                    }
-                    selectSatellite(satObject); // This will handle highlighting and info display
-                    searchInput.value = satObject.userData.name; 
-                    searchResultsList.style.display = 'none';
+                    selectSatellite(satObject);
+                    toggleSearchOverlay(false); // Close search overlay after selection
                 }
             }
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const deltaTime = timePaused ? 0 : (new Date().getTime() - currentTime.getTime()) * timeScale;
+        // --- Animation Loop ---
+        function animateApp() {
+            requestAnimationFrame(animateApp);
+            const deltaTime = timePaused ? 0 : (new Date().getTime() - currentTime.getTime()) * timeScale; // This approach for deltaTime is a bit flawed if tab is inactive
             
             if(!timePaused){
-                currentTime = new Date(currentTime.getTime() + deltaTime);
-                updateTimeDisplay(); // Update display based on new currentTime
-                updateSatellitePositions(); // Update only visible or focused
+                // A more robust way to handle time progression
+                const simElapsedTime = (1/60) * 1000 * timeScale; // Assuming 60 FPS, time in ms
+                currentTime = new Date(currentTime.getTime() + simElapsedTime);
+                updateTimeDisplay();
+                updateSatellitePositions();
             }
 
-            earth.rotation.y += 0.00005 * (timePaused ? 0.1 : timeScale); // Slower base rotation, affected by timeScale slightly
-            if (clouds) clouds.rotation.y += 0.00008 * (timePaused ? 0.1 : timeScale);
-            if (stars) stars.rotation.y += 0.00002 * (timePaused ? 0.1 : timeScale);
+            earth.rotation.y += 0.00003 * (timePaused ? 0.1 : timeScale);
+            if (clouds) clouds.rotation.y += 0.00005 * (timePaused ? 0.1 : timeScale);
+            if (stars) stars.rotation.y += 0.00001 * (timePaused ? 0.1 : timeScale);
 
             if (targetSatelliteObject) {
                 targetSatelliteObject.getWorldPosition(cameraFocusTargetPosition);
-
                 if (isCameraAnimating) {
-                    controls.target.lerp(cameraFocusTargetPosition, 0.08); // Smoothly move orbit center
-                    
+                    controls.target.lerp(cameraFocusTargetPosition, 0.08);
                     let alt = targetSatelliteObject.userData.approxAltitudeKm || 1000;
-                    let distFactor = 0.05; // Base distance factor
-                    if (alt < 1000) distFactor = 0.02;       // LEO, closer
-                    else if (alt > 30000) distFactor = 0.15; // GEO, further
+                    let distFactor = 0.08; // Base distance factor for mobile (slightly further)
+                    if (alt < 1000) distFactor = 0.04;
+                    else if (alt > 30000) distFactor = 0.2;
                     
                     const offset = new THREE.Vector3().subVectors(camera.position, controls.target).normalize().multiplyScalar(distFactor);
                     desiredCameraPosition.addVectors(cameraFocusTargetPosition, offset);
@@ -881,18 +938,13 @@
 
                     if (camera.position.distanceTo(desiredCameraPosition) < 0.001 && controls.target.distanceTo(cameraFocusTargetPosition) < 0.001) {
                         isCameraAnimating = false;
-                        // controls.target.copy(cameraFocusTargetPosition); // Final snap
                     }
                 } else if (isFollowingSatellite) {
-                    controls.target.copy(cameraFocusTargetPosition); // Lock orbit center on satellite
-                    // Maintain camera distance while following (OrbitControls usually does this well if target is updated)
-                    // If you need fixed offset:
-                    // const fixedOffset = camera.position.clone().sub(cameraFocusTargetPosition);
-                    // camera.position.copy(cameraFocusTargetPosition).add(fixedOffset);
+                    controls.target.copy(cameraFocusTargetPosition);
                 }
             }
             
-            controls.update(); // Crucial for damping and other OrbitControls features
+            controls.update();
             renderer.render(scene, camera);
         }
     </script>
