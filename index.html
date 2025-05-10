@@ -2,1135 +2,399 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultra Wacky Chem-o-Matic 5000</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Learning Jump AI</title>
     <style>
-        :root {
-            --bg-primary: #1e1e2f; /* Dark blue-grey */
-            --bg-secondary: #27293d; /* Slightly lighter dark blue */
-            --bg-tertiary: #3b3d56;
-            --accent-primary: #ff69b4; /* Hot pink */
-            --accent-secondary: #00bcd4; /* Cyan */
-            --accent-tertiary: #ffeb3b; /* Yellow */
-            --text-primary: #f0f0f8;
-            --text-secondary: #c0c0d0;
-            --border-color: #4a4c68;
-            --success-color: #4caf50;
-            --error-color: #f44336;
-            --font-main: 'Poppins', sans-serif;
-            --font-fancy: 'Caveat', cursive;
-            --shadow-light: rgba(255, 255, 255, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.3);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px;
-            overflow-x: hidden;
-        }
-
-        #lab-bench {
-            width: 100%;
-            max-width: 1200px; /* Max width for desktop */
-            background-color: var(--bg-secondary);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow-dark);
-            overflow: hidden;
-        }
-
-        header {
-            background-color: var(--accent-primary);
-            color: var(--bg-primary);
-            padding: 15px 20px;
-            text-align: center;
-            border-bottom: 5px solid var(--accent-tertiary);
-            position: relative;
-        }
-
-        header h1 {
-            font-family: var(--font-fancy);
-            font-size: 2.5em;
-            letter-spacing: 1px;
-        }
-        
-        #mood-indicator {
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            font-size: 2em;
-            transition: transform 0.3s ease;
-        }
-        #mood-indicator.excited { transform: translateY(-50%) scale(1.5) rotate(15deg); }
-
-        #main-content {
-            display: flex;
-            flex-direction: column; /* Mobile first */
-        }
-
-        /* Chemical Shelf (Aside) */
-        #chemical-shelf {
-            padding: 15px;
-            background-color: var(--bg-tertiary);
-            border-bottom: 2px solid var(--border-color);
-        }
-        #chemical-shelf h2 {
-            color: var(--accent-secondary);
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        #chemical-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-        }
-        .chemical-card {
-            background-color: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 2px 5px var(--shadow-dark);
-            position: relative;
-            overflow: hidden;
-        }
-        .chemical-card:before { /* Shiny effect */
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
-            transform: rotate(45deg);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .chemical-card:hover:before { opacity: 1; }
-        .chemical-card:hover {
-            transform: translateY(-3px) scale(1.02);
-            border-color: var(--accent-primary);
-            box-shadow: 0 5px 15px var(--shadow-dark);
-        }
-        .chemical-card.selected {
-            border-color: var(--accent-tertiary);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px var(--accent-tertiary);
-        }
-        .chemical-card .chem-icon {
-            font-size: 2em;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .chemical-card .chem-name {
-            font-weight: 600;
-            font-size: 0.9em;
-            margin-bottom: 3px;
-        }
-        .chemical-card .chem-desc {
-            font-size: 0.75em;
-            color: var(--text-secondary);
-            display: none; /* Show on hover/focus or larger cards */
-        }
-
-        /* Experiment Zone (Main Section) */
-        #experiment-zone {
-            padding: 20px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        #beaker-and-tools {
-            display: flex;
-            flex-direction: column; /* Mobile: tools below beaker */
-            gap: 15px;
-            align-items: center; /* Center beaker module */
-        }
-
-        #beaker-module {
-            width: 100%;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #beaker-display {
-            width: 100%;
-            aspect-ratio: 3/4;
-            position: relative;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 200"><defs><linearGradient id="gradGlass" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:rgba(200,220,255,0.1);stop-opacity:1" /><stop offset="20%" style="stop-color:rgba(200,220,255,0.3);stop-opacity:1" /><stop offset="50%" style="stop-color:rgba(200,220,255,0.1);stop-opacity:1" /><stop offset="80%" style="stop-color:rgba(200,220,255,0.3);stop-opacity:1" /><stop offset="100%" style="stop-color:rgba(200,220,255,0.1);stop-opacity:1" /></linearGradient></defs><path d="M20 195 Q75 205 130 195 L140 15 Q75 0 10 15 Z" fill="url(%23gradGlass)" stroke="%23A0A0CC" stroke-width="4"/><line x1="25" y1="40" x2="40" y2="40" stroke="%23A0A0CC" stroke-width="2.5"/><line x1="25" y1="70" x2="40" y2="70" stroke="%23A0A0CC" stroke-width="2.5"/><line x1="25" y1="100" x2="40" y2="100" stroke="%23A0A0CC" stroke-width="2.5"/><line x1="25" y1="130" x2="40" y2="130" stroke="%23A0A0CC" stroke-width="2.5"/><line x1="25" y1="160" x2="40" y2="160" stroke="%23A0A0CC" stroke-width="2.5"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            margin-bottom: 10px;
-        }
-
-        #reaction-canvas {
-            position: absolute;
-            top: 5%; bottom: 5%; left: 8%; right: 8%; /* Adjust based on SVG proportions */
-            width: 84%; height: 90%;
-            /* background: rgba(255,0,0,0.1); for debug */
-        }
-        
-        #beaker-info {
-            font-size: 0.85em;
-            color: var(--text-secondary);
-            text-align: center;
-            width: 100%;
-            background: var(--bg-tertiary);
-            padding: 5px;
-            border-radius: 5px;
-        }
-        #beaker-info span { margin: 0 5px; }
-
-
-        #tools-panel {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 10px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            width: fit-content; /* Shrink to content */
-            margin: 0 auto; /* Center it */
-        }
-        .tool-btn {
-            background-color: var(--accent-secondary);
-            color: var(--bg-primary);
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 1.2em; /* For emojis */
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .tool-btn:hover {
-            background-color: var(--accent-primary);
-            transform: scale(1.1);
-        }
-        .tool-btn.active {
-            background-color: var(--accent-tertiary);
-            color: var(--bg-primary);
-            box-shadow: 0 0 10px var(--accent-tertiary);
-        }
-
-        #control-panel {
-            background-color: var(--bg-tertiary);
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
-        #selection-info {
-            font-size: 0.9em;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-            min-height: 20px;
-        }
-        #selection-info .chem-name-tag {
-            background-color: var(--bg-secondary);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        .action-btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--bg-primary);
-            width: 100%;
-            max-width: 250px;
-        }
-        #mix-btn { background-color: var(--success-color); }
-        #mix-btn:hover { background-color: #3e8e41; }
-        #mix-btn:disabled { background-color: #555; color: #888; cursor: not-allowed; }
-        #random-mix-btn { background-color: var(--accent-secondary); }
-        #random-mix-btn:hover { filter: brightness(1.2); }
-        #clear-btn { background-color: var(--error-color); }
-        #clear-btn:hover { background-color: #c0392b; }
-
-        #reaction-log-area {
-            background-color: var(--bg-tertiary);
-            padding: 15px;
-            border-radius: 10px;
-        }
-        #reaction-log-area h2 {
-            color: var(--accent-tertiary);
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        #reaction-output {
-            min-height: 40px;
-            padding: 10px;
-            background-color: var(--bg-secondary);
-            border-radius: 8px;
-            text-align: center;
-            font-style: italic;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-        #discovered-reactions-list {
-            list-style: none;
-            max-height: 150px;
-            overflow-y: auto;
-            padding-right: 5px; /* For scrollbar */
-        }
-        #discovered-reactions-list li {
-            background-color: var(--bg-secondary);
-            padding: 8px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            border-left: 3px solid var(--accent-secondary);
-        }
-        #discovered-reactions-list li:nth-child(odd) { border-left-color: var(--accent-primary); }
-
-
-        footer {
-            text-align: center;
-            padding: 15px;
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            margin-top: auto; /* Pushes to bottom if content is short */
-        }
-
-        /* Media Queries for larger screens */
-        @media (min-width: 768px) {
-            #main-content {
-                flex-direction: row;
-            }
-            #chemical-shelf {
-                width: 300px; /* Fixed width for shelf */
-                flex-shrink: 0;
-                border-right: 2px solid var(--border-color);
-                border-bottom: none;
-                max-height: calc(100vh - 150px); /* Adjust based on header/footer */
-                overflow-y: auto;
-            }
-            #chemical-list {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Smaller cards in shelf */
-            }
-             .chemical-card .chem-desc { display: block; margin-top: 5px;}
-
-            #experiment-zone {
-                gap: 25px;
-            }
-            #beaker-and-tools {
-                flex-direction: row; /* Tools beside beaker */
-                align-items: flex-start;
-                gap: 20px;
-            }
-            #beaker-module {
-                max-width: 350px; /* Slightly larger beaker on desktop */
-            }
-            #tools-panel {
-                flex-direction: column; /* Stack tools vertically */
-                width: auto;
-                margin: 0;
-            }
-            .tool-btn { font-size: 1em; padding: 8px 12px; }
-             #control-panel {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: space-between;
-            }
-            .action-btn { width: auto; max-width: none; }
-            #selection-info { width: 100%; text-align: center; order: -1; /* Put it on top */}
-        }
-         @media (min-width: 1000px) {
-            #chemical-shelf { width: 350px; }
-            #chemical-list { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));}
-         }
-
-        /* Custom Scrollbar for Webkit */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius: 10px;}
-        ::-webkit-scrollbar-thumb { background: var(--accent-secondary); border-radius: 10px;}
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
-
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f0f0; margin-top: 20px; }
+        .container { display: flex; flex-direction: row; align-items: flex-start; gap: 20px; }
+        canvas { border: 1px solid black; background-color: #e0e0e0; }
+        #gameCanvas { background-color: #d0e0f0; }
+        #aiVisionCanvas { background-color: #f0f0d0; }
+        .stats { border: 1px solid #ccc; padding: 10px; background-color: white; min-width: 200px; }
+        .stats p { margin: 5px 0; }
+        h1, h2 { text-align: center; }
     </style>
 </head>
 <body>
-    <div id="lab-bench">
-        <header>
-            <h1>Ultra Wacky Chem-o-Matic 5000</h1>
-            <div id="mood-indicator">🧪</div>
-        </header>
+    <h1>Self-Learning Jump AI</h1>
 
-        <main id="main-content">
-            <aside id="chemical-shelf">
-                <h2>Chemicals</h2>
-                <div id="chemical-list">
-                    <!-- Chemical cards generated by JS -->
-                </div>
-            </aside>
-
-            <section id="experiment-zone">
-                <div id="beaker-and-tools">
-                    <div id="beaker-module">
-                        <div id="beaker-display">
-                            <canvas id="reaction-canvas"></canvas>
-                        </div>
-                        <div id="beaker-info">
-                            <span>Contents: <span id="beaker-contents-name">Empty</span></span>
-                            <span>Temp: <span id="beaker-temp">20°C</span></span>
-                        </div>
-                    </div>
-                    <div id="tools-panel">
-                        <button id="tool-heat" class="tool-btn" title="Heat Up">🔥</button>
-                        <button id="tool-cool" class="tool-btn" title="Cool Down">❄️</button>
-                        <button id="tool-stir" class="tool-btn" title="Stir Contents">🌀</button>
-                    </div>
-                </div>
-
-                <div id="control-panel">
-                    <div id="selection-info">
-                        Selected: <span id="chem1-selected-tag" class="chem-name-tag">---</span> + <span id="chem2-selected-tag" class="chem-name-tag">---</span>
-                    </div>
-                    <button id="mix-btn" class="action-btn" disabled>Mix!</button>
-                    <button id="random-mix-btn" class="action-btn">🎲 Surprise Mix!</button>
-                    <button id="clear-btn" class="action-btn">🗑️ Clear All</button>
-                </div>
-
-                <div id="reaction-log-area">
-                    <h2>Lab Notes</h2>
-                    <div id="reaction-output">
-                        <p id="reaction-message">Select two chemicals or try a Surprise Mix!</p>
-                    </div>
-                    <ul id="discovered-reactions-list">
-                        <!-- Logged reactions here -->
-                    </ul>
-                </div>
-            </section>
-        </main>
-
-        <footer>
-            <p>© <span id="current-year"></span> Wacky Labs Inc. - Handle with Giggles!</p>
-        </footer>
+    <div class="container">
+        <div>
+            <h2>Game World</h2>
+            <canvas id="gameCanvas" width="600" height="300"></canvas>
+        </div>
+        <div>
+            <h2>AI "Vision" (Discretized State)</h2>
+            <canvas id="aiVisionCanvas" width="150" height="150"></canvas>
+            <div class="stats">
+                <h2>Stats</h2>
+                <p>Episode: <span id="episode">0</span></p>
+                <p>Cookies (Successes): <span id="cookies">0</span></p>
+                <p>Punishments (Fails): <span id="punishments">0</span></p>
+                <p>Epsilon (Exploration): <span id="epsilon">1.00</span></p>
+                <p>Last Action: <span id="lastAction">-</span></p>
+                <p>Learning Rate (Alpha): <span id="alpha">0.1</span></p>
+                <p>Discount (Gamma): <span id="gamma">0.9</span></p>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- DOM Elements ---
-        const chemicalListDiv = document.getElementById('chemical-list');
-        const mixBtn = document.getElementById('mix-btn');
-        const randomMixBtn = document.getElementById('random-mix-btn');
-        const clearBtn = document.getElementById('clear-btn');
-        const reactionMessageEl = document.getElementById('reaction-message');
-        const chem1SelectedTag = document.getElementById('chem1-selected-tag');
-        const chem2SelectedTag = document.getElementById('chem2-selected-tag');
-        const moodIndicator = document.getElementById('mood-indicator');
-        
-        const beakerContentsNameEl = document.getElementById('beaker-contents-name');
-        const beakerTempEl = document.getElementById('beaker-temp');
-        
-        const heatBtn = document.getElementById('tool-heat');
-        const coolBtn = document.getElementById('tool-cool');
-        const stirBtn = document.getElementById('tool-stir');
+        // --- Game Elements ---
+        const gameCanvas = document.getElementById('gameCanvas');
+        const gameCtx = gameCanvas.getContext('2d');
+        const aiVisionCanvas = document.getElementById('aiVisionCanvas');
+        const aiVisionCtx = aiVisionCanvas.getContext('2d');
 
-        const discoveredReactionsListEl = document.getElementById('discovered-reactions-list');
+        // --- DOM Elements for Stats ---
+        const episodeEl = document.getElementById('episode');
+        const cookiesEl = document.getElementById('cookies');
+        const punishmentsEl = document.getElementById('punishments');
+        const epsilonEl = document.getElementById('epsilon');
+        const lastActionEl = document.getElementById('lastAction');
+        const alphaEl = document.getElementById('alpha');
+        const gammaEl = document.getElementById('gamma');
 
-        const canvas = document.getElementById('reaction-canvas');
-        const ctx = canvas.getContext('2d');
-        let canvasWidth, canvasHeight;
+        // --- Game Constants ---
+        const GRAVITY = 0.5;
+        const PLAYER_JUMP_FORCE = -10; // Negative is up
+        const PLAYER_MOVE_SPEED = 3;
+        const GROUND_Y = gameCanvas.height - 20;
+        const OBSTACLE_WIDTH = 30;
+        const OBSTACLE_HEIGHT = 60;
+        const GOAL_LINE_X = 500;
+        const GOAL_LINE_WIDTH = 5;
+        const MAX_STEPS_PER_EPISODE = 500; // To prevent infinite loops if stuck
 
-        // --- State Variables ---
-        let selectedChemicals = [];
-        let animationFrameId = null;
-        let particles = [];
-        let beakerState = {
-            name: "Empty",
-            baseColor: 'rgba(0,0,0,0)', // Transparent when empty
-            displayColor: 'rgba(0,0,0,0)',
-            level: 0, // 0 to 1
-            targetLevel: 0,
-            temperature: 20, // Celsius
-            viscosity: 1, // 1 = normal, higher = thicker
-            isFrozen: false,
-            isBoiling: false,
-            isStirring: false,
-            stirAngle: 0,
-            customEffects: [], // e.g., 'glowing', 'shadowy'
+        // --- Player Object ---
+        let player = {
+            x: 50,
+            y: GROUND_Y - 30, // Start on ground
+            width: 20,
+            height: 30,
+            vy: 0, // Vertical velocity
+            onGround: true
         };
-        let discoveredReactions = JSON.parse(localStorage.getItem('discoveredReactions_v2')) || [];
 
-        // --- Constants & Definitions ---
-        const MAX_TEMP = 150;
-        const MIN_TEMP = -50;
-        const FREEZING_POINT = 0;
-        const BOILING_POINT = 100;
+        // --- Obstacle Object ---
+        let obstacle = {
+            x: 300,
+            y: GROUND_Y - OBSTACLE_HEIGHT,
+            width: OBSTACLE_WIDTH,
+            height: OBSTACLE_HEIGHT
+        };
+        
+        // --- AI Q-Learning Parameters ---
+        let qTable = {}; // { "state_string": [q_action0, q_action1, q_action2, q_action3] }
+        const LEARNING_RATE = 0.1; // Alpha
+        const DISCOUNT_FACTOR = 0.9; // Gamma
+        let epsilon = 1.0; // Exploration rate
+        const EPSILON_DECAY = 0.999; // Slower decay for more exploration
+        const MIN_EPSILON = 0.01;
 
-        const CHEMICALS_DATA = [
-            { id: 'giggle', name: 'Giggle Gas', color: '#FF69B4', icon: '😂', desc: "Pure concentrated mirth.", tags: ['gas', 'light'] },
-            { id: 'slime', name: 'Ecto-Slime', color: '#32CD32', icon: '🦠', desc: "Surprisingly bouncy.", tags: ['gooey', 'viscous'] },
-            { id: 'boom', name: 'Boom-Powder', color: '#FF4500', icon: '💥', desc: "Volatile. Very.", tags: ['explosive', 'hot'] },
-            { id: 'sparkle', name: 'Pixie Dust', color: '#8A2BE2', icon: '✨', desc: "Fabulously glittery.", tags: ['magic', 'light'] },
-            { id: 'stink', name: 'Funk Cloud', color: '#8B4513', icon: '💩', desc: "Weaponized odor.", tags: ['gas', 'noxious'] },
-            { id: 'shrink', name: 'Micro-Serum', color: '#00CED1', icon: '🔬', desc: "Makes things tiny.", tags: ['transforming', 'cold'] },
-            { id: 'grow', name: 'Mega-Bloom', color: '#FFD700', icon: '🌟', desc: "For BIG results.", tags: ['transforming', 'warm'] },
-            { id: 'zap', name: 'Static Charge', color: '#F0E68C', icon: '⚡', desc: "Positively shocking!", tags: ['electric', 'energy'] },
-            { id: 'chill', name: 'Cryo-Mist', color: '#ADD8E6', icon: '❄️', desc: "Instant frostbite.", tags: ['cold', 'ice'] },
-            { id: 'gloom', name: 'Shadow Essence', color: '#483D8B', icon: '💀', desc: "Distilled despair.", tags: ['dark', 'magic'] },
-            { id: 'glow', name: 'Lumin-Gel', color: '#7FFF00', icon: '💡', desc: "Radiates soft light.", tags: ['light', 'glowing', 'gooey'] },
-            { id: 'void', name: 'Null Matter', color: '#111111', icon: '⚫', desc: "What is this even?", tags: ['exotic', 'unstable'] }
+        // Actions: 0: Do Nothing, 1: Move Forward, 2: Jump, 3: Move Forward + Jump
+        const ACTIONS = [
+            { move: false, jump: false, name: "Nothing" },
+            { move: true,  jump: false, name: "Move" },
+            { move: false, jump: true,  name: "Jump" },
+            { move: true,  jump: true,  name: "Move+Jump" }
         ];
 
+        // --- Game State Variables ---
+        let cookies = 0;
+        let punishments = 0;
+        let episodeCount = 0;
+        let currentSteps = 0;
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            populateChemicals();
-            resizeCanvas();
-            updateBeakerInfo();
-            loadDiscoveredReactions();
-            document.getElementById('current-year').textContent = new Date().getFullYear();
-            startAnimationLoop(); // Keep animation loop always running for temp effects etc.
-        });
-        window.addEventListener('resize', resizeCanvas);
+        // --- Helper: Get Discretized State ---
+        // This function converts the continuous game state into a discrete representation
+        // that the AI can use as a key in the Q-table.
+        // We discretize distance to obstacle, player's height relative to obstacle top, and if on ground.
+        function getDiscretizedState() {
+            const distToObstacleX = Math.floor((obstacle.x - (player.x + player.width)) / 40); // Buckets of 40px
+            const playerTopY = player.y;
+            const obstacleTopY = obstacle.y;
+            const heightDiffToObstacleTop = Math.floor((playerTopY - obstacleTopY) / 30); // Buckets of 30px
+            const playerIsBeforeObstacle = (player.x + player.width) < obstacle.x;
+            const playerIsOverObstacle = (player.x < obstacle.x + obstacle.width) && ((player.x + player.width) > obstacle.x);
+            const playerHasPassedObstacle = player.x > (obstacle.x + obstacle.width);
 
-        // --- UI & Chemical Management ---
-        function populateChemicals() {
-            chemicalListDiv.innerHTML = ''; // Clear existing
-            CHEMICALS_DATA.forEach(chem => {
-                const card = document.createElement('div');
-                card.classList.add('chemical-card');
-                card.dataset.id = chem.id;
-                card.style.setProperty('--chem-color-border', chem.color); // For potential future use
+            // Simplified AI vision state:
+            // 0: Far before obstacle
+            // 1: Near before obstacle
+            // 2: Directly under/level with obstacle (horizontally)
+            // 3: Past obstacle
+            let horizontalPosCategory;
+            if (distToObstacleX > 2) horizontalPosCategory = 0; // Far
+            else if (distToObstacleX >= 0 && playerIsBeforeObstacle) horizontalPosCategory = 1; // Near
+            else if (playerIsOverObstacle) horizontalPosCategory = 2; // Under/Over
+            else horizontalPosCategory = 3; // Past
 
-                const icon = document.createElement('span');
-                icon.classList.add('chem-icon');
-                icon.textContent = chem.icon;
-                
-                const name = document.createElement('div');
-                name.classList.add('chem-name');
-                name.textContent = chem.name;
 
-                const desc = document.createElement('div');
-                desc.classList.add('chem-desc');
-                desc.textContent = chem.desc;
+            // Height categories relative to obstacle top:
+            // 0: Significantly below obstacle top
+            // 1: Near or at obstacle top
+            // 2: Significantly above obstacle top
+            let verticalPosCategory;
+            if (heightDiffToObstacleTop > 1) verticalPosCategory = 0; // Below
+            else if (heightDiffToObstacleTop >= -1) verticalPosCategory = 1; // Near/Level
+            else verticalPosCategory = 2; // Above
+            
+            // Is player approaching obstacle or moving away from it (if past)
+            // This can help differentiate states when player is past the obstacle.
+            const playerVelXSign = Math.sign(PLAYER_MOVE_SPEED); // Assuming constant forward speed when moving.
 
-                card.appendChild(icon);
-                card.appendChild(name);
-                card.appendChild(desc);
-
-                card.addEventListener('click', () => toggleChemicalSelection(chem, card));
-                chemicalListDiv.appendChild(card);
-            });
+            return `${horizontalPosCategory}_${verticalPosCategory}_${player.onGround}_${playerVelXSign}`;
         }
 
-        function toggleChemicalSelection(chemical, cardElement) {
-            const index = selectedChemicals.findIndex(sc => sc.id === chemical.id);
-            if (index > -1) {
-                selectedChemicals.splice(index, 1);
-                cardElement.classList.remove('selected');
+        // --- Helper: Choose Action (Epsilon-Greedy) ---
+        function chooseAction(state) {
+            if (!qTable[state]) {
+                qTable[state] = Array(ACTIONS.length).fill(0); // Initialize Q-values for new state
+            }
+
+            if (Math.random() < epsilon) {
+                return Math.floor(Math.random() * ACTIONS.length); // Explore: random action
             } else {
-                if (selectedChemicals.length < 2) {
-                    selectedChemicals.push(chemical);
-                    cardElement.classList.add('selected');
-                } else {
-                    // Simple visual feedback: briefly shake the message area
-                    reactionMessageEl.parentElement.style.transition = 'transform 0.1s ease-in-out';
-                    reactionMessageEl.parentElement.style.transform = 'translateX(5px)';
-                    setTimeout(() => reactionMessageEl.parentElement.style.transform = 'translateX(-5px)', 100);
-                    setTimeout(() => reactionMessageEl.parentElement.style.transform = 'translateX(0px)', 200);
-                    reactionMessageEl.textContent = "Max 2 chemicals! Clear or unselect one.";
-                    setTimeout(updateReactionMessageBasedOnSelection, 2000);
+                // Exploit: choose best action
+                const qValues = qTable[state];
+                return qValues.indexOf(Math.max(...qValues));
+            }
+        }
+
+        // --- Helper: Update Q-Table ---
+        function updateQTable(prevState, action, reward, nextState) {
+            if (!qTable[prevState]) { // Should already exist from chooseAction
+                qTable[prevState] = Array(ACTIONS.length).fill(0);
+            }
+            if (!qTable[nextState]) { // Initialize if next state is new
+                qTable[nextState] = Array(ACTIONS.length).fill(0);
+            }
+
+            const oldQValue = qTable[prevState][action];
+            const maxFutureQ = Math.max(...qTable[nextState]);
+            const newQValue = oldQValue + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - oldQValue);
+            qTable[prevState][action] = newQValue;
+        }
+
+        // --- Game Reset ---
+        function resetGame(isSuccess) {
+            player.x = 50;
+            player.y = GROUND_Y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+            currentSteps = 0;
+            episodeCount++;
+
+            // Update stats
+            episodeEl.textContent = episodeCount;
+            cookiesEl.textContent = cookies;
+            punishmentsEl.textContent = punishments;
+
+            // Decay epsilon
+            if (epsilon > MIN_EPSILON) {
+                epsilon *= EPSILON_DECAY;
+            }
+            epsilonEl.textContent = epsilon.toFixed(3);
+        }
+
+        // --- Collision Detection ---
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        // --- Game Update Logic (called by AI loop) ---
+        function updateGame(actionIndex) {
+            const action = ACTIONS[actionIndex];
+            lastActionEl.textContent = action.name;
+
+            let reward = -0.1; // Small penalty for each step to encourage speed
+
+            // Apply actions
+            if (action.move) {
+                player.x += PLAYER_MOVE_SPEED;
+            }
+            if (action.jump && player.onGround) {
+                player.vy = PLAYER_JUMP_FORCE;
+                player.onGround = false;
+            }
+
+            // Physics
+            player.vy += GRAVITY;
+            player.y += player.vy;
+
+            // Ground collision
+            if (player.y + player.height >= GROUND_Y) {
+                player.y = GROUND_Y - player.height;
+                player.vy = 0;
+                player.onGround = true;
+            }
+
+            // Boundary checks (simple respawn if out of left/right bounds)
+            if (player.x + player.width < 0 || player.x > gameCanvas.width) {
+                reward = -10; // Severe punishment for going off screen
+                punishments++;
+                return { reward, done: true };
+            }
+            
+            // Obstacle collision
+            if (checkCollision(player, obstacle)) {
+                reward = -10; // Punishment for hitting obstacle
+                punishments++;
+                return { reward, done: true };
+            }
+
+            // Goal check
+            if (player.x + player.width > GOAL_LINE_X && player.x < GOAL_LINE_X + GOAL_LINE_WIDTH) {
+                if (player.y + player.height > obstacle.y) { // Must be on ground or slightly above, not falling from sky
+                     reward = 10; // Cookie!
+                     cookies++;
+                     return { reward, done: true };
                 }
             }
-            updateSelectionInfo();
-            mixBtn.disabled = selectedChemicals.length !== 2;
-        }
-        
-        function updateSelectionInfo() {
-            chem1SelectedTag.textContent = selectedChemicals[0] ? selectedChemicals[0].name : '---';
-            chem1SelectedTag.style.backgroundColor = selectedChemicals[0] ? selectedChemicals[0].color : 'var(--bg-secondary)';
-            chem1SelectedTag.style.color = selectedChemicals[0] ? getContrastColor(selectedChemicals[0].color) : 'var(--text-secondary)';
-
-            chem2SelectedTag.textContent = selectedChemicals[1] ? selectedChemicals[1].name : '---';
-            chem2SelectedTag.style.backgroundColor = selectedChemicals[1] ? selectedChemicals[1].color : 'var(--bg-secondary)';
-            chem2SelectedTag.style.color = selectedChemicals[1] ? getContrastColor(selectedChemicals[1].color) : 'var(--text-secondary)';
-            updateReactionMessageBasedOnSelection();
-        }
-
-        function updateReactionMessageBasedOnSelection() {
-            if (selectedChemicals.length === 0) reactionMessageEl.textContent = "Select two chemicals or try a Surprise Mix!";
-            else if (selectedChemicals.length === 1) reactionMessageEl.textContent = "Select one more chemical...";
-            else if (selectedChemicals.length === 2) reactionMessageEl.textContent = "Ready to Mix!";
-        }
-
-        function getContrastColor(hexColor) {
-            if (!hexColor || hexColor.length < 7) return 'var(--text-primary)'; // Default if invalid
-            const r = parseInt(hexColor.slice(1, 3), 16);
-            const g = parseInt(hexColor.slice(3, 5), 16);
-            const b = parseInt(hexColor.slice(5, 7), 16);
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            return brightness > 150 ? 'var(--bg-primary)' : 'var(--text-primary)';
-        }
-
-        function clearSelectionsAndBeaker() {
-            selectedChemicals = [];
-            document.querySelectorAll('.chemical-card.selected').forEach(card => card.classList.remove('selected'));
-            updateSelectionInfo();
-            mixBtn.disabled = true;
             
-            beakerState = {
-                name: "Empty", baseColor: 'rgba(0,0,0,0)', displayColor: 'rgba(0,0,0,0)',
-                level: 0, targetLevel: 0, temperature: 20, viscosity: 1,
-                isFrozen: false, isBoiling: false, isStirring: false, stirAngle: 0, customEffects: []
-            };
-            particles = [];
-            reactionMessageEl.textContent = "Beaker cleared! Ready for science!";
-            updateBeakerInfo();
-            setMood('🧪'); // Neutral
-        }
-        clearBtn.addEventListener('click', clearSelectionsAndBeaker);
-
-
-        // --- Canvas & Animation ---
-        function resizeCanvas() {
-            canvas.width = canvas.getBoundingClientRect().width;
-            canvas.height = canvas.getBoundingClientRect().height;
-            canvasWidth = canvas.width;
-            canvasHeight = canvas.height;
-        }
-
-        function startAnimationLoop() {
-            if (!animationFrameId) {
-                animationFrameId = requestAnimationFrame(gameLoop);
+            // Timeout
+            currentSteps++;
+            if (currentSteps >= MAX_STEPS_PER_EPISODE) {
+                reward = -5; // Punishment for taking too long
+                punishments++;
+                return { reward, done: true };
             }
-        }
-        function stopAnimationLoop() {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
+
+            return { reward, done: false };
         }
 
-        function gameLoop(timestamp) {
-            updateBeakerState(timestamp);
-            updateParticles(timestamp);
-            
-            drawBeaker();
-            drawParticles();
-            
-            animationFrameId = requestAnimationFrame(gameLoop);
+        // --- Drawing Functions ---
+        function drawGame() {
+            // Clear canvas
+            gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+            // Draw ground
+            gameCtx.fillStyle = '#70b070'; // Greenish
+            gameCtx.fillRect(0, GROUND_Y, gameCanvas.width, gameCanvas.height - GROUND_Y);
+
+            // Draw player
+            gameCtx.fillStyle = 'blue';
+            gameCtx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw obstacle
+            gameCtx.fillStyle = 'red';
+            gameCtx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+            // Draw goal line
+            gameCtx.fillStyle = 'green';
+            gameCtx.fillRect(GOAL_LINE_X, 0, GOAL_LINE_WIDTH, gameCanvas.height);
         }
 
-        function updateBeakerState(timestamp) {
-            // Temperature effects
-            if (beakerState.temperature >= BOILING_POINT && beakerState.level > 0 && !beakerState.isFrozen) {
-                beakerState.isBoiling = true;
-                if (Math.random() < 0.2) createSteamParticle();
+        function drawAiVision() {
+            aiVisionCtx.clearRect(0, 0, aiVisionCanvas.width, aiVisionCanvas.height);
+            
+            const stateStr = getDiscretizedState(); // Use the same state representation
+            const parts = stateStr.split('_'); // [horizontalPos, verticalPos, onGround, velXSign]
+
+            const cellWidth = aiVisionCanvas.width / 4; // For horizontal categories
+            const cellHeight = aiVisionCanvas.height / 3; // For vertical categories
+
+            // --- Visualize Horizontal Position Category ---
+            // 0: Far before, 1: Near before, 2: Under/Over, 3: Past
+            const horizCat = parseInt(parts[0]);
+            aiVisionCtx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Red tint for obstacle area approximation
+            if (horizCat === 0) aiVisionCtx.fillRect(0, 0, cellWidth, aiVisionCanvas.height);
+            else if (horizCat === 1) aiVisionCtx.fillRect(cellWidth, 0, cellWidth, aiVisionCanvas.height);
+            else if (horizCat === 2) aiVisionCtx.fillRect(2 * cellWidth, 0, cellWidth, aiVisionCanvas.height);
+            else aiVisionCtx.fillRect(3 * cellWidth, 0, cellWidth, aiVisionCanvas.height);
+
+            // --- Visualize Vertical Position Category ---
+            // 0: Below, 1: Near/Level, 2: Above (relative to obstacle top)
+            const vertCat = parseInt(parts[1]);
+            aiVisionCtx.fillStyle = 'rgba(0, 0, 255, 0.3)'; // Blue tint for player height approximation
+            if (vertCat === 0) aiVisionCtx.fillRect(0, 2 * cellHeight, aiVisionCanvas.width, cellHeight); // Player is low
+            else if (vertCat === 1) aiVisionCtx.fillRect(0, cellHeight, aiVisionCanvas.width, cellHeight); // Player is mid
+            else aiVisionCtx.fillRect(0, 0, aiVisionCanvas.width, cellHeight); // Player is high
+
+            // --- Visualize On Ground ---
+            const onGround = parts[2] === 'true';
+            aiVisionCtx.fillStyle = onGround ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 255, 0, 0.5)'; // Green if on ground, Yellow if in air
+            aiVisionCtx.fillRect(aiVisionCanvas.width - 20, aiVisionCanvas.height - 20, 20, 20); // Small indicator box
+
+            // Draw grid lines for clarity
+            aiVisionCtx.strokeStyle = '#aaa';
+            aiVisionCtx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) { // Horizontal lines
+                aiVisionCtx.beginPath();
+                aiVisionCtx.moveTo(i * cellWidth, 0);
+                aiVisionCtx.lineTo(i * cellWidth, aiVisionCanvas.height);
+                aiVisionCtx.stroke();
+            }
+            for (let i = 1; i < 3; i++) { // Vertical lines
+                aiVisionCtx.beginPath();
+                aiVisionCtx.moveTo(0, i * cellHeight);
+                aiVisionCtx.lineTo(aiVisionCanvas.width, i * cellHeight);
+                aiVisionCtx.stroke();
+            }
+
+            // Simple text of state
+            aiVisionCtx.fillStyle = 'black';
+            aiVisionCtx.font = '10px Arial';
+            aiVisionCtx.textAlign = 'center';
+            aiVisionCtx.fillText(stateStr, aiVisionCanvas.width / 2, aiVisionCanvas.height - 5);
+        }
+
+
+        // --- Main AI Loop ---
+        let previousState = null;
+        let previousAction = null;
+
+        function aiLoop() {
+            const currentState = getDiscretizedState();
+            
+            // If there was a previous state, update Q-table based on the outcome of that action
+            // This is deferred because we need the 'reward' and 'nextState' (which is 'currentState' now)
+            if (previousState !== null && previousAction !== null) {
+                // The reward calculation happens in updateGame, which was called in the *previous* iteration
+                // So, the 'gameOutcome.reward' we got before is the reward for 'previousState' and 'previousAction'
+                // This is a bit tricky: we update based on the *result* of the *previous* action.
+                // For the very first step of an episode, previousState will be null.
+                // The 'reward' is associated with transitioning FROM previousState TO currentState.
+                // Let's re-think: The updateQTable should happen AFTER an action is taken and outcome observed.
+            }
+
+            const actionToTake = chooseAction(currentState);
+            const gameOutcome = updateGame(actionToTake); // This applies the action and returns reward & done status
+
+            const nextStateAfterAction = getDiscretizedState(); // State after action is taken
+
+            // Now update Q-table with (currentState, actionToTake, gameOutcome.reward, nextStateAfterAction)
+            updateQTable(currentState, actionToTake, gameOutcome.reward, nextStateAfterAction);
+
+            // Drawing
+            drawGame();
+            drawAiVision();
+
+            if (gameOutcome.done) {
+                resetGame(gameOutcome.reward > 0); // Pass if it was a success (cookie)
+                previousState = null; // Reset for new episode
+                previousAction = null;
             } else {
-                beakerState.isBoiling = false;
-            }
-
-            if (beakerState.temperature <= FREEZING_POINT && beakerState.level > 0) {
-                beakerState.isFrozen = true;
-                beakerState.viscosity = 100; // Essentially frozen
-            } else if (beakerState.isFrozen && beakerState.temperature > FREEZING_POINT) {
-                beakerState.isFrozen = false; // Thawing
-                beakerState.viscosity = 5; // Slushy
-            } else if (!beakerState.isFrozen) {
-                 // Viscosity based on temp (simple model)
-                if (beakerState.temperature < 10) beakerState.viscosity = 1 + (10 - beakerState.temperature) * 0.3;
-                else if (beakerState.temperature > 40) beakerState.viscosity = Math.max(0.5, 1 - (beakerState.temperature - 40) * 0.02);
-                else beakerState.viscosity = 1;
-            }
-
-            // Liquid level animation
-            if (Math.abs(beakerState.level - beakerState.targetLevel) > 0.005) {
-                beakerState.level += (beakerState.targetLevel - beakerState.level) * 0.05;
-            } else {
-                beakerState.level = beakerState.targetLevel;
-            }
-            
-            // Stirring
-            if (beakerState.isStirring) {
-                beakerState.stirAngle += 0.1 / beakerState.viscosity; // Slower stir in thick liquid
-            }
-
-            // Update display color (e.g. for glowing effect)
-            if (beakerState.customEffects.includes('glowing') && beakerState.level > 0) {
-                const glowFactor = 0.7 + Math.sin(timestamp / 300) * 0.3; // Pulsing glow
-                const baseRgb = colorToRgb(beakerState.baseColor);
-                if (baseRgb) {
-                    beakerState.displayColor = `rgba(${Math.min(255, baseRgb.r * glowFactor + 50)}, ${Math.min(255, baseRgb.g * glowFactor + 50)}, ${Math.min(255, baseRgb.b * glowFactor + 50)}, ${baseRgb.a})`;
-                }
-            } else {
-                beakerState.displayColor = beakerState.baseColor;
-            }
-        }
-        
-        function drawBeaker() {
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-            if (beakerState.level <= 0) return;
-
-            const liquidHeight = canvasHeight * beakerState.level;
-            const liquidY = canvasHeight - liquidHeight;
-
-            ctx.fillStyle = beakerState.displayColor;
-
-            // Main liquid body
-            ctx.beginPath();
-            if (beakerState.isStirring && !beakerState.isFrozen) { // Vortex effect
-                const vortexDepth = Math.min(liquidHeight * 0.4, 30 / beakerState.viscosity);
-                ctx.moveTo(0, liquidY + Math.sin(beakerState.stirAngle) * 3);
-                ctx.quadraticCurveTo(canvasWidth / 2, liquidY + vortexDepth + Math.sin(beakerState.stirAngle + Math.PI/2) * 5, canvasWidth, liquidY + Math.cos(beakerState.stirAngle) * 3);
-            } else { // Normal surface or wavy
-                ctx.moveTo(0, liquidY);
-                for (let x = 0; x <= canvasWidth; x += 10) {
-                    const yOffset = beakerState.isBoiling ? (Math.random() - 0.5) * 8 : Math.sin((x + Date.now() * 0.003) * 0.1 / beakerState.viscosity) * (3 / beakerState.viscosity);
-                    ctx.lineTo(x, liquidY + yOffset);
-                }
-                ctx.lineTo(canvasWidth, liquidY);
-            }
-            ctx.lineTo(canvasWidth, canvasHeight);
-            ctx.lineTo(0, canvasHeight);
-            ctx.closePath();
-            ctx.fill();
-
-            // Frozen effect overlay
-            if (beakerState.isFrozen) {
-                ctx.fillStyle = 'rgba(170, 200, 255, 0.5)'; // Icy blue overlay
-                ctx.fill(); // Re-fill with icy color
-                // Draw some frost/crack lines
-                ctx.strokeStyle = 'rgba(220, 240, 255, 0.7)';
-                ctx.lineWidth = 1.5;
-                for(let i=0; i<5; i++){
-                    ctx.beginPath();
-                    ctx.moveTo(Math.random() * canvasWidth, liquidY + Math.random() * liquidHeight * 0.2);
-                    ctx.lineTo(Math.random() * canvasWidth, liquidY + liquidHeight - Math.random() * liquidHeight * 0.2);
-                    ctx.stroke();
-                }
-            }
-            
-            // Shadowy effect
-            if (beakerState.customEffects.includes('shadowy')) {
-                ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                const numWisps = 5;
-                for (let i = 0; i < numWisps; i++) {
-                    ctx.beginPath();
-                    const startX = (i / numWisps) * canvasWidth + (Math.random() - 0.5) * 20;
-                    const startY = liquidY + liquidHeight * 0.8 + (Math.random() - 0.5) * liquidHeight * 0.2;
-                    const endY = liquidY + (Math.random() * 0.3) * liquidHeight;
-                    const controlX1 = startX + (Math.random() - 0.5) * 40;
-                    const controlY1 = startY - liquidHeight * 0.3 * Math.random();
-                    const controlX2 = startX + (Math.random() - 0.5) * 30;
-                    const controlY2 = endY + liquidHeight * 0.3 * Math.random();
-                    ctx.moveTo(startX, startY);
-                    ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, startX + (Math.random() - 0.5) * 10, endY);
-                    ctx.globalAlpha = 0.3 + Math.random() * 0.3;
-                    ctx.fill();
-                    ctx.globalAlpha = 1.0;
-                }
+                previousState = currentState; // Store for next iteration's Q-update (though we update immediately now)
+                previousAction = actionToTake;
             }
         }
 
-        function updateBeakerInfo() {
-            beakerContentsNameEl.textContent = beakerState.name;
-            beakerTempEl.textContent = `${beakerState.temperature.toFixed(0)}°C`;
+        // --- Initialize and Start ---
+        function init() {
+            alphaEl.textContent = LEARNING_RATE;
+            gammaEl.textContent = DISCOUNT_FACTOR;
+            resetGame(false); // Initial reset
+            drawGame();
+            drawAiVision();
+            setInterval(aiLoop, 200); // Slow down for visualization (200ms per step)
         }
 
-        // --- Particle System ---
-        class Particle {
-            constructor(x, y, vx, vy, radius, color, life, type = 'circle', trailLength = 0) {
-                this.x = x; this.y = y;
-                this.vx = vx; this.vy = vy;
-                this.radius = radius; this.color = color;
-                this.life = life; this.initialLife = life;
-                this.type = type; // 'circle', 'square', 'text', 'image' (image not implemented here)
-                this.char = '*'; // For 'text' type
-                this.rotation = 0;
-                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
-                this.trailLength = trailLength;
-                this.history = [];
-                this.alpha = 1;
-            }
-
-            update() {
-                // Apply viscosity drag
-                this.vx /= (1 + (beakerState.viscosity -1) * 0.1);
-                this.vy /= (1 + (beakerState.viscosity -1) * 0.1);
-
-                // Apply temperature-based buoyancy/gravity for some particles
-                if (this.type === 'bubble' || this.type === 'steam') {
-                    const buoyancy = (beakerState.temperature - 20) / 500; // Hotter = more buoyant
-                    this.vy -= buoyancy;
-                } else {
-                    this.vy += 0.05 * beakerState.viscosity; // Gravity, stronger in less viscous fluid
-                }
-                
-                // Stirring effect
-                if(beakerState.isStirring && this.y > canvasHeight - beakerState.level * canvasHeight && !beakerState.isFrozen){
-                    const dx = this.x - canvasWidth / 2;
-                    const dy = this.y - (canvasHeight - beakerState.level * canvasHeight / 2);
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    if(dist > 5){
-                        const vortexStrength = 0.5 / beakerState.viscosity;
-                        this.vx += -dy / dist * vortexStrength * (1 - dist / (canvasWidth/2)); // Pull towards center, stronger closer
-                        this.vy += dx / dist * vortexStrength * (1 - dist / (canvasWidth/2));
-                    }
-                }
-
-
-                this.x += this.vx;
-                this.y += this.vy;
-                this.rotation += this.rotationSpeed;
-                this.life--;
-                this.alpha = Math.max(0, this.life / this.initialLife);
-
-                if (this.trailLength > 0) {
-                    this.history.push({x: this.x, y: this.y, alpha: this.alpha});
-                    if (this.history.length > this.trailLength) {
-                        this.history.shift();
-                    }
-                }
-                 // Keep within liquid, or disappear if above (unless steam)
-                const liquidSurfaceY = canvasHeight * (1 - beakerState.level);
-                if (this.type !== 'steam' && this.type !== 'explosion' && this.y < liquidSurfaceY && beakerState.level > 0) {
-                    this.y = liquidSurfaceY; // Pop at surface
-                    if(this.vy < 0) this.vy *= -0.3; // bounce a bit
-                }
-                 if (this.x < 0 || this.x > canvasWidth) this.vx *= -0.8; // Bounce off sides
-
-            }
-
-            draw() {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation);
-                
-                // Draw trail first
-                if (this.trailLength > 0 && this.history.length > 1) {
-                    for (let i = 0; i < this.history.length -1; i++) {
-                        const p1 = this.history[i];
-                        const p2 = this.history[i+1];
-                        const trailAlpha = p1.alpha * (i / this.history.length);
-                        ctx.beginPath();
-                        ctx.moveTo(p1.x - this.x, p1.y - this.y); // Relative to current particle pos
-                        ctx.lineTo(p2.x - this.x, p2.y - this.y);
-                        ctx.strokeStyle = this.color.replace(')', `, ${trailAlpha * 0.5})`).replace('rgb(', 'rgba(');
-                        ctx.lineWidth = this.radius * (i / this.history.length) * 1.5;
-                        ctx.stroke();
-                    }
-                }
-
-                // Draw particle
-                const particleColor = this.color.includes('rgba') ? this.color.replace(/,\s*\d?\.?\d*\)$/, `, ${this.alpha})`) : this.color.replace(')', `, ${this.alpha})`).replace('rgb(', 'rgba(');
-                ctx.fillStyle = particleColor;
-                ctx.strokeStyle = particleColor; // For text particles
-
-                switch (this.type) {
-                    case 'square':
-                        ctx.fillRect(-this.radius / 2, -this.radius / 2, this.radius, this.radius);
-                        break;
-                    case 'text':
-                        ctx.font = `${this.radius}px ${getComputedStyle(document.body).fontFamily}`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(this.char, 0, 0);
-                        break;
-                    case 'steam': // Fading circles
-                        ctx.beginPath();
-                        ctx.arc(0, 0, this.radius * (1 - this.alpha), 0, Math.PI * 2); // Shrinks as it fades
-                        ctx.fill();
-                        break;
-                    case 'lightning':
-                        ctx.lineWidth = this.radius;
-                        ctx.beginPath();
-                        ctx.moveTo(0,0);
-                        for (let i=1; i<=5; i++) {
-                            ctx.lineTo((Math.random()-0.5)*this.radius*3, -i * this.radius * 2);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'circle':
-                    default:
-                        ctx.beginPath();
-                        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                        ctx.fill();
-                }
-                ctx.restore();
-            }
-        }
-
-        function updateParticles() {
-            particles = particles.filter(p => p.life > 0 && p.y < canvasHeight + p.radius*2); // Remove dead or off-screen particles
-            particles.forEach(p => p.update());
-        }
-        function drawParticles() {
-            particles.forEach(p => p.draw());
-        }
-
-        function createSteamParticle() {
-            if (beakerState.level <=0) return;
-            const x = Math.random() * canvasWidth * 0.8 + canvasWidth * 0.1;
-            const y = canvasHeight * (1 - beakerState.level) + 5; // Just above liquid
-            const radius = Math.random() * 5 + 3;
-            particles.push(new Particle(x, y, (Math.random() - 0.5) * 0.5, -(Math.random() * 0.5 + 0.2), radius, 'rgba(220,220,230,0.7)', 80 + Math.random() * 50, 'steam'));
-        }
-        
-        // --- Tools ---
-        heatBtn.addEventListener('click', () => {
-            beakerState.temperature = Math.min(MAX_TEMP, beakerState.temperature + 15);
-            updateBeakerInfo();
-            heatBtn.classList.add('active');
-            setTimeout(() => heatBtn.classList.remove('active'), 500);
-        });
-        coolBtn.addEventListener('click', () => {
-            beakerState.temperature = Math.max(MIN_TEMP, beakerState.temperature - 15);
-            updateBeakerInfo();
-            coolBtn.classList.add('active');
-            setTimeout(() => coolBtn.classList.remove('active'), 500);
-        });
-        stirBtn.addEventListener('click', () => {
-            beakerState.isStirring = !beakerState.isStirring;
-            stirBtn.classList.toggle('active', beakerState.isStirring);
-        });
-
-        // --- Reaction Logic ---
-        mixBtn.addEventListener('click', () => {
-            if (selectedChemicals.length !== 2) return;
-            performReaction(selectedChemicals[0], selectedChemicals[1]);
-        });
-
-        randomMixBtn.addEventListener('click', () => {
-            if (CHEMICALS_DATA.length < 2) return;
-            let c1Idx, c2Idx;
-            c1Idx = Math.floor(Math.random() * CHEMICALS_DATA.length);
-            do {
-                c2Idx = Math.floor(Math.random() * CHEMICALS_DATA.length);
-            } while (c1Idx === c2Idx);
-            
-            // Clear previous selections on UI
-            selectedChemicals = [];
-            document.querySelectorAll('.chemical-card.selected').forEach(card => card.classList.remove('selected'));
-            // Mock select the new ones for visual consistency with normal mix
-            selectedChemicals.push(CHEMICALS_DATA[c1Idx], CHEMICALS_DATA[c2Idx]);
-            document.querySelector(`.chemical-card[data-id="${CHEMICALS_DATA[c1Idx].id}"]`)?.classList.add('selected');
-            document.querySelector(`.chemical-card[data-id="${CHEMICALS_DATA[c2Idx].id}"]`)?.classList.add('selected');
-            updateSelectionInfo();
-            
-            performReaction(CHEMICALS_DATA[c1Idx], CHEMICALS_DATA[c2Idx]);
-        });
-
-        function performReaction(chem1, chem2) {
-            const ids = [chem1.id, chem2.id].sort().join('-');
-            let reactionText = `Mixing ${chem1.name} and ${chem2.name}... `;
-            let mood = '🤔'; // Default thinking mood
-
-            // Blend colors
-            const c1Rgb = colorToRgb(chem1.color);
-            const c2Rgb = colorToRgb(chem2.color);
-            const mixedR = Math.floor((c1Rgb.r + c2Rgb.r) / 2);
-            const mixedG = Math.floor((c1Rgb.g + c2Rgb.g) / 2);
-            const mixedB = Math.floor((c1Rgb.b + c2Rgb.b) / 2);
-            
-            beakerState.baseColor = `rgba(${mixedR},${mixedG},${mixedB}, 0.85)`;
-            beakerState.name = `${chem1.name.split(' ')[0]}-${chem2.name.split(' ')[0]} Mix`;
-            beakerState.targetLevel = 0.75;
-            beakerState.customEffects = []; // Reset custom effects
-            particles = []; // Clear old particles for new reaction
-
-            // Specific Reactions
-            switch (ids) {
-                case 'boom-giggle':
-                    reactionText += "KABOOM... of Laughter! Confetti and giggles fill the air!";
-                    mood = '🎉';
-                    for (let i = 0; i < 150; i++) {
-                        particles.push(new Particle(
-                            canvasWidth / 2, canvasHeight * (1 - beakerState.level * 0.5), // Explode from mid-liquid
-                            (Math.random() - 0.5) * 15, (Math.random() - 0.7) * 15,
-                            Math.random() * 6 + 3, `rgb(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)})`,
-                            120 + Math.random() * 80, Math.random() > 0.5 ? 'square' : 'circle', 5
-                        ));
-                    }
-                    // Some text particles
-                    for (let i = 0; i < 10; i++) {
-                        particles.push(new Particle(canvasWidth/2, canvasHeight/2, (Math.random()-0.5)*5, (Math.random()-0.5)*5, 20, chem1.color, 100, 'text', 0, '😂'));
-                    }
-                    beakerState.temperature += 20;
-                    break;
-
-                case 'giggle-slime':
-                    reactionText += "A wobbly, giggling mass of sentient slime! It's trying to climb out!";
-                    mood = '🤪';
-                    beakerState.baseColor = chem2.color; // Slime color dominates
-                    beakerState.targetLevel = 0.9; // Slime expands
-                    beakerState.viscosity = 8;
-                    for (let i = 0; i < 50; i++) { // Large, slow bubbles
-                        particles.push(new Particle(
-                            Math.random() * canvasWidth * 0.8 + canvasWidth * 0.1, canvasHeight * 0.9,
-                            (Math.random() - 0.5) * 0.2, -(Math.random() * 0.5 + 0.2),
-                            Math.random() * 15 + 8, chem1.color.replace(')',',0.5)'), 150 + Math.random() * 100, 'bubble'
-                        ));
-                    }
-                    // Add a "climbing" slime particle effect later
-                    break;
-                
-                case 'zap-slime':
-                    reactionText += "The slime is now electrified and twitching! Zzzzap!";
-                    mood = '⚡';
-                    beakerState.customEffects.push('glowing');
-                    for (let i = 0; i < 10; i++) { // Lightning bolts in the slime
-                         particles.push(new Particle(
-                            canvasWidth/2 + (Math.random()-0.5)*canvasWidth*0.6, canvasHeight * (1-beakerState.level*Math.random()*0.8),
-                            0,0, Math.random()*3+2, chem1.color, 60, 'lightning'
-                        ));
-                    }
-                    // Add small crackling particles
-                     for (let i = 0; i < 50; i++) {
-                        particles.push(new Particle(
-                            Math.random() * canvasWidth, canvasHeight * (1 - beakerState.level * Math.random()),
-                            (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2,
-                            Math.random() * 2 + 1, chem1.color, 40 + Math.random() * 30, 'square'
-                        ));
-                    }
-                    beakerState.temperature += 10;
-                    break;
-
-                case 'chill-glow':
-                    reactionText += "A beautiful, faintly glowing ice sculpture forms!";
-                    mood = '🥶';
-                    beakerState.baseColor = chem2.color;
-                    beakerState.temperature = -20; // Instant freeze
-                    beakerState.customEffects.push('glowing');
-                    // Add some ice shard particles (stationary or slow moving)
-                    for (let i = 0; i < 20; i++) {
-                        particles.push(new Particle(
-                            Math.random() * canvasWidth, canvasHeight * (1 - beakerState.level * Math.random()*0.8),
-                            (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, // Very slow drift
-                            Math.random() * 10 + 5, 'rgba(200, 220, 255, 0.6)', // Icy color
-                            200 + Math.random() * 100, 'square', 3
-                        ));
-                    }
-                    break;
-                
-                case 'gloom-void':
-                    reactionText += "A terrifying portal to... somewhere else, briefly opens! The beaker feels cold.";
-                    mood = '💀';
-                    beakerState.baseColor = '#050505'; // Almost black
-                    beakerState.customEffects.push('shadowy');
-                    beakerState.temperature -= 30;
-                    // Create swirling dark particles
-                    for (let i = 0; i < 100; i++) {
-                        const angle = Math.random() * Math.PI * 2;
-                        const radius = Math.random() * canvasWidth * 0.3;
-                        particles.push(new Particle(
-                            canvasWidth / 2 + Math.cos(angle) * radius,
-                            canvasHeight * (1 - beakerState.level / 2) + Math.sin(angle) * radius * 0.5, // Elliptical
-                            Math.sin(angle) * 1.5, -Math.cos(angle) * 0.5, // Swirling inwards/upwards
-                            Math.random() * 4 + 2, `rgba(50,30,70,${Math.random()*0.5 + 0.2})`,
-                            100 + Math.random() * 50, 'circle', 8
-                        ));
-                    }
-                    break;
-                
-                // Add many more unique reactions here! Example structure:
-                // case 'chemA-chemB': // (sorted alphabetically)
-                //    reactionText += "Specific funny outcome!";
-                //    mood = 'appropriate_emoji';
-                //    // beakerState modifications (color, level, temp, viscosity, customEffects)
-                //    // particle generation
-                //    break;
-
-                default:
-                    reactionText += "A curious fizzle and a new color. Standard procedure!";
-                    mood = '🧐';
-                    for (let i = 0; i < 40; i++) {
-                        particles.push(new Particle(
-                            Math.random() * canvasWidth * 0.7 + canvasWidth * 0.15, 
-                            canvasHeight * (1 - beakerState.level * Math.random() * 0.5),
-                            (Math.random() - 0.5) * 0.8, -(Math.random() * 1 + 0.5),
-                            Math.random() * 3 + 2, 'rgba(220,220,220,0.8)', 80 + Math.random() * 40, 'bubble'
-                        ));
-                    }
-            }
-
-            reactionMessageEl.textContent = reactionText;
-            setMood(mood);
-            updateBeakerInfo();
-            logDiscoveredReaction(chem1, chem2, reactionText);
-
-            // Clear selections for next mix, but keep visuals
-            const tempSelected = [...selectedChemicals]; // Keep for logging
-            selectedChemicals = [];
-            document.querySelectorAll('.chemical-card.selected').forEach(card => card.classList.remove('selected'));
-            updateSelectionInfo();
-            mixBtn.disabled = true;
-        }
-
-        function setMood(emoji) {
-            moodIndicator.textContent = emoji;
-            moodIndicator.classList.add('excited');
-            setTimeout(() => moodIndicator.classList.remove('excited'), 1000);
-        }
-
-        function colorToRgb(colorStr) {
-            if (!colorStr) return { r: 128, g: 128, b: 128, a: 1 }; // Default gray if undefined
-            if (colorStr.startsWith('#')) {
-                const bigint = parseInt(colorStr.slice(1), 16);
-                return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255, a: 1 };
-            } else if (colorStr.startsWith('rgb')) { // handles rgb and rgba
-                const parts = colorStr.match(/[\d.]+/g);
-                return { r: parseInt(parts[0]), g: parseInt(parts[1]), b: parseInt(parts[2]), a: parts[3] ? parseFloat(parts[3]) : 1 };
-            }
-            return { r: 128, g: 128, b: 128, a: 1 }; // Default gray
-        }
-
-        // --- Lab Notes (Discovery Log) ---
-        function logDiscoveredReaction(chem1, chem2, resultText) {
-            const combinationId = [chem1.id, chem2.id].sort().join('+');
-            if (!discoveredReactions.find(r => r.id === combinationId)) {
-                const discovery = {
-                    id: combinationId,
-                    chem1Name: chem1.name,
-                    chem2Name: chem2.name,
-                    icon1: chem1.icon,
-                    icon2: chem2.icon,
-                    summary: resultText.split('... ')[1] || "A mysterious reaction occurred." // Get the summary part
-                };
-                discoveredReactions.push(discovery);
-                localStorage.setItem('discoveredReactions_v2', JSON.stringify(discoveredReactions));
-                addReactionToLogDOM(discovery);
-            }
-        }
-
-        function loadDiscoveredReactions() {
-            discoveredReactionsListEl.innerHTML = '';
-            discoveredReactions.forEach(addReactionToLogDOM);
-        }
-
-        function addReactionToLogDOM(reaction) {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${reaction.icon1} ${reaction.chem1Name} + ${reaction.icon2} ${reaction.chem2Name}</strong>: ${reaction.summary.substring(0,50)}...`;
-            li.title = `${reaction.chem1Name} + ${reaction.chem2Name}: ${reaction.summary}`;
-            discoveredReactionsListEl.prepend(li); // Add new discoveries to the top
-        }
-
+        window.onload = init;
     </script>
 </body>
 </html>
