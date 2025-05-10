@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPhone 15 Pro - Ad Concept</title>
+    <title>iPhone 15 Pro - The Next Dimension</title>
     <style>
         :root {
-            --apple-bg: #000;
-            --apple-text: #f5f5f7;
-            --apple-highlight: #007aff; /* A subtle blue, can change */
-            --phone-color: #424242; /* Darker titanium-esque */
-            --screen-color: #111;
-            --animation-duration: 1s;
-            --stagger-delay: 0.5s;
+            --apple-bg: #000000;
+            --apple-text-primary: #f5f5f7;
+            --apple-text-secondary: #a1a1a6;
+            --apple-highlight: #007aff;
+            --phone-titanium-dark: #3a3a3c;
+            --phone-titanium-light: #58585c;
+            --phone-screen: #050505;
+            --dynamic-island-bg: #000;
+            --animation-fast: 0.6s;
+            --animation-medium: 1s;
+            --animation-slow: 1.5s;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
         body, html {
@@ -21,19 +29,21 @@
             width: 100%;
             height: 100%;
             background-color: var(--apple-bg);
-            color: var(--apple-text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            color: var(--apple-text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
             overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .ad-container {
             width: 100%;
             height: 100%;
             position: relative;
-            perspective: 1000px; /* For 3D-ish effects */
+            perspective: 1200px; /* Increased perspective for more 3D */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -48,296 +58,692 @@
             justify-content: center;
             align-items: center;
             opacity: 0;
-            transition: opacity 0.8s ease-in-out;
+            transition: opacity var(--animation-medium) ease-in-out;
             text-align: center;
+            padding: 5vmin;
+            transform-style: preserve-3d; /* Allow 3D children */
         }
 
         .scene.active {
             opacity: 1;
+            z-index: 1; /* Bring active scene to front */
         }
-        
-        /* ---- iPhone Mockup ---- */
-        .iphone-mockup {
-            width: 35vmin; /* Responsive to viewport smaller dimension */
-            height: 70vmin;
-            max-width: 200px; /* Max size for larger screens */
-            max-height: 400px;
-            background-color: var(--phone-color);
-            border: 0.8vmin solid #5a5a5e; /* Slightly lighter border for definition */
-            border-radius: 6vmin;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 0 0.2vmin rgba(255,255,255,0.1) inset;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transform-style: preserve-3d;
-            transition: transform 1s ease-out, opacity 1s ease-out;
-            opacity: 0;
+        .scene.previous {
+            z-index: 0;
         }
 
-        .iphone-screen {
-            width: calc(100% - 3vmin);
-            height: calc(100% - 3vmin);
-            background-color: var(--screen-color);
-            border-radius: 4.5vmin;
+        /* --- Particle Canvas (Scene 0) --- */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Behind other content initially */
+        }
+        
+        /* --- iPhone Mockup (More 3D) --- */
+        .iphone-container {
+            width: 38vmin; /* Slightly larger base for better proportions */
+            height: 76vmin;
+            max-width: 220px;
+            max-height: 440px;
             position: relative;
+            transform-style: preserve-3d;
+            transition: transform var(--animation-medium) ease-out, opacity var(--animation-medium) ease-out;
+            opacity: 0; /* Controlled by JS/scene logic */
+        }
+
+        .iphone-body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, var(--phone-titanium-light), var(--phone-titanium-dark));
+            border-radius: 7vmin;
+            position: absolute;
+            box-shadow: 0 1vmin 3vmin rgba(0,0,0,0.4), 
+                        inset 0 0 0.5vmin rgba(255,255,255,0.1),
+                        inset 0 0 2vmin rgba(0,0,0,0.3);
+            transform: translateZ(-0.5vmin); /* Back part */
+        }
+        
+        .iphone-side { /* For thickness illusion */
+            position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 7vmin;
+            background-color: var(--phone-titanium-dark);
+            transform: translateZ(-1vmin); /* Push back further */
+        }
+
+        .iphone-screen-assembly {
+            width: calc(100% - 1.6vmin); /* Thinner bezel */
+            height: calc(100% - 1.6vmin);
+            background-color: var(--phone-screen);
+            border-radius: 5.5vmin; /* Screen rounding */
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) translateZ(0.1vmin); /* Slightly proud */
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* For dynamic island */
+            justify-content: flex-start;
             align-items: center;
         }
 
         .dynamic-island {
-            width: 25%;
+            width: 28%;
+            min-width: 60px;
             height: 4%;
-            min-height: 10px; /* ensure visibility */
-            background-color: #000;
-            border-radius: 2vmin;
-            margin-top: 3%;
-            transition: width 0.5s ease-in-out, transform 0.5s ease-in-out;
-        }
-        
-        .dynamic-island.active-feature {
-            animation: pulseIsland 1s ease-in-out;
+            min-height: 12px;
+            background-color: var(--dynamic-island-bg);
+            border-radius: 2.5vmin;
+            margin-top: 3.5%;
+            position: relative;
+            z-index: 10;
+            transition: all var(--animation-fast) ease-in-out;
         }
 
-        @keyframes pulseIsland {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        .action-button-visual {
+            position: absolute;
+            top: 15%;
+            left: -2.5vmin; /* Position outside main body */
+            width: 1.5vmin;
+            height: 6vmin;
+            background-color: var(--phone-titanium-dark);
+            border-radius: 0.5vmin;
+            box-shadow: -0.2vmin 0.2vmin 0.5vmin rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity var(--animation-fast) ease-in-out, transform var(--animation-fast) ease-in-out;
         }
+        .action-button-visual.visible { opacity: 1; }
+        .action-button-visual.pressed { transform: translateX(0.3vmin) scale(0.95); }
 
-        .feature-text {
-            font-size: 5vmin;
-            margin-top: 5vmin;
-            font-weight: 600;
+        /* --- Text Styling & Animations --- */
+        .headline {
+            font-size: clamp(6vmin, 8vw, 9vmin); /* Responsive font size */
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 2vmin;
+            opacity: 0;
+            transform: translateY(30px);
+            /* Base transition for JS activation */
+            transition: opacity var(--animation-medium) ease-out, transform var(--animation-medium) ease-out;
+        }
+        .sub-headline {
+            font-size: clamp(3.5vmin, 5vw, 4.5vmin);
+            font-weight: 500;
+            color: var(--apple-text-secondary);
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transition: opacity var(--animation-medium) ease-out var(--animation-fast), transform var(--animation-medium) ease-out var(--animation-fast); /* Staggered */
         }
+        .feature-description {
+            font-size: clamp(4vmin, 5.5vw, 5vmin);
+            font-weight: 600;
+            margin-top: 8vh; /* Space between phone and text */
+            opacity: 0;
+            transform: translateY(25px);
+            transition: opacity var(--animation-medium) ease-out, transform var(--animation-medium) ease-out;
+        }
+
+        .text-animate-in { opacity: 1 !important; transform: translateY(0) !important; }
+        .letter-animate span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        /* --- Scene Specific Animations & Elements --- */
         
-        .main-title {
-            font-size: 8vmin;
-            font-weight: 700;
-            margin-bottom: 2vmin;
-             opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 1s ease-out, transform 1s ease-out;
-        }
-        .sub-title {
-            font-size: 4.5vmin;
-            font-weight: 500;
-            color: #aaa;
-             opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 1s ease-out 0.3s, transform 1s ease-out 0.3s; /* Staggered */
+        /* Scene 0: Genesis / Particles */
+        #scene0 .headline { transition-delay: 2.5s; } /* After particles settle a bit */
+
+        /* Scene 1: Form Emerge */
+        #scene1 .iphone-container { animation: formEmerge 2s ease-out forwards; }
+        @keyframes formEmerge {
+            0% { opacity: 0.3; transform: scale(0.6) rotateY(90deg) rotateX(30deg) translateZ(-100vmin); }
+            60% { opacity: 1; transform: scale(0.9) rotateY(-15deg) rotateX(5deg) translateZ(0); }
+            100% { opacity: 1; transform: scale(1) rotateY(0deg) rotateX(0deg) translateZ(0); }
         }
 
-        /* ---- Scene specific animations ---- */
-
-        /* Scene 1: Abstract Teaser */
-        .light-beam {
+        /* Scene 3: Titanium */
+        .titanium-glint {
             position: absolute;
-            width: 5px;
-            height: 200%; /* Long enough to sweep across */
-            background: linear-gradient(transparent, rgba(200,200,255,0.3), transparent);
+            top: 0; left: -50%; /* Start off-screen */
+            width: 30%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3) 50%, transparent);
+            transform: skewX(-25deg);
+            animation: glintAnim 2.5s ease-in-out 0.5s forwards; /* Run once after delay */
             opacity: 0;
         }
-        #beam1 { animation: sweep1 3s ease-in-out 0.5s forwards; }
-        #beam2 { animation: sweep2 3s ease-in-out 1s forwards; }
-        
-        @keyframes sweep1 {
-            0% { opacity: 0; transform: translateX(-100vw) translateY(-50%) rotate(25deg); }
-            20% { opacity: 0.7; }
-            80% { opacity: 0.7; }
-            100% { opacity: 0; transform: translateX(100vw) translateY(-50%) rotate(25deg); }
-        }
-        @keyframes sweep2 {
-            0% { opacity: 0; transform: translateX(100vw) translateY(-50%) rotate(-15deg); }
-            20% { opacity: 0.6; }
-            80% { opacity: 0.6; }
-            100% { opacity: 0; transform: translateX(-100vw) translateY(-50%) rotate(-15deg); }
-        }
-
-        /* Scene 2: Phone Reveal */
-        #scene2 .iphone-mockup {
-            animation: revealPhone 2s ease-out forwards;
-        }
-        @keyframes revealPhone {
-            0% { opacity: 0; transform: scale(0.7) rotateY(60deg) rotateX(20deg); }
-            100% { opacity: 1; transform: scale(1) rotateY(0deg) rotateX(0deg); }
-        }
-        #scene2 .main-title { animation: fadeInText 1s ease-out 1.5s forwards; }
-
-        /* Scene 3, 4, 5: Features */
-        .feature-scene .iphone-mockup { /* Keep phone visible and static */
-            opacity: 1;
-            transform: scale(1);
-        }
-        .feature-scene .feature-text {
-            animation: fadeInText 1s ease-out 0.5s forwards;
-        }
-        .feature-scene .iphone-mockup {
-            animation: subtlePhoneShift 1.5s ease-in-out 0.3s;
-        }
-
-        @keyframes subtlePhoneShift {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-1vmin) scale(1.01); }
-        }
-
-        @keyframes fadeInText {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes glintAnim {
+            0% { left: -50%; opacity: 0; }
+            40% { opacity: 1; }
+            60% { opacity: 1; }
+            100% { left: 120%; opacity: 0; }
         }
         
-        /* Scene 6: Hero Shot */
-        #scene6 .iphone-mockup {
-            animation: heroPhone 2s ease-out forwards;
-        }
-        @keyframes heroPhone {
-            0% { opacity: 1; transform: scale(1); } /* From previous state */
-            100% { opacity: 1; transform: scale(1.1); } /* Slightly larger */
-        }
-        #scene6 .main-title { animation: fadeInText 1s ease-out 0.5s forwards; }
-        #scene6 .sub-title { animation: fadeInText 1s ease-out 0.8s forwards; }
+        /* Scene 4: Action Button */
+        #scene4 .iphone-container { transform: rotateY(15deg) rotateX(5deg) scale(1.1); }
+        #scene4 .dynamic-island { width: 40%; background-color: var(--apple-highlight); } /* Example interaction */
 
-        /* Utility for delayed text fade in via JS */
-        .text-fade-in {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
+        /* Scene 5: A17 Pro Chip */
+        .a17-visuals {
+            position: absolute;
+            width: 80%; height: 50%;
+            top: 15%; /* Inside screen */
+            left: 10%;
+            pointer-events: none;
         }
+        .a17-line {
+            position: absolute;
+            background-color: var(--apple-highlight);
+            opacity: 0;
+            border-radius: 2px;
+        }
+        /* JS will animate these lines */
+
+        /* Scene 6: Camera */
+        #scene6 .iphone-container { transform: rotateY(-10deg) rotateX(-5deg) scale(1.15); }
+        .camera-focus-ring {
+            position: absolute;
+            width: 10vmin; height: 10vmin;
+            border: 0.5vmin solid var(--apple-highlight);
+            border-radius: 50%;
+            top: 20%; left: 30%; /* Approx over main lens area */
+            opacity: 0;
+            transform: scale(1.5);
+            animation: focusRingAnim 1.5s ease-out 0.5s forwards;
+        }
+        @keyframes focusRingAnim {
+            0% { opacity: 0; transform: scale(1.5); }
+            50% { opacity: 0.8; transform: scale(0.9); }
+            100% { opacity: 0; transform: scale(1); }
+        }
+
+        /* Scene 7: USB-C */
+        .usbc-port-visual {
+            position: absolute;
+            bottom: -1.5vmin; /* Below the phone */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6vmin; height: 2vmin;
+            background-color: #222;
+            border: 0.3vmin solid var(--phone-titanium-dark);
+            border-radius: 0.5vmin;
+            opacity: 0;
+            transition: opacity var(--animation-fast) ease-in-out;
+        }
+        .usbc-port-visual.visible { opacity: 1; }
+        .usbc-cable-visual {
+            position: absolute;
+            bottom: -8vmin; /* Starts further down */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1.5vmin; height: 7vmin;
+            background-color: var(--apple-text-secondary);
+            border-radius: 0.5vmin 0.5vmin 0 0;
+            opacity: 0;
+            animation: cableConnect 1s ease-out 0.5s forwards;
+        }
+        @keyframes cableConnect {
+            0% { opacity: 0; transform: translate(-50%, 5vmin); }
+            70% { opacity: 1; transform: translate(-50%, -0.5vmin); } /* Connects */
+            100% { opacity: 1; transform: translate(-50%, -0.5vmin); }
+        }
+
+
+        /* Final Scene (Hero) */
+        #scene9 .iphone-container { animation: heroRotate 8s ease-in-out infinite 1s; }
+        @keyframes heroRotate {
+            0% { transform: scale(1.1) rotateY(0deg); }
+            25% { transform: scale(1.1) rotateY(20deg); }
+            50% { transform: scale(1.1) rotateY(0deg); }
+            75% { transform: scale(1.1) rotateY(-20deg); }
+            100% { transform: scale(1.1) rotateY(0deg); }
+        }
+
+        /* Utility: Hide */
+        .hidden { display: none !important; }
 
     </style>
 </head>
 <body>
     <div class="ad-container">
+        <canvas id="particle-canvas"></canvas>
 
-        <!-- Scene 1: Abstract Teaser -->
-        <div class="scene" id="scene1">
-            <div class="light-beam" id="beam1"></div>
-            <div class="light-beam" id="beam2"></div>
-            <!-- Potentially add some SVG particles here that coalesce later -->
+        <!-- Scene 0: Genesis (Particles & Intro Text) -->
+        <div class="scene" id="scene0">
+            <h1 class="headline letter-animate">Innovation. Redefined.</h1>
         </div>
 
-        <!-- Scene 2: iPhone Reveal + Name -->
-        <div class="scene" id="scene2">
-            <div class="iphone-mockup">
-                <div class="iphone-screen">
+        <!-- Scene 1: iPhone Form Emerge -->
+        <div class="scene" id="scene1">
+            <div class="iphone-container">
+                <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
                     <div class="dynamic-island"></div>
                 </div>
             </div>
-            <h1 class="main-title" style="margin-top: 5vmin;">iPhone 15 Pro</h1>
         </div>
 
-        <!-- Scene 3: Feature - Titanium -->
-        <div class="scene feature-scene" id="scene3">
-            <div class="iphone-mockup">
-                <div class="iphone-screen">
-                    <div class="dynamic-island" id="island-feature1"></div>
+        <!-- Scene 2: Title Reveal -->
+        <div class="scene" id="scene2">
+            <!-- iPhone persists from scene 1, text animates -->
+            <div class="iphone-container" style="opacity:1;"> <!-- Keep visible -->
+                 <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island"></div>
                 </div>
             </div>
-            <p class="feature-text">Forged in Titanium.</p>
+            <h1 class="headline letter-animate">iPhone 15 Pro</h1>
+            <h2 class="sub-headline letter-animate">A new era of Pro.</h2>
         </div>
 
-        <!-- Scene 4: Feature - A17 Pro -->
-        <div class="scene feature-scene" id="scene4">
-            <div class="iphone-mockup">
-                <div class="iphone-screen">
-                    <div class="dynamic-island" id="island-feature2"></div>
-                    <!-- Could add a subtle screen graphic here -->
+        <!-- Scene 3: Titanium -->
+        <div class="scene" id="scene3">
+            <div class="iphone-container" style="opacity:1; transform: scale(1.05) rotateX(5deg);">
+                <div class="iphone-side"></div>
+                <div class="iphone-body"><div class="titanium-glint"></div></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island"></div>
                 </div>
             </div>
-            <p class="feature-text">A17 Pro. Game‑changing chip.</p>
+            <p class="feature-description letter-animate">Forged in Titanium. Strength meets lightness.</p>
         </div>
 
-        <!-- Scene 5: Feature - Camera -->
-        <div class="scene feature-scene" id="scene5">
-            <div class="iphone-mockup">
-                <div class="iphone-screen">
-                    <div class="dynamic-island" id="island-feature3"></div>
-                    <!-- Could add a subtle camera lens flare overlay -->
+        <!-- Scene 4: Action Button -->
+        <div class="scene" id="scene4">
+            <div class="iphone-container" style="opacity:1;"> <!-- JS will transform this -->
+                <div class="action-button-visual"></div>
+                <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island" id="action-dynamic-island"></div>
                 </div>
             </div>
-            <p class="feature-text">Pro Camera System. Wildly powerful.</p>
+            <p class="feature-description letter-animate">Action Button. Your shortcut to amazing.</p>
+        </div>
+
+        <!-- Scene 5: A17 Pro Chip -->
+        <div class="scene" id="scene5">
+            <div class="iphone-container" style="opacity:1;">
+                 <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island"></div>
+                    <div class="a17-visuals" id="a17-chip-visuals">
+                        <!-- Lines added by JS -->
+                    </div>
+                </div>
+            </div>
+            <p class="feature-description letter-animate">A17 Pro. The ultimate mobile chip.</p>
         </div>
         
-        <!-- Scene 6: Hero Shot & Tagline -->
+        <!-- Scene 6: Pro Camera System -->
         <div class="scene" id="scene6">
-            <div class="iphone-mockup">
-                <div class="iphone-screen">
+            <div class="iphone-container" style="opacity:1;"> <!-- JS will transform this -->
+                 <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island"></div>
+                    <div class="camera-focus-ring"></div>
+                </div>
+            </div>
+            <p class="feature-description letter-animate">Pro Camera System. Capture your world like never before.</p>
+        </div>
+
+        <!-- Scene 7: USB-C -->
+        <div class="scene" id="scene7">
+            <div class="iphone-container" style="opacity:1; transform: translateY(-5vmin);">
+                 <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island"></div>
+                </div>
+                <div class="usbc-port-visual"></div>
+                <div class="usbc-cable-visual"></div>
+            </div>
+            <p class="feature-description letter-animate">USB-C. Fast. Versatile. Universal.</p>
+        </div>
+        
+        <!-- Scene 8: Dynamic Island showcase -->
+        <div class="scene" id="scene8">
+            <div class="iphone-container" style="opacity:1; transform: scale(1.1);">
+                 <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
+                    <div class="dynamic-island" id="interactive-island"></div>
+                </div>
+            </div>
+            <p class="feature-description letter-animate">Dynamic Island. Fluidly innovative.</p>
+        </div>
+
+        <!-- Scene 9: Hero Shot & Final Tagline -->
+        <div class="scene" id="scene9">
+            <div class="iphone-container" style="opacity:1;"> <!-- Animation via CSS -->
+                 <div class="iphone-side"></div>
+                <div class="iphone-body"></div>
+                <div class="iphone-screen-assembly">
                     <div class="dynamic-island"></div>
                 </div>
             </div>
-            <h1 class="main-title" style="margin-top: 5vmin;">iPhone 15 Pro</h1>
-            <h2 class="sub-title">Pro. Beyond.</h2>
+            <h1 class="headline letter-animate" style="margin-top: 10vh;">iPhone 15 Pro</h1>
+            <h2 class="sub-headline letter-animate">Pro. Beyond.</h2>
         </div>
 
     </div>
 
     <script>
-        const scenes = [
-            document.getElementById('scene1'),
-            document.getElementById('scene2'),
-            document.getElementById('scene3'),
-            document.getElementById('scene4'),
-            document.getElementById('scene5'),
-            document.getElementById('scene6'),
-        ];
-
-        const sceneDurations = [
-            3000, // Scene 1: Teaser
-            3500, // Scene 2: Reveal
-            3000, // Scene 3: Titanium
-            3000, // Scene 4: A17 Pro
-            3000, // Scene 5: Camera
-            5000  // Scene 6: Hero
-        ];
-
+        const scenes = Array.from(document.querySelectorAll('.scene'));
+        const iphoneContainers = document.querySelectorAll('.iphone-container'); // Used to show/hide phone consistently
         let currentSceneIndex = 0;
 
-        function animateText(sceneElement) {
-            const title = sceneElement.querySelector('.main-title');
-            const subTitle = sceneElement.querySelector('.sub-title');
-            const featureText = sceneElement.querySelector('.feature-text');
+        const sceneDurations = [
+            4000, // 0: Genesis
+            3500, // 1: Form Emerge
+            4000, // 2: Title Reveal
+            3500, // 3: Titanium
+            4000, // 4: Action Button
+            4500, // 5: A17 Pro
+            4000, // 6: Camera
+            4000, // 7: USB-C
+            3500, // 8: Dynamic Island
+            7000  // 9: Hero & Tagline
+        ];
 
-            if (title) title.classList.add('text-fade-in');
-            if (subTitle) subTitle.classList.add('text-fade-in');
-            if (featureText) featureText.classList.add('text-fade-in');
+        // --- Particle Engine (Simple) ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const numParticles = Math.min(100, Math.floor(window.innerWidth / 15)); // Responsive particle count
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        
-        function animateDynamicIsland(sceneElement) {
-            const island = sceneElement.querySelector('.dynamic-island');
-            if (island && sceneElement.classList.contains('feature-scene')) {
-                island.classList.add('active-feature');
-                setTimeout(() => island.classList.remove('active-feature'), 1000); // Duration of pulse
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.3 + 0.1; // Start faint
+                this.targetOpacity = this.opacity;
+                this.color = `rgba(200, 200, 255, ${this.opacity})`; // Light blueish-white
+            }
+            update(coalesceTarget) {
+                if (coalesceTarget) {
+                    const dx = coalesceTarget.x - this.x;
+                    const dy = coalesceTarget.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const moveSpeed = 0.03;
+                    this.speedX = dx * moveSpeed;
+                    this.speedY = dy * moveSpeed;
+                    if (dist < 50) this.opacity -= 0.02; // Fade out when near target
+                    if (this.opacity < 0) this.opacity = 0;
+                }
+
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Boundary check (bounce softly)
+                if (this.x > canvas.width || this.x < 0) this.speedX *= -0.8;
+                if (this.y > canvas.height || this.y < 0) this.speedY *= -0.8;
+                
+                this.color = `rgba(200, 200, 255, ${this.opacity})`;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        let particleAnimationId;
+        let isCoalescing = false;
+        let coalesceEndTime;
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const now = Date.now();
+            let target = null;
+            if (isCoalescing) {
+                target = { x: canvas.width / 2, y: canvas.height / 2 }; // Coalesce to center
+                // Fade all particles as we approach coalesceEndTime
+                if (now > coalesceEndTime - 1000) { // Start fading 1s before end
+                    const fadeProgress = Math.max(0, (coalesceEndTime - now) / 1000);
+                    particles.forEach(p => p.opacity = p.targetOpacity * fadeProgress);
+                }
+                if (now > coalesceEndTime) {
+                    particles = []; // Clear particles after coalescing
+                }
+            }
+
+            particles.forEach(p => {
+                p.update(target);
+                p.draw();
+            });
+            
+            if (particles.length > 0) {
+                particleAnimationId = requestAnimationFrame(animateParticles);
+            } else {
+                 canvas.style.display = 'none'; // Hide canvas when done
+            }
+        }
+        
+        function startParticleCoalesce(duration = 2000) {
+            isCoalescing = true;
+            coalesceEndTime = Date.now() + duration;
+            particles.forEach(p => p.targetOpacity = p.opacity); // Store current opacity to fade from
+        }
+
+
+        // --- Text Animation ---
+        function animateLetters(element) {
+            if (!element || element.dataset.animated) return;
+            element.dataset.animated = true;
+            const text = element.textContent;
+            element.innerHTML = ''; // Clear original text
+            text.split('').forEach((char, index) => {
+                const span = document.createElement('span');
+                span.textContent = char === ' ' ? '\u00A0' : char; // Non-breaking space for spaces
+                span.style.transitionDelay = `${index * 0.03}s`;
+                element.appendChild(span);
+            });
+            // Trigger animation by adding class after a tick (for transition to apply)
+            setTimeout(() => {
+                Array.from(element.children).forEach(span => {
+                    span.style.opacity = '1';
+                    span.style.transform = 'translateY(0)';
+                });
+            }, 50);
+        }
+
+        function resetLetterAnimation(element) {
+            if (!element) return;
+            element.dataset.animated = false;
+             Array.from(element.children).forEach(span => {
+                span.style.opacity = '0';
+                span.style.transform = 'translateY(20px)';
+            });
+        }
+
+        // --- A17 Pro Chip Visuals ---
+        const a17VisualsContainer = document.getElementById('a17-chip-visuals');
+        function animateA17Chip() {
+            if (!a17VisualsContainer) return;
+            a17VisualsContainer.innerHTML = ''; // Clear previous
+            const numLines = 10;
+            for (let i = 0; i < numLines; i++) {
+                const line = document.createElement('div');
+                line.classList.add('a17-line');
+                line.style.width = `${Math.random() * 30 + 20}%`;
+                line.style.height = `${Math.random() * 2 + 1}px`;
+                line.style.top = `${Math.random() * 90}%`;
+                line.style.left = `${Math.random() * 100 - 50}%`; // Allow starting off-screen
+                line.style.transition = `all ${Math.random() * 1 + 0.5}s ease-in-out ${Math.random() * 0.5}s`;
+                a17VisualsContainer.appendChild(line);
+
+                setTimeout(() => { // Trigger animation
+                    line.style.opacity = Math.random() * 0.5 + 0.3;
+                    line.style.left = `${parseFloat(line.style.left) + Math.random() * 60 + 20}%`;
+                }, 50);
+            }
+        }
+        
+        // --- Dynamic Island Interactions ---
+        function animateDynamicIsland(islandId, animationType) {
+            const island = document.getElementById(islandId);
+            if (!island) return;
+
+            island.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Bouncy transition
+            if (animationType === 'action') {
+                island.style.width = '45%';
+                island.style.backgroundColor = 'var(--apple-highlight)';
+                island.innerHTML = `<span style="font-size:2.5vmin; line-height:1.3; color:white;">🔔</span>`; // Example icon
+                setTimeout(() => {
+                    island.style.width = '28%'; // Revert
+                    island.style.backgroundColor = 'var(--dynamic-island-bg)';
+                    island.innerHTML = '';
+                }, 1500);
+            } else if (animationType === 'interactive') {
+                island.style.width = '60%';
+                island.style.height = '10%';
+                island.innerHTML = `<span style="font-size:2.5vmin; line-height:1.5; color:white;">Now Playing... 🎶</span>`;
+                 setTimeout(() => {
+                    island.style.width = '28%'; // Revert
+                    island.style.height = '4%';
+                    island.innerHTML = '';
+                }, 2000);
+            }
+        }
+
+
+        // --- Scene Management ---
         function playScene() {
             if (currentSceneIndex > 0) {
                 scenes[currentSceneIndex - 1].classList.remove('active');
+                scenes[currentSceneIndex - 1].classList.add('previous');
             }
+            
             if (currentSceneIndex < scenes.length) {
                 const currentScene = scenes[currentSceneIndex];
-                currentScene.classList.add('active');
+                const phoneInScene = currentScene.querySelector('.iphone-container');
                 
-                // Trigger text animations manually for more control if needed,
-                // or rely on CSS animations already set up.
-                // For this setup, CSS handles initial animation, JS can add classes for re-triggering if needed.
-                // animateText(currentScene); // Uncomment if CSS animations aren't firing as expected on subsequent displays
+                // Reset all text animations for current scene before activating
+                currentScene.querySelectorAll('.headline, .sub-headline, .feature-description').forEach(el => {
+                    el.classList.remove('text-animate-in');
+                    if (el.classList.contains('letter-animate')) resetLetterAnimation(el);
+                });
 
-                // Special animations
-                if (currentScene.id === 'scene1') {
-                    // Light beams are CSS only, no extra JS needed here
-                } else if (currentScene.id === 'scene2') {
-                    const phone = currentScene.querySelector('.iphone-mockup');
-                    phone.style.opacity = '0'; // Reset for animation
-                    // The CSS animation @keyframes revealPhone handles this
-                } else if (currentScene.classList.contains('feature-scene')) {
-                    animateDynamicIsland(currentScene);
+
+                currentScene.classList.remove('previous');
+                currentScene.classList.add('active');
+
+                // Ensure iPhone visibility for scenes that should have it
+                // Scenes 0 doesn't have phone. Scene 1 introduces it.
+                iphoneContainers.forEach(container => {
+                    if (currentSceneIndex > 0 && container.closest('.scene.active')) {
+                         // Specific scene animations control its initial state (like formEmerge)
+                        if(currentScene.id !== 'scene1') { // scene1 handles its own opacity
+                            container.style.opacity = '1';
+                        }
+                    } else if (currentSceneIndex === 0){
+                        container.style.opacity = '0'; // Hide phone for scene 0
+                    }
+                });
+                
+                // Animate text elements
+                currentScene.querySelectorAll('.headline, .sub-headline, .feature-description').forEach(el => {
+                    if (el.classList.contains('letter-animate')) {
+                        animateLetters(el);
+                    } else {
+                        // Force reflow for transition
+                        void el.offsetWidth; 
+                        el.classList.add('text-animate-in');
+                    }
+                });
+
+                // Scene-specific logic
+                switch (currentScene.id) {
+                    case 'scene0':
+                        canvas.style.display = 'block';
+                        initParticles();
+                        if(particleAnimationId) cancelAnimationFrame(particleAnimationId);
+                        animateParticles();
+                        // Particles will coalesce towards the end of this scene's duration
+                        setTimeout(() => startParticleCoalesce(1500), sceneDurations[currentSceneIndex] - 2000);
+                        break;
+                    case 'scene1':
+                        // CSS animation 'formEmerge' handles the phone
+                        break;
+                    case 'scene3': // Titanium
+                        const glint = currentScene.querySelector('.titanium-glint');
+                        if (glint) { // Reset glint animation
+                            glint.style.animation = 'none';
+                            void glint.offsetWidth; // Trigger reflow
+                            glint.style.animation = '';
+                        }
+                        break;
+                    case 'scene4': // Action Button
+                        const actionBtn = currentScene.querySelector('.action-button-visual');
+                        const phoneForAction = currentScene.querySelector('.iphone-container');
+                        if (actionBtn && phoneForAction) {
+                            phoneForAction.style.transform = 'rotateY(25deg) rotateX(8deg) scale(1.1)';
+                            actionBtn.classList.add('visible');
+                            setTimeout(() => actionBtn.classList.add('pressed'), 800);
+                            setTimeout(() => actionBtn.classList.remove('pressed'), 1200);
+                            animateDynamicIsland('action-dynamic-island', 'action');
+                        }
+                        break;
+                    case 'scene5': // A17 Pro
+                        animateA17Chip();
+                        break;
+                    case 'scene6': // Camera
+                         const phoneForCamera = currentScene.querySelector('.iphone-container');
+                         const focusRing = currentScene.querySelector('.camera-focus-ring');
+                         if(phoneForCamera) phoneForCamera.style.transform = 'rotateY(-15deg) rotateX(-7deg) scale(1.15)';
+                         if (focusRing) {
+                            focusRing.style.animation = 'none';
+                            void focusRing.offsetWidth;
+                            focusRing.style.animation = '';
+                         }
+                        break;
+                    case 'scene7': // USB-C
+                        const port = currentScene.querySelector('.usbc-port-visual');
+                        const cable = currentScene.querySelector('.usbc-cable-visual');
+                        if (port) port.classList.add('visible');
+                        if (cable) {
+                            cable.style.animation = 'none';
+                            void cable.offsetWidth;
+                            cable.style.animation = '';
+                        }
+                        break;
+                    case 'scene8': // Dynamic Island
+                        animateDynamicIsland('interactive-island', 'interactive');
+                        break;
+                    case 'scene9': // Hero
+                        const heroPhone = currentScene.querySelector('.iphone-container');
+                        if(heroPhone) { // Reset and restart animation if replaying
+                            heroPhone.style.animation = 'none';
+                            void heroPhone.offsetWidth;
+                            heroPhone.style.animation = '';
+                        }
+                        break;
                 }
-
 
                 setTimeout(() => {
                     currentSceneIndex++;
@@ -345,33 +751,22 @@
                         playScene();
                     } else {
                         console.log("Ad finished.");
-                        // Optionally loop:
-                        // currentSceneIndex = 0;
+                        // Optional: Loop
+                        // currentSceneIndex = 0; 
                         // scenes[scenes.length - 1].classList.remove('active');
                         // playScene();
                     }
-                }, sceneDurations[currentSceneIndex]);
+                }, sceneDurations[currentSceneIndex -1 < 0 ? 0 : currentSceneIndex]); // Use correct index for duration
+
             }
         }
 
-        // Start the ad
         window.onload = () => {
-            // Pre-warm/reset element states if needed before first scene
-            scenes.forEach(scene => {
-                const phone = scene.querySelector('.iphone-mockup');
-                if (phone && scene.id !== 'scene2' && !scene.classList.contains('feature-scene') && scene.id !== 'scene6') {
-                    phone.style.opacity = '0'; // Ensure phones in non-initial scenes are hidden
-                }
-                const title = scene.querySelector('.main-title');
-                const subTitle = scene.querySelector('.sub-title');
-                const featureText = scene.querySelector('.feature-text');
-                if (title) title.style.opacity = '0';
-                if (subTitle) subTitle.style.opacity = '0';
-                if (featureText) featureText.style.opacity = '0';
-
-            });
-            // Ensure text elements within #scene2, feature-scenes, and #scene6 use their keyframe animations properly
-            // No need to call animateText here because the keyframes have `forwards` and delays.
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Initial setup: Hide all phones except potentially the one in the first real phone scene
+            iphoneContainers.forEach(container => container.style.opacity = '0');
 
             playScene();
         };
