@@ -3,37 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPhone 15 Pro - Dynamic Island Unveiled</title>
+    <title>iPhone 15 Pro - Dynamic Island in Focus</title>
     <style>
         :root {
-            --bg-primary: #050507; /* Even deeper black */
-            --bg-secondary: #16161A;
-            --text-primary: #FCFCFD;
-            --text-secondary: #A8A8AD;
-            --accent-dynamic-island: #007AFF; /* Blue for primary DI interactions */
-            --accent-music: #F94C66;      /* Vibrant Pink/Red for Music */
-            --accent-maps: #34C759;       /* Green for Maps */
-            --accent-timer: #FF9500;      /* Orange for Timer */
-            --accent-call: #5856D6;       /* Purple for Call */
-            --accent-neutral: #505053;
+            --bg-primary: #101012; /* Slightly textured very dark grey */
+            --bg-secondary: #1E1E22;
+            --text-primary: #FDFDFE;
+            --text-secondary: #B0B0B5;
+            --accent-dynamic-island: #0A84FF; /* Updated Apple Blue - slightly more vibrant */
+            --accent-music: #FF375F;
+            --accent-maps: #30D158;
+            --accent-timer: #FF9F0A;
+            --accent-call: #5E5CE6;
+            --accent-neutral: #5A5A5E;
+            --screen-bg-grey: #3A3A3C; /* Medium grey for screen, DI visibility */
 
             --font-heading: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
             --font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy, interactive feel */
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
             --ease-apple-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
-            --ease-out-swift: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-
-            --transition-default: 0.7s;
-            --transition-island-morph: 0.5s;
+            --transition-default: 0.8s;
+            --transition-island-morph: 0.55s; /* Slightly slower for smoother morph */
+            --transition-text-reveal: 0.7s;
         }
 
         /* Base Reset */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body {
             width: 100%; height: 100%; overflow: hidden;
-            background-color: var(--bg-primary); color: var(--text-primary);
+            background: linear-gradient(160deg, var(--bg-primary) 0%, #08080A 100%); /* Subtle gradient */
+            color: var(--text-primary);
             font-family: var(--font-body);
             -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
         }
@@ -43,154 +45,137 @@
         /* Scene Structure */
         .scene {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            display: flex; /* Using flex for main alignment within scene */
             opacity: 0; visibility: hidden;
-            transform: scale(0.95) translateY(20px); /* Subtle entry animation */
+            transform: translateY(30px) scale(0.97); /* Subtle upward entry */
             transition: opacity var(--transition-default) var(--ease-apple-smooth),
                         transform var(--transition-default) var(--ease-apple-smooth),
                         visibility 0s linear var(--transition-default);
-            padding: 6vmin;
+            padding: 7vmin 5vmin; /* Consistent padding */
             will-change: opacity, transform;
         }
-        .scene.active { opacity: 1; visibility: visible; transform: scale(1) translateY(0); transition-delay: 0s; z-index: 10; }
-        .scene.exiting { opacity: 0; transform: scale(0.95) translateY(-20px); z-index: 5; }
+        .scene.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); transition-delay: 0s; z-index: 10; }
+        .scene.exiting { opacity: 0; transform: translateY(-30px) scale(0.97); z-index: 5; }
 
-        /* iPhone 2D Mockup - Centered for DI focus */
+        /* iPhone 2D Mockup - Placement managed by JS */
         .iphone-container {
-            position: relative; /* Will be centered on stage */
-            width: 40vmin; height: 80vmin;
-            max-width: 200px; max-height: 400px;
-            opacity: 0; transform: scale(0.8);
-            transition: opacity 1s var(--ease-out-swift), transform 1s var(--ease-out-swift);
+            position: absolute; /* Absolute positioning relative to animation-stage */
+            width: 42vmin; height: 84vmin; /* Slightly larger for presence */
+            max-width: 210px; max-height: 420px;
+            opacity: 0; transform: scale(0.85);
+            transition: opacity 1.2s var(--ease-out-expo), transform 1.2s var(--ease-out-expo),
+                        top 1s var(--ease-apple-smooth), left 1s var(--ease-apple-smooth); /* Smooth position changes */
             z-index: 50;
+            will-change: opacity, transform, top, left;
         }
         .iphone-container.visible { opacity: 1; transform: scale(1); }
 
         .iphone-body {
             width: 100%; height: 100%;
             background-color: var(--bg-secondary);
-            border: 0.7vmin solid var(--accent-neutral);
-            border-radius: 7vmin; position: relative;
-            box-shadow: 0 1.2vmin 3vmin rgba(0,0,0,0.25);
+            border: 0.6vmin solid var(--accent-neutral);
+            border-radius: 7.5vmin; position: relative;
+            box-shadow: 0 1.5vmin 3.5vmin rgba(0,0,0,0.3);
         }
         .iphone-screen {
-            position: absolute; top: 1.2vmin; left: 1.2vmin;
-            width: calc(100% - 2.4vmin); height: calc(100% - 2.4vmin);
-            background-color: #000; border-radius: 5.5vmin;
+            position: absolute; top: 1.1vmin; left: 1.1vmin;
+            width: calc(100% - 2.2vmin); height: calc(100% - 2.2vmin);
+            background-color: var(--screen-bg-grey); /* GREY SCREEN */
+            border-radius: 6vmin;
             overflow: hidden; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Dynamic Island - THE STAR */
-        .dynamic-island-host { /* Positioner for the DI */
-            margin-top: 3.5%; position: relative;
-            width: 32%; min-width: 65px; height: 5%; min-height: 16px;
-            /* Base state, actual DI is inside */
+        /* Dynamic Island */
+        .dynamic-island-host {
+            margin-top: 3.8%; position: relative;
+            width: 33%; min-width: 70px; height: 5.2%; min-height: 17px;
         }
         .dynamic-island {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            background-color: #000;
-            border-radius: 2.5vmin; /* Pill shape */
+            background-color: #000000; /* Pure black for DI */
+            border-radius: 2.7vmin;
             transition: width var(--transition-island-morph) var(--ease-spring),
                         height var(--transition-island-morph) var(--ease-spring),
                         border-radius var(--transition-island-morph) var(--ease-spring),
                         transform var(--transition-island-morph) var(--ease-spring);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0.8vmin 1.5vmin;
-            overflow: hidden;
-            color: white;
+            padding: 0.9vmin 1.6vmin;
+            overflow: hidden; color: white;
             will-change: width, height, border-radius, transform;
+            box-shadow: 0 0.2vmin 0.8vmin rgba(0,0,0,0.2); /* Subtle shadow on grey screen */
         }
-        /* Base pill shape */
         .dynamic-island.pill { width: 100%; height: 100%; }
-
-        /* Expanded States */
-        .dynamic-island.medium-expanded { /* For alerts, music compact */
-            width: 180%; /* Relative to host width */
-            height: 130%;
-            border-radius: 3.5vmin;
-        }
-        .dynamic-island.large-expanded { /* For calls, detailed maps */
-            width: 250%;
-            height: 200%;
-            border-radius: 4.5vmin;
-        }
+        .dynamic-island.medium-expanded { width: 190%; height: 140%; border-radius: 3.8vmin; }
+        .dynamic-island.large-expanded { width: 260%; height: 210%; border-radius: 4.8vmin; }
         .dynamic-island.full-width-banner {
-            width: calc(var(--phone-screen-width) * 0.9); /* Accessing this via JS */
-            max-width: 90%; /* Fallback */
-            height: 150%;
-            border-radius: 3.5vmin;
+            width: calc(var(--phone-screen-width-js, 92%)); /* JS sets this custom property */
+            height: 160%; border-radius: 3.8vmin;
         }
 
-
-        /* Content within Dynamic Island */
         .di-content {
-            opacity: 0; transform: scale(0.9);
-            transition: opacity 0.3s var(--ease-apple-smooth) 0.15s, transform 0.3s var(--ease-apple-smooth) 0.15s;
-            font-size: max(1.8vmin, 10px); font-weight: 500;
-            display: flex; align-items: center; gap: 1vmin;
-            white-space: nowrap;
-            width: 100%; /* Ensure content can fill expanded DI */
+            opacity: 0; transform: translateY(3px) scale(0.95);
+            transition: opacity 0.35s var(--ease-apple-smooth) 0.2s, transform 0.35s var(--ease-apple-smooth) 0.2s;
+            font-size: max(1.9vmin, 11px); font-weight: 500;
+            display: flex; align-items: center; gap: 1.2vmin;
+            white-space: nowrap; width: 100%;
         }
-        .dynamic-island.active .di-content { opacity: 1; transform: scale(1); }
-
-        .di-icon { width: 3vmin; height: 3vmin; fill: currentColor; }
+        .dynamic-island.active .di-content { opacity: 1; transform: translateY(0) scale(1); }
+        .di-icon { width: 3.2vmin; height: 3.2vmin; min-width:16px; min-height:16px; fill: currentColor; }
         .di-icon svg { display: block; width: 100%; height: 100%; }
         .di-text { flex-grow: 1; text-align: left; }
-        .di-text-small { font-size: 0.8em; color: var(--text-secondary); }
+        .di-text-small { font-size: 0.85em; color: var(--text-secondary); opacity: 0.8; }
         .di-trailing-content { margin-left: auto; display: flex; align-items: center; }
-        
-        /* Specific DI Feature Styles */
-        .di-music-controls .di-icon { color: var(--accent-music); }
-        .di-maps-navigation .di-icon { color: var(--accent-maps); }
-        .di-timer-display .di-icon { color: var(--accent-timer); }
-        .di-call-status .di-icon { color: var(--accent-call); }
-        .di-call-status .di-avatar { width: 4vmin; height: 4vmin; border-radius: 50%; background-color: var(--accent-neutral); margin-right: 1vmin; }
-
-        /* Waveform for music (simple CSS) */
-        .di-waveform { display: flex; align-items: flex-end; height: 2.5vmin; gap: 0.3vmin; }
-        .di-waveform .bar { width: 0.4vmin; background-color: var(--accent-music); border-radius: 0.2vmin; animation: diWave 1s infinite ease-in-out alternate; }
+        .di-waveform { display: flex; align-items: flex-end; height: 2.8vmin; gap: 0.35vmin; }
+        .di-waveform .bar { width: 0.45vmin; background-color: var(--accent-music); border-radius: 0.2vmin; animation: diWave 1s infinite ease-in-out alternate; }
         .di-waveform .bar:nth-child(1) { height: 60%; animation-delay: 0s; }
         .di-waveform .bar:nth-child(2) { height: 100%; animation-delay: 0.2s; }
         .di-waveform .bar:nth-child(3) { height: 80%; animation-delay: 0.4s; }
         @keyframes diWave { 0% { height: 20%; } 100% { height: 100%; } }
+        .di-call-status .di-avatar { width: 4.5vmin; height: 4.5vmin; border-radius: 50%; background-color: var(--accent-neutral); margin-right: 1.2vmin; }
 
 
-        /* Text & Titles for DI Feature Scenes */
-        .feature-title-overlay {
-            position: absolute; top: 10vh; left: 50%; transform: translateX(-50%);
-            font-family: var(--font-heading); font-size: clamp(5vmin, 7vw, 8vmin); font-weight: 600;
-            text-align: center;
-            opacity: 0; transform: translateX(-50%) translateY(15px);
-            transition: opacity var(--transition-default) var(--ease-out-swift), transform var(--transition-default) var(--ease-out-swift);
-            will-change: opacity, transform;
+        /* Text Overlay Positioning & Styling (More Strategic) */
+        .text-overlay-group { /* Container for title and description */
+            position: absolute; /* Positioned by JS */
+            width: auto; max-width: 80vmin; /* Max width for readability */
+            opacity: 0; transform: translateY(20px);
+            transition: opacity var(--transition-text-reveal) var(--ease-out-expo),
+                        transform var(--transition-text-reveal) var(--ease-out-expo),
+                        top var(--transition-text-reveal) var(--ease-out-expo),
+                        left var(--transition-text-reveal) var(--ease-out-expo),
+                        text-align var(--transition-text-reveal) var(--ease-out-expo); /* For dynamic alignment */
+            z-index: 60; /* Above iPhone */
+            will-change: opacity, transform, top, left, text-align;
         }
-        .scene.active .feature-title-overlay.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-        
-        .feature-description-overlay {
-            position: absolute; bottom: 10vh; left: 50%; transform: translateX(-50%);
-            font-size: clamp(3vmin, 4vw, 4.5vmin); color: var(--text-secondary);
-            text-align: center; max-width: 70vmin;
-            opacity: 0; transform: translateX(-50%) translateY(15px);
-            transition: opacity var(--transition-default) var(--ease-out-swift) 0.2s, transform var(--transition-default) var(--ease-out-swift) 0.2s; /* Staggered */
-        }
-        .scene.active .feature-description-overlay.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .scene.active .text-overlay-group.visible { opacity: 1; transform: translateY(0); }
 
-        /* General Titles (Intro/Outro) */
+        .overlay-title {
+            font-family: var(--font-heading); font-size: clamp(5.5vmin, 7.5vw, 8.5vmin); font-weight: 600;
+            line-height: 1.15; letter-spacing: -0.01em;
+            color: var(--text-primary);
+            margin-bottom: 2vmin;
+        }
+        .overlay-description {
+            font-size: clamp(3.2vmin, 4.2vw, 4.8vmin); color: var(--text-secondary);
+            line-height: 1.4;
+            transition-delay: 0.15s; /* Stagger from title */
+        }
+
+        /* General Titles (Intro/Outro) - Centered */
+        .centered-title-group {
+            text-align: center; width: 100%;
+            display: flex; flex-direction: column; align-items: center;
+        }
         .main-title {
-            font-family: var(--font-heading); font-size: clamp(8vmin, 12vw, 14vmin); font-weight: 700;
-            line-height: 1.05; text-align: center;
+            font-family: var(--font-heading); font-size: clamp(8.5vmin, 13vw, 15vmin); font-weight: 700;
+            line-height: 1.0; letter-spacing: -0.025em;
         }
         .sub-title {
-            font-size: clamp(4vmin, 5.5vw, 6vmin); color: var(--text-secondary);
-            margin-top: 2vmin; text-align: center;
+            font-size: clamp(4.2vmin, 5.8vw, 6.5vmin); color: var(--text-secondary);
+            margin-top: 2.5vmin; max-width: 75vmin;
         }
 
-
-        /* SVG Icons (Inline for simplicity) */
-        .svg-icon-music path { fill: var(--accent-music); }
-        .svg-icon-maps path { fill: var(--accent-maps); }
-        .svg-icon-timer path { fill: var(--accent-timer); }
-        .svg-icon-call path { fill: var(--accent-call); }
+        /* Scene-specific alignments handled by JS config */
 
     </style>
 </head>
@@ -201,50 +186,40 @@
             <div class="iphone-body">
                 <div class="iphone-screen" id="iphoneScreen">
                     <div class="dynamic-island-host" id="dynamicIslandHost">
-                        <div class="dynamic-island pill" id="dynamicIsland">
-                            <!-- Content injected by JS -->
-                        </div>
+                        <div class="dynamic-island pill" id="dynamicIsland"></div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <div class="text-overlay-group" id="featureTextOverlay">
+            <h3 class="overlay-title" id="featureOverlayTitle"></h3>
+            <p class="overlay-description" id="featureOverlayDesc"></p>
+        </div>
+
         <!-- Scenes -->
         <div class="scene" id="scene-intro-title">
-            <h1 class="main-title">Dynamic Island.</h1>
-            <h2 class="sub-title">Magically surfaces what you need, right when you need it.</h2>
+            <div class="centered-title-group">
+                <h1 class="main-title">Dynamic Island</h1>
+                <h2 class="sub-title">A magical new way to interact with iPhone.</h2>
+            </div>
         </div>
         
-        <!-- Dynamic Island Feature Scenes -->
-        <div class="scene" id="di-scene-music">
-            <h3 class="feature-title-overlay" id="title-music">Now Playing</h3>
-            <p class="feature-description-overlay" id="desc-music">Control your music without leaving the app you're in.</p>
-        </div>
-        <div class="scene" id="di-scene-maps">
-            <h3 class="feature-title-overlay" id="title-maps">Navigation</h3>
-            <p class="feature-description-overlay" id="desc-maps">Turn-by-turn directions, glanceable and intuitive.</p>
-        </div>
-        <div class="scene" id="di-scene-timer">
-            <h3 class="feature-title-overlay" id="title-timer">Timer</h3>
-            <p class="feature-description-overlay" id="desc-timer">Keep track of timers and other live activities.</p>
-        </div>
-        <div class="scene" id="di-scene-call">
-            <h3 class="feature-title-overlay" id="title-call">Incoming Call</h3>
-            <p class="feature-description-overlay" id="desc-call">Answer or decline calls without interruption.</p>
-        </div>
-        <div class="scene" id="di-scene-multitask">
-             <h3 class="feature-title-overlay" id="title-multitask">Multiple Activities</h3>
-            <p class="feature-description-overlay" id="desc-multitask">Dynamic Island handles multiple alerts and activities at once.</p>
-        </div>
-
+        <div class="scene" id="di-scene-music"></div>
+        <div class="scene" id="di-scene-maps"></div>
+        <div class="scene" id="di-scene-timer"></div>
+        <div class="scene" id="di-scene-call"></div>
+        <div class="scene" id="di-scene-multitask"></div>
 
         <div class="scene" id="scene-outro-title">
-            <h1 class="main-title">iPhone 15 Pro</h1>
-            <h2 class="sub-title">With the incredibly innovative Dynamic Island.</h2>
+            <div class="centered-title-group">
+                <h1 class="main-title">iPhone 15 Pro</h1>
+                <h2 class="sub-title">Innovation, front and center.</h2>
+            </div>
         </div>
     </div>
 
-    <!-- SVG Icons -->
+    <!-- SVG Icons (Same as before) -->
     <svg width="0" height="0" style="position:absolute;visibility:hidden;">
         <defs>
             <g id="icon-music-note"> <path d="M12 3v10.55A4.003 4.003 0 0010 13a4 4 0 104 4V7h4V3h-6zm-2 12a2 2 0 110-4 2 2 0 010 4z"/> </g>
@@ -255,75 +230,91 @@
     </svg>
 
     <script>
+    // --- Scene Configuration ---
+    // Text overlay positions: top/left in %, alignment: 'left'/'center'/'right'
+    // iPhone positions: top/left in % relative to animation-stage center (50%,50%)
     const DI_SCENES_CONFIG = [
         { id: 'scene-intro-title', duration: 4000, iphone: { visible: false } },
         { 
-            id: 'di-scene-music', duration: 5000, iphone: { visible: true },
+            id: 'di-scene-music', duration: 5000, 
+            iphone: { visible: true, top: '50%', left: '50%' },
+            text: { title: 'Now Playing', desc: 'Control your music without leaving the app you\'re in.', pos: { top: '15%', left: '50%', align: 'center' } },
             di: { 
                 initial: 'pill',
                 sequence: [
-                    { state: 'medium-expanded', delay: 500, content:音乐Content('Song Title', 'Artist Name') },
+                    { state: 'medium-expanded', delay: 500, content: 音乐Content('Midnight City', 'M83') },
                     { state: 'pill', delay: 3500, content: '' }
                 ]
             } 
         },
         { 
-            id: 'di-scene-maps', duration: 5500, iphone: { visible: true },
+            id: 'di-scene-maps', duration: 5500, 
+            iphone: { visible: true, top: '60%', left: '30%' }, // Phone left
+            text: { title: 'Navigation', desc: 'Turn-by-turn directions, glanceable and intuitive.', pos: { top: '25%', left: '70%', align: 'left' } }, // Text right
             di: {
                 initial: 'pill',
                 sequence: [
-                    { state: 'large-expanded', delay: 500, content:地图Content('Next Turn: Right on Main St', '0.5 mi') },
+                    { state: 'large-expanded', delay: 500, content: 地图Content('Next: Left on Elm St', '0.3 mi') },
                     { state: 'pill', delay: 4000, content: '' }
                 ]
             }
         },
         {
-            id: 'di-scene-timer', duration: 5000, iphone: { visible: true },
+            id: 'di-scene-timer', duration: 5000, 
+            iphone: { visible: true, top: '40%', left: '70%' }, // Phone right
+            text: { title: 'Live Activities', desc: 'Keep track of timers, scores, and more.', pos: { top: '55%', left: '30%', align: 'right' } }, // Text left
             di: {
                 initial: 'pill',
                 sequence: [
-                    { state: 'medium-expanded', delay: 500, content:计时器Content('Timer', '00:05:30') },
+                    { state: 'medium-expanded', delay: 500, content: 计时器Content('Pasta Timer', '00:03:45') },
                     { state: 'pill', delay: 3500, content: '' }
                 ]
             }
         },
         {
-            id: 'di-scene-call', duration: 6000, iphone: { visible: true },
+            id: 'di-scene-call', duration: 6000, 
+            iphone: { visible: true, top: '50%', left: '50%' },
+            text: { title: 'Seamless Calls', desc: 'Answer, decline, or manage calls without interruption.', pos: { top: '80%', left: '50%', align: 'center' } },
             di: {
                 initial: 'pill',
                 sequence: [
-                    // Quick full width banner, then shrinks to large expanded for call UI
-                    { state: 'full-width-banner', type: 'incoming-call', delay: 500, content:来电Content('Jane Doe', 'Mobile') },
-                    { state: 'large-expanded', type: 'active-call', delay: 1500, content:通话中Content('Jane Doe', '01:23') }, // morph to active call UI
+                    { state: 'full-width-banner', delay: 500, content: 来电Content('Alex Johnson', 'Work') },
+                    { state: 'large-expanded', delay: 1500, content: 通话中Content('Alex Johnson', '00:42') },
                     { state: 'pill', delay: 3000, content: '' }
                 ]
             }
         },
-         {
-            id: 'di-scene-multitask', duration: 6000, iphone: { visible: true },
+         { // Multitask: Phone centered, text above
+            id: 'di-scene-multitask', duration: 6500, 
+            iphone: { visible: true, top: '60%', left: '50%' },
+            text: { title: 'Plays Well With Others', desc: 'Dynamic Island adapts to show multiple activities at once.', pos: { top: '20%', left: '50%', align: 'center' } },
             di: {
-                type: 'multitask', // Special handling
-                initial: 'pill',
-                sequence: [ // This would be more complex, showing two activities splitting the island
-                    // For simplicity, we'll just show one then the other
-                    { state: 'medium-expanded', type: 'music-compact', delay: 500, content:音乐ContentCompact('Tiny Song')}, // Music on one side
-                    // JS would need to split the DI into two bubbles here, which is complex.
-                    // Simulating by showing a different state after a bit.
-                    { state: 'medium-expanded', type: 'timer-compact', delay: 2500, content:计时器Content('Another Timer', '02:10') }, // Timer appears
-                    { state: 'pill', delay: 2000, content: '' }
+                type: 'multitask', initial: 'pill',
+                sequence: [ 
+                    { state: 'medium-expanded', type: 'music-compact', delay: 500, content: 音乐ContentCompact('City Lights')},
+                    // JS would need to animate the "split" here. For now, just morphs.
+                    // A true split would involve two DI elements or complex masking.
+                    { state: 'medium-expanded', type: 'timer-compact', delay: 2500, 
+                      content: 计时器Content('Presentation', '15:00') + 音乐ContentCompact('City Lights', true) /* Pass flag for compact layout */
+                    }, 
+                    { state: 'pill', delay: 2500, content: '' }
                 ]
             }
         },
-        { id: 'scene-outro-title', duration: 4500, iphone: { visible: true, finalScale: 1.05 } }
+        { id: 'scene-outro-title', duration: 4500, iphone: { visible: true, top: '45%', left: '50%', finalScale: 1.05 } }
     ];
 
-    // DI Content Generators
-    function 音乐Content(title, artist) { return `<div class="di-content di-music-controls"><span class="di-icon"><svg viewBox="0 0 24 24"><use href="#icon-music-note"/></svg></span><div class="di-text">${title}<div class="di-text-small">${artist}</div></div><div class="di-trailing-content di-waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
-    function 音乐ContentCompact(title) { return `<div class="di-content di-music-controls"><span class="di-icon"><svg viewBox="0 0 24 24"><use href="#icon-music-note"/></svg></span><div class="di-text">${title}</div></div>`; }
-    function 地图Content(instruction, distance) { return `<div class="di-content di-maps-navigation"><span class="di-icon"><svg viewBox="0 0 24 24"><use href="#icon-map-pin"/></svg></span><div class="di-text">${instruction}<div class="di-text-small">${distance}</div></div><div class="di-trailing-content"><span class="di-icon" style="transform: rotate(45deg);"><svg viewBox="0 0 24 24"><path d="M3 11l19-9L12.5 21.5 11 13 3 11z"/></svg></span></div></div>`; }
-    function 计时器Content(label, time) { return `<div class="di-content di-timer-display"><span class="di-icon"><svg viewBox="0 0 24 24"><use href="#icon-timer"/></svg></span><div class="di-text">${label}</div><div class="di-trailing-content" style="color:var(--accent-timer); font-weight:600;">${time}</div></div>`; }
-    function 来电Content(name, type) { return `<div class="di-content di-call-status"><div class="di-avatar"></div><div class="di-text">${name}<div class="di-text-small">${type}</div></div><div class="di-trailing-content" style="display:flex; gap:1.5vmin;"><span class="di-icon" style="color:#E53E3E; background-color:rgba(229,62,62,0.2); padding:0.5vmin; border-radius:50%;"><svg viewBox="0 0 24 24"><use href="#icon-phone" style="transform: rotate(135deg) scale(0.8);"/></svg></span><span class="di-icon" style="color:#34C759; background-color:rgba(52,199,89,0.2); padding:0.5vmin; border-radius:50%;"><svg viewBox="0 0 24 24"><use href="#icon-phone" style="transform: scale(0.8);"/></svg></span></div></div>`; }
-    function 通话中Content(name, duration) { return `<div class="di-content di-call-status"><div class="di-avatar"></div><div class="di-text">${name}<div class="di-text-small" style="color:var(--accent-call);">${duration}</div></div><div class="di-trailing-content di-waveform" style="height:1.5vmin;"><div class="bar" style="background-color:var(--accent-call);"></div><div class="bar" style="background-color:var(--accent-call);"></div><div class="bar" style="background-color:var(--accent-call);"></div></div></div>`; }
+    // --- DI Content Generators (Updated for better structure) ---
+    function 音乐Content(title, artist) { return `<div class="di-content di-music-controls"><span class="di-icon svg-icon-music"><svg viewBox="0 0 24 24"><use href="#icon-music-note"/></svg></span><div class="di-text">${title}<div class="di-text-small">${artist}</div></div><div class="di-trailing-content di-waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
+    function 音乐ContentCompact(title, isMultitaskSecondary = false) { 
+        // For multitask, we might want slightly different styling or less info
+        let style = isMultitaskSecondary ? 'style="flex-grow:0; margin-left: auto;"' : ''; // Example style change
+        return `<div class="di-content di-music-controls" ${style}><span class="di-icon svg-icon-music"><svg viewBox="0 0 24 24"><use href="#icon-music-note"/></svg></span>${!isMultitaskSecondary ? `<div class="di-text">${title}</div>` : ''}</div>`; 
+    }
+    function 地图Content(instruction, distance) { return `<div class="di-content di-maps-navigation"><span class="di-icon svg-icon-maps"><svg viewBox="0 0 24 24"><use href="#icon-map-pin"/></svg></span><div class="di-text">${instruction}<div class="di-text-small">${distance}</div></div><div class="di-trailing-content"><span class="di-icon" style="transform: rotate(45deg);"><svg viewBox="0 0 24 24"><path d="M3 11l19-9L12.5 21.5 11 13 3 11z" fill="${getComputedStyle(document.documentElement).getPropertyValue('--accent-maps').trim()}"/></svg></span></div></div>`; }
+    function 计时器Content(label, time) { return `<div class="di-content di-timer-display"><span class="di-icon svg-icon-timer"><svg viewBox="0 0 24 24"><use href="#icon-timer"/></svg></span><div class="di-text">${label}</div><div class="di-trailing-content" style="color:var(--accent-timer); font-weight:600;">${time}</div></div>`; }
+    function 来电Content(name, type) { return `<div class="di-content di-call-status"><div class="di-avatar"></div><div class="di-text">${name}<div class="di-text-small">${type}</div></div><div class="di-trailing-content" style="display:flex; gap:1.5vmin;"><span class="di-icon" style="color:#FF453A; background-color:rgba(255,69,58,0.15); padding:0.6vmin; border-radius:50%;"><svg viewBox="0 0 24 24"><use href="#icon-phone" style="transform: rotate(135deg) scale(0.8);"/></svg></span><span class="di-icon" style="color:#32D74B; background-color:rgba(50,215,75,0.15); padding:0.6vmin; border-radius:50%;"><svg viewBox="0 0 24 24"><use href="#icon-phone" style="transform: scale(0.8);"/></svg></span></div></div>`; }
+    function 通话中Content(name, duration) { return `<div class="di-content di-call-status"><div class="di-avatar"></div><div class="di-text">${name}<div class="di-text-small" style="color:var(--accent-call);">${duration}</div></div><div class="di-trailing-content di-waveform" style="height:1.8vmin;"><div class="bar" style="background-color:var(--accent-call);"></div><div class="bar" style="background-color:var(--accent-call);"></div><div class="bar" style="background-color:var(--accent-call);"></div></div></div>`; }
 
 
     let currentSceneIndex = -1;
@@ -331,32 +322,49 @@
 
     const iphoneContainerEl = document.getElementById('iphoneContainer');
     const dynamicIslandEl = document.getElementById('dynamicIsland');
-    const iphoneScreenEl = document.getElementById('iphoneScreen'); // For DI banner width
+    const iphoneScreenEl = document.getElementById('iphoneScreen');
+    const featureTextOverlayEl = document.getElementById('featureTextOverlay');
+    const featureOverlayTitleEl = document.getElementById('featureOverlayTitle');
+    const featureOverlayDescEl = document.getElementById('featureOverlayDesc');
+
 
     function setDynamicIslandState(stateClass, htmlContent = '') {
         clearTimeout(diSequenceTimeout);
-        dynamicIslandEl.className = 'dynamic-island'; // Reset classes
+        dynamicIslandEl.className = 'dynamic-island';
         if (stateClass) dynamicIslandEl.classList.add(stateClass);
         dynamicIslandEl.innerHTML = htmlContent;
-        // For full-width-banner, adjust width based on screen
+        
         if (stateClass === 'full-width-banner') {
-            dynamicIslandEl.style.width = `${iphoneScreenEl.offsetWidth * 0.92}px`;
+            const screenWidth = iphoneScreenEl.offsetWidth;
+            // Set CSS variable for dynamic width calculation in CSS
+            dynamicIslandEl.style.setProperty('--phone-screen-width-js', `${screenWidth * 0.92}px`);
         } else {
-            dynamicIslandEl.style.width = ''; // Revert to CSS % based on host
+            dynamicIslandEl.style.removeProperty('--phone-screen-width-js');
+            dynamicIslandEl.style.width = ''; // Revert to CSS %
         }
-        setTimeout(() => { // Add active class after a tick for transition
+        setTimeout(() => {
              if(htmlContent) dynamicIslandEl.classList.add('active');
         }, 20);
     }
 
     function playDynamicIslandSequence(sequence, initial) {
-        setDynamicIslandState(initial, ''); // Start with initial state and no content
+        setDynamicIslandState(initial, '');
         let currentIndex = 0;
         function nextStep() {
             if (currentIndex >= sequence.length) return;
             const step = sequence[currentIndex];
             diSequenceTimeout = setTimeout(() => {
-                setDynamicIslandState(step.state, step.content);
+                let contentToSet = step.content;
+                if (DI_SCENES_CONFIG[currentSceneIndex].di.type === 'multitask' && step.type === 'timer-compact' && currentIndex > 0) {
+                    // Special handling for multitask: append music content
+                    const musicCompactHTML = 音乐ContentCompact('City Lights', true);
+                    contentToSet = step.content + musicCompactHTML; // Assumes timer content is first
+                    // This is a simplified multitask viz. True split is harder.
+                    dynamicIslandEl.style.justifyContent = 'space-between'; // Try to space them
+                } else {
+                     dynamicIslandEl.style.justifyContent = ''; // Reset
+                }
+                setDynamicIslandState(step.state, contentToSet);
                 currentIndex++;
                 nextStep();
             }, step.delay);
@@ -364,17 +372,38 @@
         nextStep();
     }
 
+    function updateTextOverlay(config) {
+        if (config.text) {
+            featureOverlayTitleEl.textContent = config.text.title;
+            featureOverlayDescEl.textContent = config.text.desc;
+            featureTextOverlayEl.style.top = config.text.pos.top;
+            featureTextOverlayEl.style.left = config.text.pos.left;
+            featureTextOverlayEl.style.textAlign = config.text.pos.align;
+            // Adjust transform for centering if text-align is center
+            if (config.text.pos.align === 'center') {
+                featureTextOverlayEl.style.transform = 'translateX(-50%) translateY(20px)'; // Initial for anim
+            } else if (config.text.pos.align === 'right') {
+                featureTextOverlayEl.style.transform = 'translateX(-100%) translateY(20px)';
+            }
+            else {
+                featureTextOverlayEl.style.transform = 'translateX(0%) translateY(20px)';
+            }
+            featureTextOverlayEl.classList.add('visible');
+        } else {
+            featureTextOverlayEl.classList.remove('visible');
+        }
+    }
 
     function transitionToScene() {
-        clearTimeout(sceneTimeout);
-        clearTimeout(diSequenceTimeout); // Stop any ongoing DI animation
+        clearTimeout(sceneTimeout); clearTimeout(diSequenceTimeout);
+
+        featureTextOverlayEl.classList.remove('visible'); // Hide overlay before transition
 
         if (currentSceneIndex > -1) {
             const oldSceneEl = document.getElementById(DI_SCENES_CONFIG[currentSceneIndex].id);
             if (oldSceneEl) {
                 oldSceneEl.classList.remove('active');
                 oldSceneEl.classList.add('exiting');
-                oldSceneEl.querySelectorAll('.feature-title-overlay, .feature-description-overlay').forEach(el => el.classList.remove('visible'));
             }
         }
         
@@ -389,33 +418,46 @@
         const currentSceneEl = document.getElementById(config.id);
 
         currentSceneEl.classList.add('active');
-        currentSceneEl.querySelectorAll('.feature-title-overlay, .feature-description-overlay').forEach(el => {
-             setTimeout(() => el.classList.add('visible'), 200); // Delay for scene transition
-        });
+        
+        setTimeout(() => updateTextOverlay(config), 200); // Update text after scene starts transition
 
         // iPhone visibility & positioning
         iphoneContainerEl.classList.toggle('visible', config.iphone.visible !== false);
-        if(config.iphone.finalScale) {
-            iphoneContainerEl.style.transform = `scale(${config.iphone.finalScale})`;
-        } else if (config.iphone.visible) {
-            iphoneContainerEl.style.transform = 'scale(1)';
+        if (config.iphone.visible) {
+            iphoneContainerEl.style.top = config.iphone.top || '50%';
+            iphoneContainerEl.style.left = config.iphone.left || '50%';
+             // Center the phone using translate, regardless of its top/left
+            let baseTransform = 'translate(-50%, -50%)';
+            if (config.iphone.finalScale) {
+                 baseTransform += ` scale(${config.iphone.finalScale})`;
+            } else {
+                 baseTransform += ` scale(1)`;
+            }
+             iphoneContainerEl.style.transform = baseTransform;
+
+        } else {
+            // Ensure it's fully transformed out if not visible
+            iphoneContainerEl.style.transform = 'translate(-50%, -50%) scale(0.85)';
         }
 
 
-        // Dynamic Island animations
         if (config.di) {
             playDynamicIslandSequence(config.di.sequence, config.di.initial);
         } else {
-            setDynamicIslandState('pill', ''); // Default to pill if no DI config for scene
+            setDynamicIslandState('pill', '');
         }
 
         sceneTimeout = setTimeout(transitionToScene, config.duration);
     }
 
     window.onload = () => {
+        // Set initial positions for text overlay (hidden) so transitions work
+        featureTextOverlayEl.style.top = '0%'; 
+        featureTextOverlayEl.style.left = '0%';
+        featureTextOverlayEl.style.transform = 'translateY(20px)'; // Initial hidden state
+
         transitionToScene();
     };
-
     </script>
 </body>
 </html>
