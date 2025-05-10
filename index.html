@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Hide & Collect</title>
+    <title>AI Hide & Collect PRO</title>
     <style>
         body {
             font-family: sans-serif;
@@ -14,15 +14,26 @@
             color: #eee;
             margin: 0;
             padding: 10px;
-            overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior: none;
         }
+        .controls {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .controls label { font-size: 0.9em; }
+        .controls input[type="range"] { width: 120px; }
+
         .container {
             display: flex;
-            flex-direction: column; /* Stack game and AI vision on mobile */
+            flex-direction: column;
             align-items: center;
             gap: 15px;
             width: 100%;
-            max-width: 400px; /* Max width for game area */
+            max-width: 400px;
         }
         canvas {
             border: 1px solid #555;
@@ -37,15 +48,15 @@
             border: 1px solid #555;
             padding: 10px;
             background-color: #3a3a3a;
-            width: calc(100% - 22px); /* Full width minus padding/border */
-            max-width: 378px; /* Consistent with canvas max-width */
+            width: calc(100% - 22px);
+            max-width: 378px;
             box-sizing: border-box;
         }
-        .stats p { margin: 6px 0; font-size: 0.9em; }
+        .stats p { margin: 5px 0; font-size: 0.85em; }
         h1, h2 { text-align: center; margin-top: 5px; margin-bottom: 10px; }
         h2 { font-size: 1.1em; }
 
-        @media (min-width: 768px) { /* For wider screens, side-by-side */
+        @media (min-width: 768px) {
             .container {
                 flex-direction: row;
                 align-items: flex-start;
@@ -54,11 +65,18 @@
             .game-area { flex: 2; }
             .ai-info { flex: 1; }
             .stats { width: auto; max-width: none; }
+            .controls input[type="range"] { width: 150px; }
         }
     </style>
 </head>
 <body>
-    <h1>AI Hide & Collect</h1>
+    <h1>AI Hide & Collect PRO (Bigger Brain)</h1>
+
+    <div class="controls">
+        <label for="speedControl">Sim Speed:</label>
+        <input type="range" id="speedControl" min="10" max="500" value="75">
+        <span id="speedValue">75</span> ms/step
+    </div>
 
     <div class="container">
         <div class="game-area">
@@ -66,16 +84,17 @@
             <canvas id="gameCanvas" width="300" height="450"></canvas>
         </div>
         <div class="ai-info">
-            <h2>AI "Vision"</h2>
+            <h2>AI "Vision" (State)</h2>
             <canvas id="aiVisionCanvas" width="150" height="150"></canvas>
             <div class="stats">
                 <h2>Stats</h2>
                 <p>Episode: <span id="episode">0</span></p>
                 <p>Cookies (Coins): <span id="cookies">0</span></p>
                 <p>Punishments (Caught): <span id="punishments">0</span></p>
-                <p>Epsilon: <span id="epsilon">1.00</span></p>
+                <p>Epsilon: <span id="epsilon">1.000</span></p>
                 <p>Last Action: <span id="lastAction">-</span></p>
                 <p>Q-Table Size: <span id="qTableSize">0</span></p>
+                <p>Max Steps: <span id="maxStepsInfo">0</span></p>
             </div>
         </div>
     </div>
@@ -92,40 +111,45 @@
         const epsilonEl = document.getElementById('epsilon');
         const lastActionEl = document.getElementById('lastAction');
         const qTableSizeEl = document.getElementById('qTableSize');
+        const maxStepsInfoEl = document.getElementById('maxStepsInfo');
+
+        const speedControl = document.getElementById('speedControl');
+        const speedValue = document.getElementById('speedValue');
 
         // --- Game Constants ---
         const PLAYER_SIZE = 15;
         const HUNTER_SIZE = 15;
         const COIN_RADIUS = 7;
-        const MOVE_SPEED = PLAYER_SIZE / 2; // Move by half its size for grid-like feel if desired
-        const MAX_STEPS_PER_EPISODE = 300;
+        const MOVE_SPEED = PLAYER_SIZE; // Move by its full size for clearer step counting
+        let MAX_STEPS_PER_EPISODE = 400;
 
         // --- Game Objects ---
         let player = { x: 50, y: 50, width: PLAYER_SIZE, height: PLAYER_SIZE, color: 'blue' };
         let hunter = { x: gameCanvas.width - 50, y: gameCanvas.height - 50, width: HUNTER_SIZE, height: HUNTER_SIZE, color: 'red' };
         let coins = [];
-        let obstacles = [
-            { x: 100, y: 80, width: 20, height: 150, color: '#777' },
-            { x: 180, y: 250, width: 100, height: 20, color: '#777' },
-            { x: 30, y: 300, width: 80, height: 20, color: '#777' },
-            { x: gameCanvas.width / 2 - 10, y: 0, width: 20, height: 70, color: '#777' },
-            { x: gameCanvas.width / 2 - 10, y: gameCanvas.height - 70, width: 20, height: 70, color: '#777' }
+        let obstacles = [ // More obstacles for complex scenarios
+            { x: 100, y: 0, width: 20, height: 120, color: '#777' }, // Top wall
+            { x: 100, y: gameCanvas.height - 120, width: 20, height: 120, color: '#777' }, // Bottom wall
+            { x: 180, y: 200, width: 100, height: 20, color: '#777' }, // Mid bar
+            { x: 0, y: gameCanvas.height/2 - 10, width: 70, height: 20, color: '#777' }, // Left bar
+            { x: gameCanvas.width-70, y: gameCanvas.height/2 - 50, width: 70, height: 20, color: '#777' }, // Right bar
+            { x: 50, y: 50, width: 20, height: 80, color: '#777' },
+            { x: gameCanvas.width - 70, y: gameCanvas.height - 130, width: 20, height: 80, color: '#777' }
         ];
 
         // --- AI Q-Learning Parameters ---
         let qTable = {};
-        const LEARNING_RATE = 0.1; // Alpha
-        const DISCOUNT_FACTOR = 0.9; // Gamma
+        const LEARNING_RATE = 0.1;
+        const DISCOUNT_FACTOR = 0.9;
         let epsilon = 1.0;
-        const EPSILON_DECAY = 0.9995; // Slower decay
-        const MIN_EPSILON = 0.05;
+        const EPSILON_DECAY = 0.9999; // Slower decay for larger state space
+        const MIN_EPSILON = 0.1;    // Higher min epsilon for more exploration
 
-        // Actions: 0:Up, 1:Down, 2:Left, 3:Right, 4:Stay
         const ACTIONS = [
-            { dx: 0, dy: -MOVE_SPEED, name: "Up" },
-            { dx: 0, dy: MOVE_SPEED, name: "Down" },
-            { dx: -MOVE_SPEED, dy: 0, name: "Left" },
-            { dx: MOVE_SPEED, dy: 0, name: "Right" },
+            { dx: 0, dy: -1, name: "Up" },   // dx/dy are multipliers for MOVE_SPEED
+            { dx: 0, dy: 1, name: "Down" },
+            { dx: -1, dy: 0, name: "Left" },
+            { dx: 1, dy: 0, name: "Right" },
             { dx: 0, dy: 0, name: "Stay" }
         ];
 
@@ -134,6 +158,9 @@
         let episodeCount = 0;
         let currentSteps = 0;
 
+        let simIntervalId = null;
+        let currentSimSpeed = 75;
+
         // --- Helper Functions ---
         function rectCollision(rect1, rect2) {
             return rect1.x < rect2.x + rect2.width &&
@@ -141,79 +168,153 @@
                    rect1.y < rect2.y + rect2.height &&
                    rect1.y + rect1.height > rect2.y;
         }
-
-        function pointInRect(px, py, rect) {
-            return px > rect.x && px < rect.x + rect.width &&
-                   py > rect.y && py < rect.y + rect.height;
-        }
         
         function spawnCoin() {
             let coinX, coinY, validPosition;
+            const maxAttempts = 50;
+            let attempts = 0;
             do {
                 validPosition = true;
+                attempts++;
                 coinX = COIN_RADIUS + Math.random() * (gameCanvas.width - 2 * COIN_RADIUS);
                 coinY = COIN_RADIUS + Math.random() * (gameCanvas.height - 2 * COIN_RADIUS);
-                // Ensure coin doesn't spawn inside an obstacle
-                for (const obs of obstacles) {
-                    if (pointInRect(coinX, coinY, obs) || 
-                        Math.hypot(coinX - (obs.x + obs.width/2), coinY - (obs.y + obs.height/2)) < COIN_RADIUS + Math.max(obs.width, obs.height)/2 ) { // Basic check
-                        validPosition = false;
-                        break;
+                const tempCoinCircle = { x: coinX, y: coinY, radius: COIN_RADIUS };
+
+                for (const obs of obstacles) { // Check collision with obstacles
+                    // Approximate obstacle as circle for simple distance check with coin
+                    const obsCenterX = obs.x + obs.width / 2;
+                    const obsCenterY = obs.y + obs.height / 2;
+                    const distToObsCenter = Math.hypot(coinX - obsCenterX, coinY - obsCenterY);
+                    if (distToObsCenter < COIN_RADIUS + Math.max(obs.width, obs.height) / 2) {
+                         // More precise check: point in rect for coin center
+                        if (coinX > obs.x && coinX < obs.x + obs.width && coinY > obs.y && coinY < obs.y + obs.height) {
+                            validPosition = false;
+                            break;
+                        }
                     }
                 }
-                // Ensure coin is not too close to player or hunter initially (optional)
-                 if (Math.hypot(coinX - player.x, coinY - player.y) < PLAYER_SIZE * 2) validPosition = false;
+                if (!validPosition) continue;
+                if (Math.hypot(coinX - (player.x+player.width/2), coinY - (player.y+player.height/2)) < PLAYER_SIZE * 2 + COIN_RADIUS) validPosition = false;
+                if (Math.hypot(coinX - (hunter.x+hunter.width/2), coinY - (hunter.y+hunter.height/2)) < HUNTER_SIZE * 2 + COIN_RADIUS) validPosition = false;
 
-            } while (!validPosition);
+            } while (!validPosition && attempts < maxAttempts);
+
+            if (!validPosition) { // Fallback if too many attempts
+                coinX = gameCanvas.width / 2;
+                coinY = gameCanvas.height / 2;
+            }
             coins = [{ x: coinX, y: coinY, radius: COIN_RADIUS, color: 'lime' }];
         }
 
-        function getAngleCategory(dx, dy) { // 8 sectors
-            const angle = Math.atan2(dy, dx) + Math.PI; // Range 0 to 2PI
-            return Math.floor(angle / (Math.PI / 4)) % 8; // Map to 0-7
+        function getAngleCategory(dx, dy) {
+            const angle = Math.atan2(dy, dx) + Math.PI;
+            return Math.floor(angle / (Math.PI / 4)) % 8;
         }
 
-        function getDistanceCategory(dist) { // 3 categories
-            if (dist < PLAYER_SIZE * 3) return 0; // Close
-            if (dist < PLAYER_SIZE * 8) return 1; // Medium
-            return 2; // Far
+        function getDistanceCategory(dist, entitySize) { // 4 categories
+            if (dist < entitySize * 2) return 0; // Very Close
+            if (dist < entitySize * 5) return 1; // Close
+            if (dist < entitySize * 10) return 2; // Medium
+            return 3; // Far
         }
-        
-        function checkLocalObstacle(x, y, width, height) {
-            const checkRect = {x, y, width, height};
-            for (const obs of obstacles) {
-                if (rectCollision(checkRect, obs)) return true;
+
+        // Probes how many MOVE_SPEED steps are clear in a direction
+        function probeClearSteps(entity, unitDirX, unitDirY, maxProbeSteps) {
+            let clearSteps = 0;
+            for (let i = 1; i <= maxProbeSteps; i++) {
+                const nextX = entity.x + unitDirX * i * MOVE_SPEED;
+                const nextY = entity.y + unitDirY * i * MOVE_SPEED;
+                const probeRect = { x: nextX, y: nextY, width: entity.width, height: entity.height };
+
+                if (probeRect.x < 0 || probeRect.x + probeRect.width > gameCanvas.width ||
+                    probeRect.y < 0 || probeRect.y + probeRect.height > gameCanvas.height) {
+                    break; // Hit boundary
+                }
+                let collision = false;
+                for (const obs of obstacles) {
+                    if (rectCollision(probeRect, obs)) {
+                        collision = true;
+                        break;
+                    }
+                }
+                if (collision) break;
+                clearSteps++;
             }
-            return false;
+            // Discretize: 0, 1, 2 (for 2+ clear steps)
+            if (clearSteps === 0) return 0;
+            if (clearSteps === 1) return 1;
+            return 2;
         }
+
+        // Checks if a path (approximated by sampling player-sized rects) is clear
+        function isPathClear(entity1, entity2, obstaclesArr, checkWidth, checkHeight) {
+            const e1cx = entity1.x + entity1.width / 2;
+            const e1cy = entity1.y + entity1.height / 2;
+            const e2cx = entity2.x + (entity2.width || entity2.radius*2) / 2;
+            const e2cy = entity2.y + (entity2.height || entity2.radius*2) / 2;
+
+            const dx = e2cx - e1cx;
+            const dy = e2cy - e1cy;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < PLAYER_SIZE/2) return true; // Essentially on top or very close
+
+            const numSamples = Math.max(2, Math.ceil(dist / (PLAYER_SIZE / 2)));
+
+            for (let i = 0; i <= numSamples; i++) {
+                const t = i / numSamples;
+                const currentX = e1cx + t * dx;
+                const currentY = e1cy + t * dy;
+
+                const probeRect = {
+                    x: currentX - checkWidth / 2,
+                    y: currentY - checkHeight / 2,
+                    width: checkWidth,
+                    height: checkHeight
+                };
+                
+                // Don't check collision with entity1 or entity2 themselves, only external obstacles
+                // This is implicitly handled as we iterate over `obstaclesArr`
+                for (const obs of obstaclesArr) {
+                    if (rectCollision(probeRect, obs)) {
+                        return false; // Path blocked by an obstacle
+                    }
+                }
+            }
+            return true; // Path clear
+        }
+
 
         function getDiscretizedState() {
             // 1. Hunter relative to Player
-            const relHx = hunter.x - player.x;
-            const relHy = hunter.y - player.y;
-            const angleH = getAngleCategory(relHx, relHy);
-            const distH = getDistanceCategory(Math.hypot(relHx, relHy));
+            const relHx_center = (hunter.x + hunter.width/2) - (player.x + player.width/2);
+            const relHy_center = (hunter.y + hunter.height/2) - (player.y + player.height/2);
+            const hunterAngle = getAngleCategory(relHx_center, relHy_center);
+            const hunterDist = getDistanceCategory(Math.hypot(relHx_center, relHy_center), PLAYER_SIZE);
 
-            // 2. Nearest Coin relative to Player
-            let angleC = 0, distC = 2; // Default if no coin (shouldn't happen if one always exists)
+            // 2. Coin relative to Player
+            let coinAngle = 0, coinDist = 3; // Default (far) if no coin
             if (coins.length > 0) {
                 const coin = coins[0];
-                const relCx = coin.x - player.x;
-                const relCy = coin.y - player.y;
-                angleC = getAngleCategory(relCx, relCy);
-                distC = getDistanceCategory(Math.hypot(relCx, relCy));
+                const relCx_center = coin.x - (player.x + player.width/2);
+                const relCy_center = coin.y - (player.y + player.height/2);
+                coinAngle = getAngleCategory(relCx_center, relCy_center);
+                coinDist = getDistanceCategory(Math.hypot(relCx_center, relCy_center), PLAYER_SIZE);
             }
             
-            // 3. Local Obstacle Probes (slightly larger than player for detection)
-            const probeDist = PLAYER_SIZE * 0.5; // How far to "feel" for an obstacle
-            const obsN = checkLocalObstacle(player.x, player.y - probeDist, player.width, probeDist) ? 1 : 0;
-            const obsS = checkLocalObstacle(player.x, player.y + player.height, player.width, probeDist) ? 1 : 0;
-            const obsE = checkLocalObstacle(player.x + player.width, player.y, probeDist, player.height) ? 1 : 0;
-            const obsW = checkLocalObstacle(player.x - probeDist, player.y, probeDist, player.height) ? 1 : 0;
+            // 3. Clear steps in cardinal directions (max 2 steps lookahead for state)
+            const maxClearProbe = 2;
+            const clearN = probeClearSteps(player, 0, -1, maxClearProbe);
+            const clearS = probeClearSteps(player, 0, 1, maxClearProbe);
+            const clearE = probeClearSteps(player, 1, 0, maxClearProbe);
+            const clearW = probeClearSteps(player, -1, 0, maxClearProbe);
 
-            return `${angleH}_${distH}_${angleC}_${distC}_${obsN}_${obsS}_${obsE}_${obsW}`;
+            // 4. Line of Sight to Coin and from Hunter
+            const coinPathClear = (coins.length > 0) ? (isPathClear(player, coins[0], obstacles, player.width, player.height) ? 0 : 1) : 1; // 0=clear, 1=blocked
+            const hunterPathClear = isPathClear(player, hunter, obstacles, player.width, player.height) ? 0 : 1; // 0=player visible, 1=player hidden
+            
+            return `${hunterAngle}_${hunterDist}_${coinAngle}_${coinDist}_${clearN}_${clearS}_${clearE}_${clearW}_${coinPathClear}_${hunterPathClear}`;
         }
-
 
         function chooseAction(state) {
             if (!qTable[state]) {
@@ -224,63 +325,41 @@
                 return Math.floor(Math.random() * ACTIONS.length);
             } else {
                 const qValues = qTable[state];
-                // If multiple max values, pick one randomly to break ties
                 const maxQ = Math.max(...qValues);
-                const bestActions = [];
-                for(let i=0; i<qValues.length; i++) {
-                    if (qValues[i] === maxQ) bestActions.push(i);
-                }
+                const bestActions = qValues.reduce((acc, q, idx) => (q === maxQ ? acc.concat(idx) : acc), []);
                 return bestActions[Math.floor(Math.random() * bestActions.length)];
             }
         }
 
         function updateQTable(prevState, action, reward, nextState) {
-            if (!qTable[prevState]) qTable[prevState] = Array(ACTIONS.length).fill(0); // Should exist
+            if (!qTable[prevState]) qTable[prevState] = Array(ACTIONS.length).fill(0);
             if (!qTable[nextState]) {
                 qTable[nextState] = Array(ACTIONS.length).fill(0);
                 qTableSizeEl.textContent = Object.keys(qTable).length;
             }
 
             const oldQValue = qTable[prevState][action];
-            const maxFutureQ = Math.max(...qTable[nextState]);
+            const maxFutureQ = qTable[nextState].length > 0 ? Math.max(...qTable[nextState]) : 0;
             const newQValue = oldQValue + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - oldQValue);
             qTable[prevState][action] = newQValue;
         }
-
+        
         function resetGame() {
-            player.x = PLAYER_SIZE * 2;
-            player.y = PLAYER_SIZE * 2;
-            hunter.x = gameCanvas.width - HUNTER_SIZE * 3;
-            hunter.y = gameCanvas.height - HUNTER_SIZE * 3;
-            
-            // Ensure hunter and player don't start on top of each other or obstacles (basic check)
-            let safeSpawn = false;
-            while(!safeSpawn) {
-                safeSpawn = true;
+            // Try to spawn player and hunter in clear, distant locations
+            let attempts = 0;
+            const maxSpawnAttempts = 20;
+            do {
                 player.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - 3 * PLAYER_SIZE);
                 player.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - 3 * PLAYER_SIZE);
-                for(const obs of obstacles) {
-                    if(rectCollision(player, obs)) {
-                        safeSpawn = false;
-                        break;
-                    }
-                }
-            }
-             safeSpawn = false;
-            while(!safeSpawn) {
-                safeSpawn = true;
+                attempts++;
+            } while (obstacles.some(obs => rectCollision(player, obs)) && attempts < maxSpawnAttempts);
+            
+            attempts = 0;
+            do {
                 hunter.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - 3 * PLAYER_SIZE);
                 hunter.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - 3 * PLAYER_SIZE);
-                if (Math.hypot(hunter.x-player.x, hunter.y-player.y) < PLAYER_SIZE * 5) { // Don't spawn hunter too close to player
-                    safeSpawn = false; continue;
-                }
-                for(const obs of obstacles) {
-                    if(rectCollision(hunter, obs)) {
-                        safeSpawn = false;
-                        break;
-                    }
-                }
-            }
+                attempts++;
+            } while ((obstacles.some(obs => rectCollision(hunter, obs)) || Math.hypot(player.x-hunter.x, player.y-hunter.y) < gameCanvas.width/3) && attempts < maxSpawnAttempts);
 
 
             spawnCoin();
@@ -292,128 +371,124 @@
             punishmentsEl.textContent = scorePunishments;
             if (epsilon > MIN_EPSILON) epsilon *= EPSILON_DECAY;
             epsilonEl.textContent = epsilon.toFixed(3);
+            maxStepsInfoEl.textContent = MAX_STEPS_PER_EPISODE;
         }
 
-        function moveEntity(entity, dx, dy) {
+        function moveEntity(entity, dxMultiplier, dyMultiplier) {
+            const moveAmountX = dxMultiplier * MOVE_SPEED;
+            const moveAmountY = dyMultiplier * MOVE_SPEED;
+
             const oldX = entity.x;
             const oldY = entity.y;
-            let newX = entity.x + dx;
-            let newY = entity.y + dy;
+            let newX = entity.x + moveAmountX;
+            let newY = entity.y + moveAmountY;
 
-            // Canvas boundary collision
+            // Canvas boundary collision for individual axes
             if (newX < 0) newX = 0;
             if (newX + entity.width > gameCanvas.width) newX = gameCanvas.width - entity.width;
             if (newY < 0) newY = 0;
             if (newY + entity.height > gameCanvas.height) newY = gameCanvas.height - entity.height;
             
-            // Obstacle collision for the intended move
-            let tempEntity = { ...entity, x: newX, y: newY };
-            let collidedX = false;
-            let collidedY = false;
+            let finalX = oldX;
+            let finalY = oldY;
 
-            // Check X-axis move first
-            tempEntity.x = newX;
-            tempEntity.y = oldY;
+            // Try moving X only
+            let tempEntityX = { ...entity, x: newX, y: oldY };
+            let collisionX = false;
             for (const obs of obstacles) {
-                if (rectCollision(tempEntity, obs)) {
-                    newX = oldX; // Cannot move in X
-                    collidedX = true;
+                if (rectCollision(tempEntityX, obs)) {
+                    collisionX = true;
                     break;
                 }
             }
-            
-            // Check Y-axis move
-            tempEntity.x = oldX; // Reset x for y-check based on original x
-            tempEntity.y = newY;
-             for (const obs of obstacles) {
-                if (rectCollision(tempEntity, obs)) {
-                    newY = oldY; // Cannot move in Y
-                    collidedY = true;
+            if (!collisionX) finalX = newX;
+
+            // Try moving Y only
+            let tempEntityY = { ...entity, x: oldX, y: newY }; // Use oldX for this check
+            let collisionY = false;
+            for (const obs of obstacles) {
+                if (rectCollision(tempEntityY, obs)) {
+                    collisionY = true;
                     break;
                 }
             }
-            
-            // If both directions individually are fine, check combined move (for corners)
-            if (!collidedX && !collidedY && dx !== 0 && dy !== 0) {
-                tempEntity.x = newX;
-                tempEntity.y = newY;
+            if (!collisionY) finalY = newY;
+
+            // If trying to move diagonally and both individual X and Y moves were valid,
+            // check the combined diagonal position.
+            if (dxMultiplier !== 0 && dyMultiplier !== 0 && !collisionX && !collisionY) {
+                let tempEntityXY = { ...entity, x: newX, y: newY };
+                let collisionXY = false;
                 for (const obs of obstacles) {
-                     if (rectCollision(tempEntity, obs)) {
-                        // Prioritize one direction or revert both. Let's revert both for simplicity.
-                        // More advanced: try sliding by reverting only one.
-                        // For this, if combined fails, we could try just X then just Y.
-                        // But since we check X and Y separately first, this should be okay.
-                        // If only X was valid, and only Y was valid, then newX, newY is only based on one
-                        // or the other being reverted if that specific axis failed.
-                        // Re-evaluate newX, newY if only one was blocked
-                        if (rectCollision({...entity, x: entity.x + dx, y: oldY}, obs)) newX = oldX;
-                        if (rectCollision({...entity, x: oldX, y: entity.y + dy}, obs)) newY = oldY;
+                    if (rectCollision(tempEntityXY, obs)) {
+                        collisionXY = true;
                         break;
                     }
                 }
+                if (!collisionXY) { // Diagonal is clear
+                    finalX = newX;
+                    finalY = newY;
+                } else { // Diagonal blocked, prefer to keep one of the valid axis movements
+                         // This logic can be simple: if diagonal fails, it means only one axis should have moved.
+                         // The current finalX, finalY already reflect single-axis valid moves.
+                         // If player *wanted* to move diagonally, but couldn't, it effectively slides.
+                }
             }
-
-            entity.x = newX;
-            entity.y = newY;
-            return (newX === oldX && newY === oldY); // Return true if stuck (hit obstacle)
+            
+            entity.x = finalX;
+            entity.y = finalY;
+            return (finalX === oldX && finalY === oldY && (dxMultiplier !==0 || dyMultiplier !==0) ); // True if tried to move but couldn't
         }
-
 
         function updateGame(actionIndex) {
             const action = ACTIONS[actionIndex];
             lastActionEl.textContent = action.name;
-            let reward = -0.1; // Small penalty per step
+            let reward = -0.05; // Slightly smaller penalty per step
 
-            // --- Player Movement ---
             const playerStuck = moveEntity(player, action.dx, action.dy);
-            if (playerStuck && (action.dx !== 0 || action.dy !== 0)) { // Penalize if tried to move but couldn't
-                reward -= 1;
+            if (playerStuck) {
+                reward -= 0.5; // Penalize for bumping into walls if trying to move
             }
 
-            // --- Hunter Movement ---
-            // Hunter tries to move towards player, avoiding obstacles
-            let hunterDx = 0, hunterDy = 0;
-            if (player.x < hunter.x) hunterDx = -MOVE_SPEED * 0.8; // Hunter slightly slower or same speed
-            else if (player.x > hunter.x) hunterDx = MOVE_SPEED * 0.8;
-            if (player.y < hunter.y) hunterDy = -MOVE_SPEED * 0.8;
-            else if (player.y > hunter.y) hunterDy = MOVE_SPEED * 0.8;
-            
-            // Normalize diagonal speed (optional, makes movement more consistent)
-            const hMagnitude = Math.hypot(hunterDx, hunterDy);
-            if (hMagnitude > MOVE_SPEED * 0.8) {
-                hunterDx = (hunterDx / hMagnitude) * MOVE_SPEED * 0.8;
-                hunterDy = (hunterDy / hMagnitude) * MOVE_SPEED * 0.8;
+            // --- Hunter Movement (simple chase, obstacle aware) ---
+            const hunterTargetX = player.x + player.width / 2;
+            const hunterTargetY = player.y + player.height / 2;
+            const hunterCurrentX = hunter.x + hunter.width / 2;
+            const hunterCurrentY = hunter.y + hunter.height / 2;
+
+            let hdx = 0, hdy = 0;
+            if (Math.abs(hunterTargetX - hunterCurrentX) > MOVE_SPEED / 2) {
+                hdx = Math.sign(hunterTargetX - hunterCurrentX);
             }
-            moveEntity(hunter, hunterDx, hunterDy);
+            if (Math.abs(hunterTargetY - hunterCurrentY) > MOVE_SPEED / 2) {
+                hdy = Math.sign(hunterTargetY - hunterCurrentY);
+            }
+            moveEntity(hunter, hdx, hdy);
 
 
-            // --- Collision Checks & Rewards ---
-            // Player vs Hunter
             if (rectCollision(player, hunter)) {
                 reward -= 10;
                 scorePunishments++;
                 return { reward, done: true };
             }
 
-            // Player vs Coins
-            for (let i = coins.length - 1; i >= 0; i--) {
-                const coin = coins[i];
+            if (coins.length > 0) {
+                const coin = coins[0];
                 if (Math.hypot((player.x + player.width/2) - coin.x, (player.y + player.height/2) - coin.y) < player.width/2 + coin.radius) {
                     reward += 20;
                     scoreCookies++;
-                    coins.splice(i, 1);
-                    spawnCoin(); // Spawn a new one
-                    return { reward, done: true }; // End episode on success
+                    coins.splice(0, 1);
+                    spawnCoin();
+                    return { reward, done: true }; // End episode on coin collection
                 }
             }
             
             currentSteps++;
             if (currentSteps >= MAX_STEPS_PER_EPISODE) {
-                reward -= 5; // Timeout punishment
+                reward -= 5;
                 scorePunishments++;
                 return { reward, done: true };
             }
-
             return { reward, done: false };
         }
 
@@ -435,94 +510,87 @@
             gameCtx.fillRect(hunter.x, hunter.y, hunter.width, hunter.height);
         }
 
-        function drawAiVision() {
+        function drawAiVision() { // Simplified text-based vision
             aiVisionCtx.clearRect(0, 0, aiVisionCanvas.width, aiVisionCanvas.height);
             const stateStr = getDiscretizedState();
-            const parts = stateStr.split('_').map(Number);
-            // [angleH, distH, angleC, distC, obsN, obsS, obsE, obsW]
+            const parts = stateStr.split('_');
+            
+            aiVisionCtx.fillStyle = '#ccc';
+            aiVisionCtx.font = '11px monospace';
+            let yPos = 15;
+            const lineHeight = 13;
 
-            const centerX = aiVisionCanvas.width / 2;
-            const centerY = aiVisionCanvas.height / 2;
-            const visionPlayerSize = 10;
-
-            // Draw Player indicator
-            aiVisionCtx.fillStyle = player.color;
-            aiVisionCtx.fillRect(centerX - visionPlayerSize/2, centerY - visionPlayerSize/2, visionPlayerSize, visionPlayerSize);
-
-            // Draw Hunter direction/distance
-            if (parts.length >= 2) {
-                const angleH_rad = (parts[0] * (Math.PI / 4)) - Math.PI; // Convert sector back to approx angle
-                const distFactorH = (2 - parts[1]) / 2; // 0 (far) -> 1, 1 (mid) -> 0.5, 2 (close) -> 0
-                const visionDistH = (aiVisionCanvas.width / 2 - visionPlayerSize) * distFactorH;
-                aiVisionCtx.beginPath();
-                aiVisionCtx.moveTo(centerX, centerY);
-                aiVisionCtx.lineTo(centerX + Math.cos(angleH_rad) * visionDistH, centerY + Math.sin(angleH_rad) * visionDistH);
-                aiVisionCtx.strokeStyle = hunter.color;
-                aiVisionCtx.lineWidth = 2 + parts[1]; // Thicker if closer
-                aiVisionCtx.stroke();
-                aiVisionCtx.fillStyle = hunter.color;
-                aiVisionCtx.fillRect(centerX + Math.cos(angleH_rad) * visionDistH - 3, centerY + Math.sin(angleH_rad) * visionDistH - 3, 6, 6);
+            if (parts.length === 10) {
+                aiVisionCtx.fillText(`Hunter: ${parts[0]}A ${parts[1]}D`, 5, yPos); yPos += lineHeight;
+                aiVisionCtx.fillText(`Coin:   ${parts[2]}A ${parts[3]}D`, 5, yPos); yPos += lineHeight;
+                aiVisionCtx.fillText(`PathCoin: ${parts[8]==='0'?'CLR':'BLK'}`, 5, yPos); yPos += lineHeight;
+                aiVisionCtx.fillText(`VisHunter:${parts[9]==='0'?'VIS':'HID'}`, 5, yPos); yPos += lineHeight;
+                yPos += 5;
+                aiVisionCtx.fillText(`Steps N:${parts[4]} S:${parts[5]}`, 5, yPos); yPos += lineHeight;
+                aiVisionCtx.fillText(`Steps E:${parts[6]} W:${parts[7]}`, 5, yPos); yPos += lineHeight;
+            } else {
+                 aiVisionCtx.fillText(stateStr, 5, yPos, aiVisionCanvas.width - 10);
             }
 
-            // Draw Coin direction/distance
-            if (parts.length >= 4 && coins.length > 0) {
-                const angleC_rad = (parts[2] * (Math.PI / 4)) - Math.PI;
-                const distFactorC = (2 - parts[3]) / 2;
-                const visionDistC = (aiVisionCanvas.width / 2 - visionPlayerSize) * distFactorC;
+            // Draw a mini-map representation for fun
+            const mapScale = 0.25;
+            const mapOffsetX = aiVisionCanvas.width / 2 - (gameCanvas.width * mapScale / 2) + 20;
+            const mapOffsetY = yPos + 10;
+
+            aiVisionCtx.save();
+            aiVisionCtx.translate(mapOffsetX, mapOffsetY);
+            aiVisionCtx.scale(mapScale, mapScale);
+
+            //obstacles
+            aiVisionCtx.fillStyle = '#888';
+            obstacles.forEach(obs => aiVisionCtx.fillRect(obs.x, obs.y, obs.width, obs.height));
+            //coin
+            if (coins.length > 0) {
                 aiVisionCtx.beginPath();
-                aiVisionCtx.moveTo(centerX, centerY);
-                aiVisionCtx.lineTo(centerX + Math.cos(angleC_rad) * visionDistC, centerY + Math.sin(angleC_rad) * visionDistC);
-                aiVisionCtx.strokeStyle = coins[0].color;
-                aiVisionCtx.lineWidth = 1 + parts[3];
-                aiVisionCtx.stroke();
-                aiVisionCtx.beginPath();
-                aiVisionCtx.arc(centerX + Math.cos(angleC_rad) * visionDistC, centerY + Math.sin(angleC_rad) * visionDistC, 4, 0, Math.PI*2);
+                aiVisionCtx.arc(coins[0].x, coins[0].y, coins[0].radius / mapScale * 0.5 , 0, Math.PI * 2); // Make coin visible
                 aiVisionCtx.fillStyle = coins[0].color;
                 aiVisionCtx.fill();
             }
+            //hunter
+            aiVisionCtx.fillStyle = hunter.color;
+            aiVisionCtx.fillRect(hunter.x, hunter.y, hunter.width, hunter.height);
+            //player
+            aiVisionCtx.fillStyle = player.color;
+            aiVisionCtx.fillRect(player.x, player.y, player.width, player.height);
             
-            // Draw Obstacle indicators
-            const obsIndicatorSize = 15;
-            aiVisionCtx.fillStyle = 'rgba(128, 128, 128, 0.7)';
-            if (parts[4]) aiVisionCtx.fillRect(centerX - obsIndicatorSize/2, centerY - visionPlayerSize/2 - obsIndicatorSize, obsIndicatorSize, obsIndicatorSize); // N
-            if (parts[5]) aiVisionCtx.fillRect(centerX - obsIndicatorSize/2, centerY + visionPlayerSize/2, obsIndicatorSize, obsIndicatorSize); // S
-            if (parts[6]) aiVisionCtx.fillRect(centerX + visionPlayerSize/2, centerY - obsIndicatorSize/2, obsIndicatorSize, obsIndicatorSize); // E
-            if (parts[7]) aiVisionCtx.fillRect(centerX - visionPlayerSize/2 - obsIndicatorSize, centerY - obsIndicatorSize/2, obsIndicatorSize, obsIndicatorSize); // W
-
-            aiVisionCtx.fillStyle = '#ccc';
-            aiVisionCtx.font = '8px Arial';
-            aiVisionCtx.textAlign = 'center';
-            aiVisionCtx.fillText(stateStr, aiVisionCanvas.width / 2, aiVisionCanvas.height - 5);
+            aiVisionCtx.restore();
         }
 
-        // --- Main AI Loop ---
-        let previousState = null;
-        let previousAction = null;
 
         function aiLoop() {
             const currentState = getDiscretizedState();
             const actionToTake = chooseAction(currentState);
-            
-            const gameOutcome = updateGame(actionToTake); // Applies action, returns reward & done
-            const nextStateAfterAction = getDiscretizedState(); // Get state *after* action
-            
+            const gameOutcome = updateGame(actionToTake);
+            const nextStateAfterAction = getDiscretizedState();
             updateQTable(currentState, actionToTake, gameOutcome.reward, nextStateAfterAction);
-
             drawGame();
             drawAiVision();
-
             if (gameOutcome.done) {
                 resetGame();
             }
         }
 
-        // --- Initialize and Start ---
         function init() {
-            spawnCoin(); // Initial coin
-            resetGame(); // Initial reset to set up episode 0 correctly
+            currentSimSpeed = parseInt(speedControl.value);
+            speedValue.textContent = currentSimSpeed;
+            
+            speedControl.addEventListener('input', (e) => {
+                currentSimSpeed = parseInt(e.target.value);
+                speedValue.textContent = currentSimSpeed;
+                if (simIntervalId) clearInterval(simIntervalId);
+                simIntervalId = setInterval(aiLoop, currentSimSpeed);
+            });
+            
+            resetGame(); // Initial reset
             drawGame();
             drawAiVision();
-            setInterval(aiLoop, 75); // Faster loop
+            if (simIntervalId) clearInterval(simIntervalId); // Clear if any previous
+            simIntervalId = setInterval(aiLoop, currentSimSpeed);
         }
 
         window.onload = init;
