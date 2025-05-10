@@ -3,151 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>IdeaSpark 2025 - Mobile Concept</title>
+    <title>IdeaSpark 2025 - Advanced Concept</title>
     <style>
         :root {
-            --bg-primary: #101012; /* Even deeper dark */
-            --bg-secondary: #1A1A1C;
-            --bg-tertiary: #252528;
-            --text-primary: #E8E8EA;
-            --text-secondary: #A0A0A5;
-            --accent-primary: #00CFE8; /* Futuristic Cyan/Teal */
-            --accent-secondary: #FF4081; /* Vivid Pink for contrast */
-            --border-color: #303033;
+            --bg-primary: #0D0F12; /* Even darker, slightly blueish */
+            --bg-secondary: #181A1F;
+            --bg-tertiary: #22252B;
+            --bg-glass: rgba(30, 30, 35, 0.6); /* For glassmorphism */
+            --text-primary: #F0F2F5;
+            --text-secondary: #A8ACB3;
+            --accent-primary: #00D1FF; /* Brighter Cyan */
+            --accent-secondary: #FF3B7F; /* Punchier Pink */
+            --border-color: #2A2D33;
             --header-height: 56px;
             --bottom-nav-height: 60px;
-            --border-radius-main: 20px; /* Softer, larger radius */
-            --border-radius-small: 12px;
+            --border-radius-main: 22px;
+            --border-radius-small: 14px;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-                         Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
-                         sans-serif; /* Prioritize SF Pro if available */
+            font-family: var(--font-main);
             -webkit-tap-highlight-color: transparent;
         }
 
         html, body {
             height: 100%;
             overflow: hidden;
-            background-color: #050506;
+            background-color: #050608;
         }
 
         .app-shell {
-            width: 100%;
-            height: 100%;
-            max-width: 414px;
-            max-height: calc(414px * (16 / 9));
-            margin: auto;
-            position: relative;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #222;
-            border-right: 1px solid #222;
-            box-shadow: 0 0 30px rgba(0,0,0,0.6);
+            width: 100%; height: 100%;
+            max-width: 414px; max-height: calc(414px * (16 / 9));
+            margin: auto; position: relative;
+            background-color: var(--bg-primary); color: var(--text-primary);
+            overflow: hidden; display: flex; flex-direction: column;
+            border: 1px solid #1A1C20;
+            box-shadow: 0 0 40px rgba(0,0,0,0.7);
         }
          @media (max-width: 450px) {
-            .app-shell {
-                max-width: 100%;
-                max-height: 100%;
-                border-left: none;
-                border-right: none;
-                box-shadow: none;
-            }
+            .app-shell { max-width: 100%; max-height: 100%; border: none; box-shadow: none; }
         }
 
-        /* Page container for view switching */
+        /* Page Transitions & Content */
         .page-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
             padding: 16px;
             padding-top: calc(var(--header-height) + 16px);
             padding-bottom: calc(var(--bottom-nav-height) + 16px);
-            display: none; /* Hidden by default, shown by JS */
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0; transform: translateX(20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            pointer-events: none;
+            z-index: 1;
         }
         .page-content.active {
-            display: block;
+            opacity: 1; transform: translateX(0);
+            pointer-events: auto;
+            z-index: 10;
         }
 
-        /* Header Styles */
+        /* Header */
         .app-header {
-            height: var(--header-height);
-            padding: 0 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center; /* Center logo typically */
+            height: var(--header-height); padding: 0 16px;
+            display: flex; align-items: center; justify-content: center;
             background-color: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            max-width: inherit;
-            margin: 0 auto;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            max-width: inherit; margin: 0 auto;
         }
-         .app-header-logo {
-            font-size: 1.4em;
-            font-weight: 700;
-            color: var(--accent-primary);
-            letter-spacing: 1px;
-         }
-         .app-header-logo .sparkle {
-            color: var(--accent-secondary);
-            font-style: italic;
-         }
-         .header-action-button { /* For potential right-side actions */
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none; border: none; padding: 8px;
-         }
-         .header-action-button svg {
-            width: 24px; height: 24px; fill: var(--text-secondary);
-         }
-
-
-        /* --- Home Page (Pin Grid) --- */
-        .pin-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            align-items: start;
+        .app-header-logo {
+            font-size: 1.5em; font-weight: 700; color: var(--accent-primary);
+            letter-spacing: 1px; text-shadow: 0 0 5px var(--accent-primary);
         }
-        .pin {
-            position: relative;
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius-main);
+        .app-header-logo .sparkle { color: var(--accent-secondary); font-style: italic; text-shadow: 0 0 5px var(--accent-secondary); }
+
+        /* General UI Elements */
+        .section-title {
+            font-size: 1.2em; font-weight: 700; margin-bottom: 16px;
+            color: var(--text-primary); letter-spacing: 0.5px;
+        }
+        .button-primary {
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--bg-primary); font-weight: 600;
+            padding: 12px 24px; border-radius: var(--border-radius-small);
+            border: none; cursor: pointer; text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 209, 255, 0.2), 0 4px 10px rgba(255, 59, 127, 0.2);
+        }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 209, 255, 0.3), 0 6px 15px rgba(255, 59, 127, 0.3); }
+        .button-secondary {
+            background-color: var(--bg-tertiary); color: var(--text-secondary);
+            padding: 10px 20px; border-radius: var(--border-radius-small);
+            border: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s;
+        }
+        .button-secondary:hover { background-color: #33363d; }
+        .input-field {
+            width: 100%; padding: 14px 18px; font-size: 1em;
+            border-radius: var(--border-radius-small); border: 1px solid var(--border-color);
+            background-color: var(--bg-tertiary); color: var(--text-primary); outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(0, 209, 255, 0.3); }
+        textarea.input-field { min-height: 80px; resize: vertical; }
+
+        /* Skeleton Loader */
+        .skeleton-pin-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .skeleton-pin {
+            background-color: var(--bg-secondary); border-radius: var(--border-radius-main);
             overflow: hidden;
-            cursor: pointer;
-            color: var(--text-primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease-out;
         }
-        .pin:active {
-            transform: scale(0.97);
+        .skeleton-pin-img { width: 100%; padding-bottom: 120%; /* Aspect ratio proxy */ background-color: var(--bg-tertiary); animation: pulse 1.5s infinite ease-in-out; }
+        .skeleton-pin-content { padding: 10px 14px 14px; }
+        .skeleton-pin-title { height: 1em; width: 70%; background-color: var(--bg-tertiary); margin-bottom: 6px; border-radius: 4px; animation: pulse 1.5s infinite ease-in-out; }
+        .skeleton-pin-user { height: 0.8em; width: 40%; background-color: var(--bg-tertiary); border-radius: 4px; animation: pulse 1.5s infinite ease-in-out; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+
+        /* --- Pin Grid (Home, Profile) --- */
+        .pin-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; }
+        .pin {
+            position: relative; background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-main); overflow: hidden; cursor: pointer;
+            color: var(--text-primary); box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
         }
-        .pin img {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-top-left-radius: var(--border-radius-main);
-            border-top-right-radius: var(--border-radius-main);
-            background-color: var(--bg-tertiary);
-        }
+        .pin:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .pin:active { transform: scale(0.96); }
+        .pin img { width: 100%; height: auto; display: block; background-color: var(--bg-tertiary); }
         .pin-content { padding: 10px 14px 14px; }
-        .pin-title {
-            font-size: 0.9em; font-weight: 600; margin-bottom: 4px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .pin-title { font-size: 0.9em; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .pin-user { display: flex; align-items: center; font-size: 0.75em; color: var(--text-secondary); }
         .pin-user-avatar {
             width: 20px; height: 20px; border-radius: 50%;
@@ -156,187 +145,218 @@
             font-size: 0.7em; font-weight: bold; color: var(--bg-primary);
         }
         .pin-save-button {
-            position: absolute;
-            top: 10px; right: 10px;
-            background-color: rgba(0,0,0,0.6);
-            color: white;
-            padding: 6px 10px;
-            border-radius: var(--border-radius-small);
-            font-weight: 600; border: none; cursor: pointer;
-            font-size: 0.8em;
-            backdrop-filter: blur(5px);
-            transition: background-color 0.2s, color 0.2s;
+            position: absolute; top: 12px; right: 12px;
+            background-color: var(--bg-glass); color: white;
+            padding: 7px 11px; border-radius: var(--border-radius-small);
+            font-weight: 600; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;
+            font-size: 0.8em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            transition: background-color 0.2s, color 0.2s, transform 0.1s;
         }
-        .pin-save-button.saved {
-            background-color: var(--accent-primary);
-            color: var(--bg-primary);
-        }
+        .pin-save-button:active { transform: scale(0.9); }
+        .pin-save-button.saved { background-color: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
+
 
         /* --- Discover Page --- */
-        #discoverPage .search-bar-container {
-            margin-bottom: 20px;
-            position: relative;
-        }
+        #discoverPage .search-bar-container { margin-bottom: 24px; position: relative; }
         #discoverPage .search-input {
-            width: 100%;
-            padding: 14px 20px;
-            padding-left: 48px; /* For icon */
-            font-size: 1em;
-            border-radius: var(--border-radius-main);
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            outline: none;
+            width: 100%; padding: 16px 22px; padding-left: 52px;
+            font-size: 1.05em; border-radius: var(--border-radius-main);
+            border: 1px solid var(--border-color); background-color: var(--bg-tertiary);
+            color: var(--text-primary); outline: none;
         }
-         #discoverPage .search-input::placeholder { color: var(--text-secondary); }
-         #discoverPage .search-icon {
-            position: absolute;
-            left: 16px; top: 50%;
-            transform: translateY(-50%);
-            width: 20px; height: 20px;
-            fill: var(--text-secondary);
-         }
-        .discover-section-title {
-            font-size: 1.1em; font-weight: 700;
-            margin-bottom: 12px; color: var(--text-primary);
+        #discoverPage .search-icon {
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px; fill: var(--text-secondary);
         }
-        .category-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+        .category-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
         .category-tag {
-            background-color: var(--bg-tertiary);
-            color: var(--text-secondary);
-            padding: 8px 16px;
-            border-radius: var(--border-radius-small);
-            font-size: 0.85em; font-weight: 500; cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
+            background-color: var(--bg-tertiary); color: var(--text-secondary);
+            padding: 9px 18px; border-radius: var(--border-radius-small);
+            font-size: 0.9em; font-weight: 500; cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.1s;
         }
-        .category-tag:hover { background-color: var(--accent-primary); color: var(--bg-primary); }
+        .category-tag:hover { background-color: var(--accent-primary); color: var(--bg-primary); border-color: var(--accent-primary); }
+        .category-tag:active { transform: scale(0.95); }
         .mock-search-results .result-item {
-            background-color: var(--bg-secondary); padding: 12px; border-radius: var(--border-radius-small);
-            margin-bottom: 8px; font-size: 0.9em;
+            background-color: var(--bg-secondary); padding: 14px; border-radius: var(--border-radius-small);
+            margin-bottom: 10px; font-size: 0.95em; cursor: pointer; transition: background-color 0.2s;
         }
+        .mock-search-results .result-item:hover { background-color: var(--bg-tertiary); }
 
         /* --- Create Page --- */
-        .create-options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 16px;
-        }
+        .create-options-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } /* Single column for more focus */
         .create-option-card {
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius-main);
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background-color: var(--bg-secondary); border-radius: var(--border-radius-main);
+            padding: 24px; display: flex; align-items: center;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        .create-option-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-        }
+        .create-option-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
         .create-option-card svg {
-            width: 36px; height: 36px;
-            fill: var(--accent-primary);
-            margin-bottom: 12px;
+            width: 32px; height: 32px; fill: var(--accent-primary); margin-right: 16px;
         }
         .create-option-card .ai-sparkle svg { fill: var(--accent-secondary); }
-        .create-option-card p { font-size: 0.9em; font-weight: 600; }
+        .create-option-card p { font-size: 1em; font-weight: 600; }
+        .create-option-card .description { font-size: 0.8em; color: var(--text-secondary); margin-top: 4px;}
 
         /* --- Updates Page --- */
         .notification-list .notification-item {
-            display: flex; align-items: center;
-            background-color: var(--bg-secondary);
-            padding: 12px 16px;
-            border-radius: var(--border-radius-small);
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex; align-items: flex-start; background-color: var(--bg-secondary);
+            padding: 14px 18px; border-radius: var(--border-radius-small); margin-bottom: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15); cursor: pointer; transition: background-color 0.2s;
         }
+        .notification-item:hover { background-color: var(--bg-tertiary); }
         .notification-icon {
-            width: 32px; height: 32px; border-radius: 50%;
+            min-width: 36px; height: 36px; border-radius: 50%;
             background-color: var(--accent-primary); color: var(--bg-primary);
             display: flex; align-items: center; justify-content: center;
-            margin-right: 12px; font-weight: bold;
+            margin-right: 14px; font-weight: bold; font-size: 1.1em;
         }
         .notification-icon.comment { background-color: var(--accent-secondary); }
-        .notification-text p { font-size: 0.9em; margin-bottom: 2px; }
-        .notification-text .time { font-size: 0.75em; color: var(--text-secondary); }
+        .notification-text p { font-size: 0.95em; margin-bottom: 3px; line-height: 1.4; }
+        .notification-text .time { font-size: 0.8em; color: var(--text-secondary); }
 
         /* --- Profile Page --- */
-        .profile-header { text-align: center; margin-bottom: 24px; }
+        .profile-header { text-align: center; margin-bottom: 28px; }
         .profile-avatar-large {
-            width: 90px; height: 90px; border-radius: 50%;
-            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-            margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center;
-            font-size: 2.5em; font-weight: bold; color: var(--bg-primary);
-            box-shadow: 0 0 0 4px var(--bg-primary), 0 0 0 6px var(--accent-primary);
+            width: 100px; height: 100px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center;
+            font-size: 3em; font-weight: bold; color: var(--bg-primary);
+            box-shadow: 0 0 0 5px var(--bg-primary), 0 0 0 8px var(--accent-primary);
         }
-        .profile-name { font-size: 1.5em; font-weight: 700; margin-bottom: 4px; }
-        .profile-username { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 12px; }
-        .profile-stats { display: flex; justify-content: space-around; margin-bottom: 24px; }
+        .profile-name { font-size: 1.6em; font-weight: 700; margin-bottom: 6px; }
+        .profile-username { font-size: 0.95em; color: var(--text-secondary); margin-bottom: 16px; }
+        .profile-stats { display: flex; justify-content: space-around; margin-bottom: 28px; }
         .stat-item { text-align: center; }
-        .stat-item .count { font-size: 1.2em; font-weight: 700; }
-        .stat-item .label { font-size: 0.8em; color: var(--text-secondary); }
-        .profile-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; }
+        .stat-item .count { font-size: 1.3em; font-weight: 700; }
+        .stat-item .label { font-size: 0.85em; color: var(--text-secondary); }
+        .profile-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .profile-tab {
-            flex: 1; text-align: center; padding: 12px 0; font-weight: 600;
+            flex: 1; text-align: center; padding: 14px 0; font-weight: 600;
             color: var(--text-secondary); cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: color 0.2s, border-color 0.2s;
+            border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s;
         }
         .profile-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-primary); }
-        .profile-tab-content { display: none; }
-        .profile-tab-content.active { display: block; }
-        /* Using .pin-container for profile content for now */
+        .profile-tab-content { display: none; } /* Handled by JS for animations */
+        .profile-tab-content.active-tab-content { display: block; } /* Initial state before JS animation */
+        .board-card-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .board-card {
+            background-color: var(--bg-secondary); border-radius: var(--border-radius-main);
+            padding-bottom: 75%; /* Aspect ratio for cover */ position: relative;
+            overflow: hidden; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .board-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
+        .board-card-cover { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; background-color: var(--bg-tertiary); }
+        .board-card-name {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 10px; background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white; font-weight: 600; font-size: 0.9em; text-align: center;
+        }
 
-        /* Bottom Navigation */
+
+        /* --- Bottom Navigation --- */
         .bottom-nav {
-            height: var(--bottom-nav-height);
-            background-color: var(--bg-secondary);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--bottom-nav-height); background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-color); display: flex; justify-content: space-around;
+            align-items: center; position: fixed; bottom: 0; left: 0; right: 0;
             z-index: 100; max-width: inherit; margin: 0 auto;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
         }
         .nav-item {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            background: none; border: none; color: var(--text-secondary);
-            padding: 4px 0; cursor: pointer; transition: color 0.2s;
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: none; border: none; color: var(--text-secondary); padding: 4px 0;
+            cursor: pointer; transition: color 0.2s, transform 0.1s;
         }
+        .nav-item:active { transform: scale(0.9); }
         .nav-item.active { color: var(--accent-primary); }
-        .nav-item svg { width: 26px; height: 26px; fill: currentColor; margin-bottom: 3px; }
+        .nav-item svg { width: 28px; height: 28px; fill: currentColor; margin-bottom: 2px; }
         .nav-item-profile .profile-avatar-nav {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--text-secondary), #888);
+            width: 30px; height: 30px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--text-secondary), #999);
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: var(--bg-primary); font-size: 0.9em;
-            transition: box-shadow 0.2s;
+            font-weight: bold; color: var(--bg-primary); font-size: 1em;
+            transition: box-shadow 0.2s, background 0.2s;
         }
         .nav-item.active .nav-item-profile .profile-avatar-nav {
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            box-shadow: 0 0 8px var(--accent-primary);
+            box-shadow: 0 0 10px var(--accent-primary);
         }
 
+        /* --- Modals (General Purpose) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s linear;
+        }
+        .modal-overlay.visible { opacity: 1; visibility: visible; transition-delay: 0s; }
+        .modal-content {
+            background-color: var(--bg-glass); backdrop-filter: blur(15px) saturate(180%); -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 24px; border-radius: var(--border-radius-main);
+            width: 90%; max-width: 450px; /* Max width for modal on larger "phone" */
+            max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 1.3em; font-weight: 700; }
+        .modal-close-button {
+            background: none; border: none; font-size: 1.8em; color: var(--text-secondary);
+            cursor: pointer; padding: 0; line-height: 1;
+        }
+
+        /* Create Spark Modal Specifics */
+        #createSparkModal .form-group { margin-bottom: 16px; }
+        #createSparkModal label { display: block; font-size: 0.9em; font-weight: 500; margin-bottom: 6px; color: var(--text-secondary); }
+        #createSparkModal .image-placeholder {
+            width: 100%; height: 150px; background-color: var(--bg-tertiary);
+            border: 2px dashed var(--border-color); border-radius: var(--border-radius-small);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-secondary); font-size: 0.9em; margin-bottom: 12px; cursor: pointer;
+        }
+        #createSparkModal .image-placeholder svg { width: 30px; height: 30px; fill: var(--text-secondary); margin-bottom: 8px; }
+
+        /* Pin Detail Modal Specifics */
+        #pinDetailModal .pin-detail-image {
+            width: 100%; max-height: 40vh; object-fit: contain;
+            border-radius: var(--border-radius-small); margin-bottom: 16px;
+            background-color: var(--bg-tertiary);
+        }
+        #pinDetailModal .pin-detail-user { display: flex; align-items: center; margin-bottom: 12px; }
+        /* Reuse .pin-user-avatar */
+        #pinDetailModal .pin-detail-username { font-weight: 600; margin-left: 8px; }
+        #pinDetailModal .pin-detail-description { font-size: 0.95em; line-height: 1.5; margin-bottom: 20px; color: var(--text-secondary); }
+        #pinDetailModal .comments-section, #pinDetailModal .related-sparks-section { margin-top: 24px; }
+        #pinDetailModal .comment, #pinDetailModal .related-spark-item {
+            background-color: var(--bg-secondary); padding: 10px; border-radius: var(--border-radius-small);
+            margin-bottom: 8px; font-size: 0.9em;
+        }
 
         /* Toast Notification */
         #toast {
-            visibility: hidden; min-width: 220px;
-            background-color: var(--bg-tertiary); color: var(--text-primary);
-            text-align: center; border-radius: var(--border-radius-main);
-            padding: 14px 22px; position: fixed; z-index: 1002;
-            left: 50%; bottom: calc(var(--bottom-nav-height) + 10px);
-            transform: translateX(-50%); font-size: 0.9em;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease, visibility 0.3s ease;
+            visibility: hidden; min-width: 240px;
+            background-color: var(--bg-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-primary); text-align: center;
+            border-radius: var(--border-radius-main); padding: 16px 24px;
+            position: fixed; z-index: 1002; left: 50%;
+            bottom: calc(var(--bottom-nav-height) + 5px); /* Closer to nav */
+            transform: translateX(-50%) translateY(10px); /* Start slightly lower */
+            font-size: 0.95em; box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+            opacity: 0; transition: all 0.3s cubic-bezier(0.215, 0.610, 0.355, 1); /* Smoother transition */
         }
         #toast.show {
             visibility: visible; opacity: 1;
-            bottom: calc(var(--bottom-nav-height) + 20px);
+            transform: translateX(-50%) translateY(0);
+            bottom: calc(var(--bottom-nav-height) + 15px);
         }
-
     </style>
 </head>
 <body>
@@ -344,17 +364,12 @@
     <div class="app-shell">
         <header class="app-header">
             <div class="app-header-logo">Idea<span class="sparkle">Spark</span></div>
-            <!-- Example: Settings button could go here -->
-            <!-- <button class="header-action-button" aria-label="Settings">
-                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-            </button> -->
         </header>
 
-        <!-- Page Content Area -->
-        <div id="homePage" class="page-content active">
-            <div class="pin-container" id="pin-container-home">
-                <!-- Home pins will be injected here -->
-            </div>
+        <!-- Page Content Area (Dynamically switched) -->
+        <div id="homePage" class="page-content">
+            <div class="skeleton-pin-container" id="skeleton-loader-home"></div>
+            <div class="pin-container" id="pin-container-home" style="display:none;"></div>
         </div>
 
         <div id="discoverPage" class="page-content">
@@ -362,59 +377,55 @@
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
                 <input type="search" class="search-input" id="discoverSearchInput" placeholder="Search for sparks & ideas...">
             </div>
-            <div class="mock-search-results" id="mockSearchResultsContainer">
-                <!-- Mock search results appear here -->
-            </div>
+            <div class="mock-search-results" id="mockSearchResultsContainer"></div>
             <div id="discoverDefaultContent">
-                <div class="discover-section-title">Trending Now ✨</div>
+                <div class="section-title">Trending Now ✨</div>
                 <div class="category-tags">
-                    <span class="category-tag">AI Art</span><span class="category-tag">Sustainable Living</span>
-                    <span class="category-tag">VR Experiences</span><span class="category-tag">Future Tech</span>
-                    <span class="category-tag">Bio-Hacking</span><span class="category-tag">Space Travel</span>
+                    <span class="category-tag">AI Avatars</span><span class="category-tag">Bio-Integrated Design</span>
+                    <span class="category-tag">Sensory XR</span><span class="category-tag">Quantum Art</span>
+                    <span class="category-tag">NeuroTech Interfaces</span><span class="category-tag">Personalized Medicine</span>
                 </div>
-                <div class="discover-section-title">Categories</div>
+                <div class="section-title">Explore Categories</div>
                 <div class="category-tags">
-                    <span class="category-tag">Design</span><span class="category-tag">Innovation</span>
-                    <span class="category-tag">Lifestyle</span><span class="category-tag">Wellness</span>
-                    <span class="category-tag">DIY</span><span class="category-tag">Code</span>
+                    <span class="category-tag">Futurism</span><span class="category-tag">Innovation Labs</span>
+                    <span class="category-tag">Consciousness</span><span class="category-tag">Sustainable Futures</span>
+                    <span class="category-tag">Robotics</span><span class="category-tag">Digital Identity</span>
                 </div>
             </div>
         </div>
 
         <div id="createPage" class="page-content">
-            <div class="discover-section-title" style="text-align: center; margin-bottom: 24px;">Unleash Your Next Idea</div>
+            <div class="section-title" style="text-align: center; margin-bottom: 24px;">Ignite Your Creativity</div>
             <div class="create-options-grid">
-                <div class="create-option-card" data-create-type="spark">
+                <div class="create-option-card" id="openCreateSparkModalButton">
                     <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63L2 11l6.18 5.37L6.81 22L12 17.31L17.19 22l-1.37-5.63L22 11l-7.19-2.37L12 2zm0 10.55L10.23 15.4L6.46 16l3.29 2.86L8.7 22.45L12 20.03l3.3 2.42l-1.05-3.59L17.54 16l-3.77-.6L12 12.55z"/></svg>
-                    <p>New Spark</p>
+                    <div><p>New Spark</p><span class="description">Share your latest idea or creation.</span></div>
                 </div>
                 <div class="create-option-card" data-create-type="board">
                     <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zm0 8h6v6H4zm8-8h6v6h-6zm0 8h6v6h-6zM2 2v20h20V2H2zm18 18H4V4h16v16z"/></svg>
-                    <p>New Board</p>
+                    <div><p>New Board</p><span class="description">Organize your sparks into collections.</span></div>
                 </div>
                 <div class="create-option-card" data-create-type="ai_generate">
                     <span class="ai-sparkle"><svg viewBox="0 0 24 24"><path d="M19.64 7.03l-1.41-1.41L15.46 9.4l1.41 1.41L19.64 7.03m-5.66 1.41L12.56 7l-1.41 1.41L12.56 9.83l1.42-1.39M4.36 7.03l2.77 2.77L8.54 7l-1.41-1.41L4.36 7.03m11.09 9.19l2.77 2.77 1.41-1.41-2.77-2.77-1.41 1.41M12 22a1.5 1.5 0 01-1.5-1.5c0-.65.42-1.2 1-1.41V12h1v7.09c.58.21 1 .76 1 1.41A1.5 1.5 0 0112 22m-4.5-2c0 .65-.42 1.2-1 1.41V14h-1v7.09c-.58-.21-1-.76-1-1.41a1.5 1.5 0 013 0m9 0c0 .65-.42 1.2-1 1.41V14h-1v7.09c-.58-.21-1-.76-1-1.41a1.5 1.5 0 013 0M12 5a3 3 0 00-3 3h6a3 3 0 00-3-3z"/></svg></span>
-                    <p>AI Generate</p>
+                    <div><p>AI Generate Image</p><span class="description">Let AI spark your visual imagination.</span></div>
                 </div>
             </div>
         </div>
 
         <div id="updatesPage" class="page-content">
-            <div class="discover-section-title" style="margin-bottom: 20px;">Your Feed</div>
-            <div class="notification-list" id="notificationList">
-                <!-- Notifications will be injected here -->
-            </div>
+            <div class="section-title" style="margin-bottom: 20px;">Your Activity Pulse</div>
+            <div class="notification-list" id="notificationList"></div>
         </div>
 
         <div id="profilePage" class="page-content">
             <div class="profile-header">
                 <div class="profile-avatar-large">I</div>
                 <div class="profile-name">Innovator One</div>
-                <div class="profile-username">@i_one_2025</div>
+                <div class="profile-username">@i_one_2025_pro</div>
                 <div class="profile-stats">
-                    <div class="stat-item"><span class="count">1.2K</span><span class="label">Followers</span></div>
-                    <div class="stat-item"><span class="count">345</span><span class="label">Following</span></div>
-                    <div class="stat-item"><span class="count">87</span><span class="label">Sparks</span></div>
+                    <div class="stat-item"><span class="count">2.7K</span><span class="label">Followers</span></div>
+                    <div class="stat-item"><span class="count">412</span><span class="label">Following</span></div>
+                    <div class="stat-item"><span class="count">128</span><span class="label">Sparks</span></div>
                 </div>
             </div>
             <div class="profile-tabs">
@@ -422,298 +433,480 @@
                 <div class="profile-tab" data-profile-tab="boards">Boards</div>
                 <div class="profile-tab" data-profile-tab="saved">Saved</div>
             </div>
-            <div id="profileSparksContent" class="profile-tab-content active">
-                 <div class="pin-container" id="pin-container-profile-sparks">
-                    <!-- User's sparks will be injected here -->
-                </div>
+            <div id="profileSparksContent" class="profile-tab-content active-tab-content">
+                <div class="skeleton-pin-container" id="skeleton-loader-profile-sparks"></div>
+                <div class="pin-container" id="pin-container-profile-sparks" style="display:none;"></div>
             </div>
             <div id="profileBoardsContent" class="profile-tab-content">
-                <p style="text-align:center; color: var(--text-secondary); padding: 20px;">Mock board list would appear here.</p>
+                <div class="board-card-container" id="board-card-container-profile"></div>
             </div>
             <div id="profileSavedContent" class="profile-tab-content">
-                 <div class="pin-container" id="pin-container-profile-saved">
-                    <!-- User's saved sparks will be injected here -->
-                </div>
+                <div class="skeleton-pin-container" id="skeleton-loader-profile-saved"></div>
+                <div class="pin-container" id="pin-container-profile-saved" style="display:none;"></div>
             </div>
         </div>
 
-
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <button class="nav-item active" data-page="homePage" aria-label="Home">
-                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
-            </button>
-            <button class="nav-item" data-page="discoverPage" aria-label="Discover">
-                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-            </button>
-            <button class="nav-item" data-page="createPage" aria-label="Create">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
-            </button>
-            <button class="nav-item" data-page="updatesPage" aria-label="Updates">
-                 <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"></path></svg>
-            </button>
-            <button class="nav-item nav-item-profile" data-page="profilePage" aria-label="Profile">
-                <div class="profile-avatar-nav">I</div>
-            </button>
+            <button class="nav-item active" data-page="homePage" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9l-8-6zm0 2.69L17.31 10H6.69L12 5.69zM7 19v-5H5v5h2zm10 0v-5h-2v5h2z"/></svg></button>
+            <button class="nav-item" data-page="discoverPage" aria-label="Discover"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></button>
+            <button class="nav-item" data-page="createPage" aria-label="Create"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></button>
+            <button class="nav-item" data-page="updatesPage" aria-label="Updates"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2-1H8v-5c0-2.21 1.79-4 4-4s4 1.79 4 4v5z"/></svg></button>
+            <button class="nav-item nav-item-profile" data-page="profilePage" aria-label="Profile"><div class="profile-avatar-nav">I</div></button>
         </nav>
+
+        <!-- Create Spark Modal -->
+        <div class="modal-overlay" id="createSparkModalOverlay">
+            <div class="modal-content" id="createSparkModal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Create New Spark</h3>
+                    <button class="modal-close-button" data-close-modal="createSparkModalOverlay">×</button>
+                </div>
+                <div class="form-group">
+                    <label for="sparkImage">Upload Image (mock)</label>
+                    <div class="image-placeholder" id="sparkImagePlaceholder">
+                        <svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86l-3 3.87L9 13.14 6 17h12l-3.86-5.14z"/></svg>
+                        Tap to select image
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sparkTitle">Title</label>
+                    <input type="text" id="sparkTitle" class="input-field" placeholder="e.g., My Awesome Creation">
+                </div>
+                <div class="form-group">
+                    <label for="sparkDescription">Description</label>
+                    <textarea id="sparkDescription" class="input-field" placeholder="Tell us more about your spark..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="sparkBoard">Select Board (mock)</label>
+                    <select id="sparkBoard" class="input-field">
+                        <option value="b1">Future Tech Ideas</option>
+                        <option value="b2">AI Art Gallery</option>
+                        <option value="b3">Personal Projects</option>
+                    </select>
+                </div>
+                <button class="button-primary" id="publishSparkButton" style="width:100%; margin-top:8px;">Publish Spark</button>
+            </div>
+        </div>
+
+        <!-- Pin Detail Modal -->
+        <div class="modal-overlay" id="pinDetailModalOverlay">
+            <div class="modal-content" id="pinDetailModal">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="pinDetailTitle">Spark Detail</h3>
+                    <button class="modal-close-button" data-close-modal="pinDetailModalOverlay">×</button>
+                </div>
+                <img src="" alt="Pin image" class="pin-detail-image" id="pinDetailImage">
+                <div class="pin-detail-user">
+                    <span class="pin-user-avatar" id="pinDetailUserAvatar"></span>
+                    <span class="pin-detail-username" id="pinDetailUserName"></span>
+                </div>
+                <p class="pin-detail-description" id="pinDetailDescriptionText"></p>
+                <div class="comments-section">
+                    <h4>Comments (mock)</h4>
+                    <div class="comment"><strong>UserX:</strong> Amazing concept! 🤯</div>
+                    <div class="comment"><strong>CreativeMind:</strong> Love the color palette.</div>
+                </div>
+                <div class="related-sparks-section">
+                    <h4>Related Sparks (mock)</h4>
+                    <div class="related-spark-item" id="relatedSparksContainer">
+                        <!-- Related sparks will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div id="toast">A message will show here</div>
     </div>
 
     <script>
-        // --- App State & Elements ---
-        const pages = document.querySelectorAll('.page-content');
-        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
-        const toastElement = document.getElementById('toast');
-        let activePageId = 'homePage';
-        const savedPins = new Set(); // To track saved state of pins by ID
+    // --- App State & Elements ---
+    const pages = document.querySelectorAll('.page-content');
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    const toastElement = document.getElementById('toast');
+    let activePageId = 'homePage'; // Set initial page
+    const savedPins = new Set();
+    let allPinsData = []; // Central store for all pins
 
-        // Pin Containers
-        const pinContainerHome = document.getElementById('pin-container-home');
-        const pinContainerProfileSparks = document.getElementById('pin-container-profile-sparks');
-        const pinContainerProfileSaved = document.getElementById('pin-container-profile-saved');
+    // Pin Containers
+    const pinContainerHome = document.getElementById('pin-container-home');
+    const pinContainerProfileSparks = document.getElementById('pin-container-profile-sparks');
+    const pinContainerProfileSaved = document.getElementById('pin-container-profile-saved');
+    const boardContainerProfile = document.getElementById('board-card-container-profile');
+
+    // Skeleton Loaders
+    const skeletonLoaderHome = document.getElementById('skeleton-loader-home');
+    const skeletonLoaderProfileSparks = document.getElementById('skeleton-loader-profile-sparks');
+    const skeletonLoaderProfileSaved = document.getElementById('skeleton-loader-profile-saved');
+
+    // Modals
+    const createSparkModalOverlay = document.getElementById('createSparkModalOverlay');
+    const pinDetailModalOverlay = document.getElementById('pinDetailModalOverlay');
 
 
-        // --- Sample Data ---
-        const samplePinsData = [
-            { id: 's1', imageUrl: 'https://picsum.photos/seed/is1/250/350', title: 'Quantum Garden', user: 'BioFuturist', avatar: 'B' },
-            { id: 's2', imageUrl: 'https://picsum.photos/seed/is2/250/420', title: 'AR City Overlay', user: 'UrbanTech', avatar: 'U' },
-            { id: 's3', imageUrl: 'https://picsum.photos/seed/is3/250/300', title: 'Neural Net Art', user: 'AIGenius', avatar: 'A' },
-            { id: 's4', imageUrl: 'https://picsum.photos/seed/is4/250/450', title: 'Zero-G Living', user: 'SpaceNomad', avatar: 'S' },
-            { id: 's5', imageUrl: 'https://picsum.photos/seed/is5/250/380', title: 'Synthwave Drive', user: 'RetroWave', avatar: 'R' },
-            { id: 's6', imageUrl: 'https://picsum.photos/seed/is6/250/320', title: 'Eco-Tower Concept', user: 'GreenArch', avatar: 'G' },
-            { id: 's7', imageUrl: 'https://picsum.photos/seed/is7/250/400', title: 'Holographic Fashion', user: 'Style2077', avatar: 'S' },
-            { id: 's8', imageUrl: 'https://picsum.photos/seed/is8/250/280', title: 'Mind Palace UI', user: 'CognitiveUX', avatar: 'C' },
-        ];
-        const userSparksData = samplePinsData.slice(0,4); // User created these
-        const userSavedData = samplePinsData.slice(4,7);  // User saved these
+    // --- Sample Data ---
+    const initialPinsData = [
+        { id: 's1', imageUrl: 'https://picsum.photos/seed/is_adv1/300/450', title: 'Cryosleep Chamber Design', user: 'AstroSleeper', avatar: 'A', description: 'Concept for long-duration space travel hibernation pods with neural monitoring.', boardId: 'b1' },
+        { id: 's2', imageUrl: 'https://picsum.photos/seed/is_adv2/300/520', title: 'Haptic Feedback Suit', user: 'VRRealist', avatar: 'V', description: 'Full-body suit providing realistic touch sensations for immersive VR.', boardId: 'b1' },
+        { id: 's3', imageUrl: 'https://picsum.photos/seed/is_adv3/300/400', title: 'AI-Generated Symphony', user: 'MuseAI', avatar: 'M', description: 'A complete orchestral piece composed entirely by an advanced AI.', boardId: 'b2' },
+        { id: 's4', imageUrl: 'https://picsum.photos/seed/is_adv4/300/550', title: 'Floating Hydroponic Farms', user: 'EcoSustain', avatar: 'E', description: 'Vertical farms built on buoyant platforms for urban food production.', boardId: 'b3' },
+        { id: 's5', imageUrl: 'https://picsum.photos/seed/is_adv5/300/480', title: 'Digital Consciousness Upload', user: 'TranshumanistX', avatar: 'T', description: 'Exploring the theoretical framework for transferring human consciousness to a digital substrate.', boardId: 'b1' },
+        { id: 's6', imageUrl: 'https://picsum.photos/seed/is_adv6/300/420', title: 'Bio-Luminescent Pathways', user: 'GlowingPaths', avatar: 'G', description: 'Using genetically engineered flora to create naturally lit walkways in cities.', boardId: 'b3' },
+        { id: 's7', imageUrl: 'https://picsum.photos/seed/is_adv7/300/500', title: 'Personalized Dream Weaver', user: 'LucidDreamer', avatar: 'L', description: 'A device that monitors brainwaves to influence and sculpt dream narratives.', boardId: 'b2' },
+        { id: 's8', imageUrl: 'https://picsum.photos/seed/is_adv8/300/380', title: 'Sentient AI Companion UI', user: 'AI_FriendDev', avatar: 'F', description: 'User interface concepts for interacting with a highly advanced, empathetic AI.', boardId: 'b2' },
+    ];
+    allPinsData = [...initialPinsData]; // Initialize central store
 
-        const sampleNotifications = [
-            { type: 'like', user: 'NovaMind', item: 'Quantum Garden', time: '5m ago', icon: '❤️'},
-            { type: 'comment', user: 'CypherPunk', item: 'AR City Overlay', text: 'This is revolutionary!', time: '1h ago', icon: '💬'},
-            { type: 'follow', user: 'BioHackerEve', time: '3h ago', icon: '👤'},
-            { type: 'board', user: 'NovaMind', item: 'Future Concepts', spark: 'Zero-G Living', time: '1d ago', icon: '➕'},
-        ];
+    const userSparksIds = ['s1', 's3', 's6']; // User created these
+    const userSavedInitialIds = ['s2', 's4', 's7'];  // User saved these
+    userSavedInitialIds.forEach(id => savedPins.add(id));
 
-        // --- Pin Creation & Management ---
-        function createPinElement(pinData, isInitiallySaved = false) {
-            const pinDiv = document.createElement('div');
-            pinDiv.classList.add('pin');
-            pinDiv.dataset.id = pinData.id;
+    const sampleNotifications = [
+        { type: 'like', user: 'VRRealist', item: 'Cryosleep Chamber Design', time: '2m ago', icon: '❤️'},
+        { type: 'comment', user: 'EcoSustain', item: 'Haptic Feedback Suit', text: 'Imagine this for training simulations!', time: '30m ago', icon: '💬'},
+        { type: 'follow', user: 'MuseAI', time: '2h ago', icon: '👤'},
+        { type: 'board', user: 'AstroSleeper', item: 'Future Concepts', spark: 'Floating Hydroponic Farms', time: '6h ago', icon: '➕'},
+        { type: 'new_spark', user: 'TranshumanistX', item: 'Digital Consciousness Upload', time: '1d ago', icon: '✨'}
+    ];
 
-            const img = document.createElement('img');
-            img.src = pinData.imageUrl;
-            img.alt = pinData.title;
-            img.loading = 'lazy';
+    const sampleBoards = [
+        { id: 'b1', name: 'Future Tech Ideas', coverImage: 'https://picsum.photos/seed/board_cover1/200/150', pinCount: 3 },
+        { id: 'b2', name: 'AI Art & Creations', coverImage: 'https://picsum.photos/seed/board_cover2/200/150', pinCount: 3 },
+        { id: 'b3', name: 'Sustainable Innovations', coverImage: 'https://picsum.photos/seed/board_cover3/200/150', pinCount: 2 },
+    ];
 
-            const contentDiv = document.createElement('div');
-            contentDiv.classList.add('pin-content');
-            const titleH3 = document.createElement('h3');
-            titleH3.classList.add('pin-title');
-            titleH3.textContent = pinData.title;
-            const userDiv = document.createElement('div');
-            userDiv.classList.add('pin-user');
-            const avatarSpan = document.createElement('span');
-            avatarSpan.classList.add('pin-user-avatar');
-            avatarSpan.textContent = pinData.avatar || pinData.user.charAt(0).toUpperCase();
-            const userNameSpan = document.createElement('span');
-            userNameSpan.textContent = pinData.user;
-            userDiv.append(avatarSpan, userNameSpan);
-            contentDiv.append(titleH3, userDiv);
-
-            const saveButton = document.createElement('button');
-            saveButton.classList.add('pin-save-button');
-            
-            function updateSaveButtonState() {
-                if (savedPins.has(pinData.id)) {
-                    saveButton.textContent = 'Saved';
-                    saveButton.classList.add('saved');
-                } else {
-                    saveButton.textContent = 'Save';
-                    saveButton.classList.remove('saved');
-                }
-            }
-            updateSaveButtonState(); // Initial state
-
-            saveButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (savedPins.has(pinData.id)) {
-                    savedPins.delete(pinData.id);
-                    showToast(`"${pinData.title}" unsaved.`);
-                } else {
-                    savedPins.add(pinData.id);
-                    showToast(`"${pinData.title}" saved!`);
-                }
-                updateSaveButtonState();
-                // If on profile saved page, re-render that list
-                if (activePageId === 'profilePage' && document.getElementById('profileSavedContent').classList.contains('active')) {
-                    loadProfileSavedPins();
-                }
-            });
-
-            pinDiv.append(img, contentDiv, saveButton);
-            pinDiv.addEventListener('click', () => showToast(`Opening Spark: "${pinData.title}" (mock)`));
-            return pinDiv;
+    // --- Skeleton Loader ---
+    function showSkeleton(container, count = 4) {
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const skeleton = `
+                <div class="skeleton-pin">
+                    <div class="skeleton-pin-img"></div>
+                    <div class="skeleton-pin-content">
+                        <div class="skeleton-pin-title"></div>
+                        <div class="skeleton-pin-user"></div>
+                    </div>
+                </div>`;
+            container.innerHTML += skeleton;
         }
+        container.style.display = 'grid';
+    }
 
-        function loadPins(container, data) {
-            container.innerHTML = ''; // Clear existing
-            data.forEach(pinData => {
-                const pinElement = createPinElement(pinData, savedPins.has(pinData.id));
-                container.appendChild(pinElement);
-            });
-        }
+    async function loadWithSkeleton(pinContainerElement, skeletonElement, dataLoaderFn) {
+        pinContainerElement.style.display = 'none';
+        showSkeleton(skeletonElement);
+        await new Promise(resolve => setTimeout(resolve, 700)); // Simulate network delay
+        await dataLoaderFn();
+        skeletonElement.style.display = 'none';
+        pinContainerElement.style.display = 'grid';
+    }
 
-        // --- Page Navigation ---
-        function switchPage(pageId) {
-            pages.forEach(page => {
-                page.classList.toggle('active', page.id === pageId);
-            });
-            navItems.forEach(item => {
-                item.classList.toggle('active', item.dataset.page === pageId);
-            });
-            activePageId = pageId;
 
-            // Scroll to top of new page
-            const activePageElement = document.getElementById(pageId);
-            if (activePageElement) activePageElement.scrollTop = 0;
+    // --- Pin Creation & Management ---
+    function createPinElement(pinData) {
+        const pinDiv = document.createElement('div');
+        pinDiv.classList.add('pin');
+        pinDiv.dataset.id = pinData.id;
 
-            // Load content if needed
-            if (pageId === 'homePage') loadPins(pinContainerHome, samplePinsData);
-            if (pageId === 'updatesPage') loadNotifications();
-            if (pageId === 'profilePage') {
-                // Default to 'sparks' tab on profile
-                switchProfileTab('sparks');
-            }
-            if (pageId === 'discoverPage') { // Reset discover page state
-                 document.getElementById('discoverSearchInput').value = '';
-                 document.getElementById('mockSearchResultsContainer').innerHTML = '';
-                 document.getElementById('discoverDefaultContent').style.display = 'block';
-            }
-        }
+        const img = document.createElement('img');
+        img.src = pinData.imageUrl;
+        img.alt = pinData.title;
+        img.loading = 'lazy';
 
-        navItems.forEach(item => {
-            item.addEventListener('click', () => switchPage(item.dataset.page));
-        });
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('pin-content');
+        const titleH3 = document.createElement('h3');
+        titleH3.classList.add('pin-title');
+        titleH3.textContent = pinData.title;
+        const userDiv = document.createElement('div');
+        userDiv.classList.add('pin-user');
+        const avatarSpan = document.createElement('span');
+        avatarSpan.classList.add('pin-user-avatar');
+        avatarSpan.textContent = pinData.avatar || pinData.user.charAt(0).toUpperCase();
+        const userNameSpan = document.createElement('span');
+        userNameSpan.textContent = pinData.user;
+        userDiv.append(avatarSpan, userNameSpan);
+        contentDiv.append(titleH3, userDiv);
 
-        // --- Toast Notification ---
-        let toastTimeout;
-        function showToast(message) {
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastElement.textContent = message;
-            toastElement.classList.add('show');
-            toastTimeout = setTimeout(() => {
-                toastElement.classList.remove('show');
-            }, 2500);
-        }
-
-        // --- Discover Page Logic ---
-        const discoverSearchInput = document.getElementById('discoverSearchInput');
-        const mockSearchResultsContainer = document.getElementById('mockSearchResultsContainer');
-        const discoverDefaultContent = document.getElementById('discoverDefaultContent');
-
-        discoverSearchInput.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            if (query.length > 1) {
-                mockSearchResultsContainer.innerHTML = ''; // Clear previous
-                discoverDefaultContent.style.display = 'none';
-                const results = samplePinsData.filter(pin => pin.title.toLowerCase().includes(query) || pin.user.toLowerCase().includes(query));
-                if (results.length > 0) {
-                    results.slice(0, 5).forEach(res => { // Show max 5 results
-                        const item = document.createElement('div');
-                        item.classList.add('result-item');
-                        item.textContent = `Spark: ${res.title} by ${res.user}`;
-                        item.onclick = () => showToast(`Opening search result: ${res.title}`);
-                        mockSearchResultsContainer.appendChild(item);
-                    });
-                } else {
-                    mockSearchResultsContainer.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding: 10px;">No sparks found for "${this.value}"</p>`;
-                }
+        const saveButton = document.createElement('button');
+        saveButton.classList.add('pin-save-button');
+        
+        function updateSaveButtonState() {
+            if (savedPins.has(pinData.id)) {
+                saveButton.textContent = 'Saved';
+                saveButton.classList.add('saved');
             } else {
-                mockSearchResultsContainer.innerHTML = '';
-                discoverDefaultContent.style.display = 'block';
+                saveButton.textContent = 'Save';
+                saveButton.classList.remove('saved');
+            }
+        }
+        updateSaveButtonState();
+
+        saveButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (savedPins.has(pinData.id)) {
+                savedPins.delete(pinData.id);
+                showToast(`"${pinData.title}" unsaved.`);
+            } else {
+                savedPins.add(pinData.id);
+                showToast(`"${pinData.title}" saved!`);
+            }
+            updateSaveButtonState();
+            if (activePageId === 'profilePage' && document.getElementById('profileSavedContent').classList.contains('active-tab-content')) {
+                loadProfileSavedPinsContent();
             }
         });
-        document.querySelectorAll('.category-tag').forEach(tag => {
-            tag.addEventListener('click', () => {
-                discoverSearchInput.value = tag.textContent;
-                discoverSearchInput.dispatchEvent(new Event('input')); // Trigger search
-                showToast(`Exploring ${tag.textContent}`);
-            });
-        });
 
-        // --- Create Page Logic ---
-        document.querySelectorAll('.create-option-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const type = card.dataset.createType;
-                if (type === 'spark') showToast('Opening New Spark creator (mock)');
-                else if (type === 'board') showToast('Opening New Board creator (mock)');
-                else if (type === 'ai_generate') showToast('Initiating AI Image Generation (mock)... ✨');
-            });
-        });
+        pinDiv.append(img, contentDiv, saveButton);
+        pinDiv.addEventListener('click', () => openPinDetailModal(pinData.id));
+        return pinDiv;
+    }
 
-        // --- Updates Page Logic ---
+    function renderPins(container, data) {
+        container.innerHTML = '';
+        data.forEach(pinData => {
+            const pinElement = createPinElement(pinData);
+            container.appendChild(pinElement);
+        });
+    }
+
+    // --- Page Navigation ---
+    function switchPage(pageId) {
+        const oldPage = document.getElementById(activePageId);
+        const newPage = document.getElementById(pageId);
+
+        if (oldPage) oldPage.classList.remove('active');
+        if (newPage) newPage.classList.add('active');
+        
+        activePageId = pageId;
+        navItems.forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
+
+        // Load content for the new page with skeleton
+        if (pageId === 'homePage') loadWithSkeleton(pinContainerHome, skeletonLoaderHome, loadHomePageContent);
+        else if (pageId === 'discoverPage') loadDiscoverPageContent(); // No skeleton for discover for now
+        else if (pageId === 'createPage') { /* No specific load needed beyond modal setup */ }
+        else if (pageId === 'updatesPage') loadUpdatesPageContent();
+        else if (pageId === 'profilePage') switchProfileTab('sparks'); // Default to 'sparks' on profile
+    }
+
+    navItems.forEach(item => {
+        item.addEventListener('click', () => switchPage(item.dataset.page));
+    });
+
+    // --- Modal Management ---
+    function openModal(overlayId) {
+        document.getElementById(overlayId).classList.add('visible');
+    }
+    function closeModal(overlayId) {
+        document.getElementById(overlayId).classList.remove('visible');
+    }
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal(overlay.id);
+        });
+    });
+
+    // --- Toast Notification ---
+    let toastTimeout;
+    function showToast(message) {
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastElement.textContent = message;
+        toastElement.classList.add('show');
+        toastTimeout = setTimeout(() => {
+            toastElement.classList.remove('show');
+        }, 3000);
+    }
+
+    // --- Page Specific Load Functions ---
+    async function loadHomePageContent() { renderPins(pinContainerHome, allPinsData); }
+    function loadDiscoverPageContent() {
+        document.getElementById('discoverSearchInput').value = '';
+        document.getElementById('mockSearchResultsContainer').innerHTML = '';
+        document.getElementById('discoverDefaultContent').style.display = 'block';
+    }
+    function loadUpdatesPageContent() {
         const notificationList = document.getElementById('notificationList');
-        function loadNotifications() {
-            notificationList.innerHTML = '';
-            sampleNotifications.forEach(notif => {
-                const item = document.createElement('div');
-                item.classList.add('notification-item');
-                const icon = document.createElement('div');
-                icon.classList.add('notification-icon');
-                if (notif.type === 'comment') icon.classList.add('comment');
-                icon.textContent = notif.icon;
-                const textDiv = document.createElement('div');
-                textDiv.classList.add('notification-text');
-                const p1 = document.createElement('p');
-                if (notif.type === 'like') p1.innerHTML = `<strong>${notif.user}</strong> liked your spark <strong>${notif.item}</strong>.`;
-                else if (notif.type === 'comment') p1.innerHTML = `<strong>${notif.user}</strong> commented on <strong>${notif.item}</strong>: "${notif.text}"`;
-                else if (notif.type === 'follow') p1.innerHTML = `<strong>${notif.user}</strong> started following you.`;
-                else if (notif.type === 'board') p1.innerHTML = `<strong>${notif.user}</strong> added your spark <strong>${notif.spark}</strong> to their board <strong>${notif.item}</strong>.`;
-                const timeP = document.createElement('p');
-                timeP.classList.add('time');
-                timeP.textContent = notif.time;
-                textDiv.append(p1, timeP);
-                item.append(icon, textDiv);
-                item.onclick = () => showToast(`Opening notification (mock)`);
-                notificationList.appendChild(item);
-            });
-        }
+        notificationList.innerHTML = '';
+        sampleNotifications.forEach(notif => {
+            const item = document.createElement('div');
+            item.classList.add('notification-item');
+            const icon = document.createElement('div');
+            icon.classList.add('notification-icon');
+            if (notif.type === 'comment') icon.classList.add('comment');
+            icon.textContent = notif.icon;
+            const textDiv = document.createElement('div');
+            textDiv.classList.add('notification-text');
+            const p1 = document.createElement('p');
+            if (notif.type === 'like') p1.innerHTML = `<strong>${notif.user}</strong> liked your spark <strong>${notif.item}</strong>.`;
+            else if (notif.type === 'comment') p1.innerHTML = `<strong>${notif.user}</strong> commented on <strong>${notif.item}</strong>: "${notif.text}"`;
+            else if (notif.type === 'follow') p1.innerHTML = `<strong>${notif.user}</strong> started following you.`;
+            else if (notif.type === 'board') p1.innerHTML = `<strong>${notif.user}</strong> added your spark <strong>${notif.spark}</strong> to their board <strong>${notif.item}</strong>.`;
+            else if (notif.type === 'new_spark') p1.innerHTML = `<strong>${notif.user}</strong> created a new spark: <strong>${notif.item}</strong>.`;
+            const timeP = document.createElement('p'); timeP.classList.add('time'); timeP.textContent = notif.time;
+            textDiv.append(p1, timeP); item.append(icon, textDiv);
+            item.onclick = () => showToast(`Opening notification from ${notif.user} (mock)`);
+            notificationList.appendChild(item);
+        });
+    }
 
-        // --- Profile Page Logic ---
-        const profileTabs = document.querySelectorAll('.profile-tab');
-        const profileTabContents = document.querySelectorAll('.profile-tab-content');
-
-        function loadProfileSparks() {
-            loadPins(pinContainerProfileSparks, userSparksData);
-        }
-        function loadProfileSavedPins() {
-            const actualSavedPinsData = samplePinsData.filter(pin => savedPins.has(pin.id));
-            loadPins(pinContainerProfileSaved, actualSavedPinsData);
-            if (actualSavedPinsData.length === 0 && pinContainerProfileSaved) {
-                pinContainerProfileSaved.innerHTML = `<p style="text-align:center; color: var(--text-secondary); padding: 20px;">No saved sparks yet. Explore and save some!</p>`;
+    // Discover Page Logic
+    const discoverSearchInput = document.getElementById('discoverSearchInput');
+    const mockSearchResultsContainer = document.getElementById('mockSearchResultsContainer');
+    const discoverDefaultContent = document.getElementById('discoverDefaultContent');
+    discoverSearchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        if (query.length > 1) {
+            mockSearchResultsContainer.innerHTML = '';
+            discoverDefaultContent.style.display = 'none';
+            const results = allPinsData.filter(pin => pin.title.toLowerCase().includes(query) || pin.user.toLowerCase().includes(query) || (pin.description && pin.description.toLowerCase().includes(query)));
+            if (results.length > 0) {
+                results.slice(0, 5).forEach(res => {
+                    const item = document.createElement('div'); item.classList.add('result-item');
+                    item.textContent = `Spark: ${res.title} by ${res.user}`;
+                    item.onclick = () => openPinDetailModal(res.id);
+                    mockSearchResultsContainer.appendChild(item);
+                });
+            } else {
+                mockSearchResultsContainer.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding: 10px;">No sparks found for "${this.value}"</p>`;
             }
+        } else {
+            mockSearchResultsContainer.innerHTML = '';
+            discoverDefaultContent.style.display = 'block';
         }
+    });
+    document.querySelectorAll('.category-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            discoverSearchInput.value = tag.textContent;
+            discoverSearchInput.dispatchEvent(new Event('input'));
+            showToast(`Exploring ${tag.textContent}`);
+        });
+    });
 
-        function switchProfileTab(tabId) {
-            profileTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.profileTab === tabId));
-            profileTabContents.forEach(content => content.classList.toggle('active', content.id === `profile${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Content`));
+    // Create Page & Create Spark Modal Logic
+    document.getElementById('openCreateSparkModalButton').addEventListener('click', () => {
+        // Reset form
+        document.getElementById('sparkTitle').value = '';
+        document.getElementById('sparkDescription').value = '';
+        document.getElementById('sparkImagePlaceholder').innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86l-3 3.87L9 13.14 6 17h12l-3.86-5.14z"/></svg>Tap to select image';
+        openModal('createSparkModalOverlay');
+    });
+    document.getElementById('sparkImagePlaceholder').addEventListener('click', () => {
+        showToast('Mock image selection!');
+        document.getElementById('sparkImagePlaceholder').innerHTML = '<svg viewBox="0 0 24 24" fill="#4CAF50"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>Image Selected (mock_image.jpg)';
+    });
+    document.getElementById('publishSparkButton').addEventListener('click', () => {
+        const title = document.getElementById('sparkTitle').value;
+        const description = document.getElementById('sparkDescription').value;
+        const boardId = document.getElementById('sparkBoard').value;
+        if (!title.trim()) {
+            showToast('Please enter a title for your spark.');
+            return;
+        }
+        const newSpark = {
+            id: 's' + (allPinsData.length + 1) + Date.now(), // Unique enough for demo
+            imageUrl: `https://picsum.photos/seed/custom${Date.now()}/300/${Math.floor(Math.random() * 200) + 350}`,
+            title: title,
+            user: 'Innovator One', // Current user
+            avatar: 'I',
+            description: description,
+            boardId: boardId
+        };
+        allPinsData.unshift(newSpark); // Add to beginning of all pins
+        userSparksIds.unshift(newSpark.id); // Add to user's sparks
+        showToast(`Spark "${title}" published!`);
+        closeModal('createSparkModalOverlay');
+        if (activePageId === 'homePage') loadWithSkeleton(pinContainerHome, skeletonLoaderHome, loadHomePageContent);
+        if (activePageId === 'profilePage' && document.getElementById('profileSparksContent').classList.contains('active-tab-content')) {
+             loadWithSkeleton(pinContainerProfileSparks, skeletonLoaderProfileSparks, loadProfileSparksContent);
+        }
+    });
+    document.querySelectorAll('.create-option-card[data-create-type]').forEach(card => {
+        card.addEventListener('click', () => {
+            const type = card.dataset.createType;
+            if (type === 'board') showToast('Opening New Board creator (mock)');
+            else if (type === 'ai_generate') showToast('Initiating AI Image Generation (mock)... ✨');
+        });
+    });
+
+    // Pin Detail Modal Logic
+    function openPinDetailModal(pinId) {
+        const pinData = allPinsData.find(p => p.id === pinId);
+        if (!pinData) return;
+
+        document.getElementById('pinDetailTitle').textContent = pinData.title;
+        document.getElementById('pinDetailImage').src = pinData.imageUrl;
+        document.getElementById('pinDetailImage').alt = pinData.title;
+        document.getElementById('pinDetailUserAvatar').textContent = pinData.avatar || pinData.user.charAt(0).toUpperCase();
+        document.getElementById('pinDetailUserName').textContent = pinData.user;
+        document.getElementById('pinDetailDescriptionText').textContent = pinData.description || "No description available for this spark.";
+        
+        // Mock related sparks
+        const relatedSparksContainer = document.getElementById('relatedSparksContainer');
+        relatedSparksContainer.innerHTML = '';
+        allPinsData.filter(p => p.id !== pinId).slice(0,2).forEach(relatedPin => {
+            const item = document.createElement('div'); item.classList.add('related-spark-item');
+            item.textContent = `${relatedPin.title} by ${relatedPin.user}`;
+            item.onclick = () => { closeModal('pinDetailModalOverlay'); openPinDetailModal(relatedPin.id); }; // Chain modals
+            relatedSparksContainer.appendChild(item);
+        });
+
+        openModal('pinDetailModalOverlay');
+    }
+
+    // Profile Page Logic
+    const profileTabs = document.querySelectorAll('.profile-tab');
+    const profileTabContents = document.querySelectorAll('.profile-tab-content');
+
+    async function loadProfileSparksContent() {
+        const userSparksData = allPinsData.filter(pin => userSparksIds.includes(pin.id));
+        renderPins(pinContainerProfileSparks, userSparksData);
+    }
+    async function loadProfileSavedPinsContent() {
+        const actualSavedPinsData = allPinsData.filter(pin => savedPins.has(pin.id));
+        renderPins(pinContainerProfileSaved, actualSavedPinsData);
+        if (actualSavedPinsData.length === 0 && pinContainerProfileSaved) {
+            pinContainerProfileSaved.innerHTML = `<p style="text-align:center; color: var(--text-secondary); padding: 20px;">No saved sparks yet. Explore and save some!</p>`;
+        }
+    }
+    function loadProfileBoardsContent() {
+        boardContainerProfile.innerHTML = '';
+        sampleBoards.forEach(board => {
+            const card = document.createElement('div');
+            card.classList.add('board-card');
+            card.innerHTML = `
+                <img src="${board.coverImage}" alt="${board.name} cover" class="board-card-cover">
+                <div class="board-card-name">${board.name} (${board.pinCount})</div>
+            `;
+            card.onclick = () => showToast(`Opening board: ${board.name} (mock)`);
+            boardContainerProfile.appendChild(card);
+        });
+    }
+
+    function switchProfileTab(tabId) {
+        profileTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.profileTab === tabId));
+        profileTabContents.forEach(content => {
+            // Using classList for display and then triggering load with skeleton
+            content.classList.remove('active-tab-content');
+            if (content.id === `profile${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Content`) {
+                content.classList.add('active-tab-content'); // Show it immediately
+            }
+        });
             
-            if (tabId === 'sparks') loadProfileSparks();
-            if (tabId === 'boards') { /* Load boards if implemented */ }
-            if (tabId === 'saved') loadProfileSavedPins();
-        }
-        profileTabs.forEach(tab => {
-            tab.addEventListener('click', () => switchProfileTab(tab.dataset.profileTab));
-        });
+        if (tabId === 'sparks') loadWithSkeleton(pinContainerProfileSparks, skeletonLoaderProfileSparks, loadProfileSparksContent);
+        else if (tabId === 'boards') loadProfileBoardsContent(); // No skeleton for boards for now
+        else if (tabId === 'saved') loadWithSkeleton(pinContainerProfileSaved, skeletonLoaderProfileSaved, loadProfileSavedPinsContent);
+    }
+    profileTabs.forEach(tab => {
+        tab.addEventListener('click', () => switchProfileTab(tab.dataset.profileTab));
+    });
 
-
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            switchPage('homePage'); // Load initial page
-             // Initialize saved pins from sample data (userSavedData)
-            userSavedData.forEach(pin => savedPins.add(pin.id));
-        });
+    // Initial Load
+    document.addEventListener('DOMContentLoaded', () => {
+        switchPage('homePage'); // Load initial page
+    });
 
     </script>
 </body>
