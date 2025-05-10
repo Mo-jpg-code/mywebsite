@@ -6,30 +6,32 @@
     <title>MeOS</title>
     <style>
         :root {
-            --bg-primary: #0D0D12; /* Near black */
-            --bg-secondary: #1A1A23; /* Slightly lighter UI elements */
-            --bg-glass: rgba(30, 30, 40, 0.6);
-            --text-primary: #E9E9F0;
-            --text-secondary: #A0A0B5;
-            --accent-primary: #00AFFF; /* Electric Blue */
-            --accent-secondary: #FF3B80; /* For contrast, e.g. notifications or alerts */
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg-primary: #0A0A0F; /* Even darker base */
+            --bg-secondary: #16161F;
+            --bg-glass: rgba(25, 25, 35, 0.5);
+            --text-primary: #F0F0F8;
+            --text-secondary: #9090A0;
+            --accent-primary: #00BFFF; /* Deep Sky Blue - a bit more vibrant */
+            --accent-secondary: #FF4081; /* Pink for contrast */
+            --border-color: rgba(255, 255, 255, 0.05);
 
             --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
             
-            --transition-snap: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Playful, snappy */
-            --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Material-like smooth */
-            --transition-startup: 1.5s ease-in-out;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+            --ease-elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6); /* For bouncy effects */
 
-            --border-radius-soft: 12px;
-            --border-radius-app-icon: 22%; /* iOS-like squircle percentage */
-            --border-radius-modal: 24px;
+            --transition-app-open: 0.6s var(--ease-out-expo);
+            --transition-app-elements: 0.5s var(--ease-out-expo);
+            --transition-interface-scale: 0.7s var(--ease-in-out-quint);
+
+            --border-radius-soft: 14px;
+            --border-radius-app-icon: 23%; 
+            --border-radius-modal: 28px;
         }
 
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            margin: 0; padding: 0; box-sizing: border-box;
             font-family: var(--font-main);
             -webkit-tap-highlight-color: transparent;
             -webkit-font-smoothing: antialiased;
@@ -37,345 +39,338 @@
         }
 
         html, body {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             overflow: hidden;
             background-color: var(--bg-primary);
             color: var(--text-primary);
         }
 
         #meos-screen {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            overflow: hidden;
-            display: flex; /* Will be controlled by JS */
-            flex-direction: column;
-            background: var(--bg-primary); /* Initial background */
-            transition: background-color 0.5s ease;
+            width: 100vw; height: 100vh;
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+            background: var(--dynamic-wallpaper, var(--bg-primary));
+            transition: background 0.7s ease, opacity 0.5s ease;
+            perspective: 1200px; /* For 3D transforms on children */
         }
 
-        /* --- Startup Animation --- */
+        /* --- CINEMATIC STARTUP ANIMATION --- */
         #startup-animation {
-            position: absolute;
-            top: 0; left: 0;
+            position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
-            background-color: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            background-color: #000000; /* Pitch Black Start */
+            display: flex; justify-content: center; align-items: center;
             z-index: 10000;
             opacity: 1;
-            transition: opacity 0.8s ease-out 0.5s; /* Fade out OS itself */
+            transition: opacity 1.2s var(--ease-in-out-quint) 0.5s; /* Fade out OS itself */
+            overflow: hidden; /* Clip internal effects */
         }
-        #startup-animation.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+        #startup-animation.hidden { opacity: 0; pointer-events: none; }
 
-        .startup-logo-container {
-            width: 120px;
-            height: 120px;
-            position: relative;
-        }
-        
-        .startup-logo-char {
-            font-size: 80px;
-            font-weight: 700;
+        .spark-container {
             position: absolute;
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .spark {
+            width: 10px; height: 10px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
             opacity: 0;
-            transform: translateY(20px) scale(0.8);
-            color: var(--accent-primary);
+            transform: scale(0);
+            box-shadow: 0 0 20px 10px var(--accent-primary), 0 0 40px 20px rgba(0, 191, 255, 0.5);
+            animation: spark-appear 2s var(--ease-out-expo) 1s forwards, 
+                       spark-pulse 3s var(--ease-in-out-quint) 3s infinite;
         }
-        .startup-logo-char.m { left: 0; animation: char-in 0.6s var(--transition-smooth) 1s forwards; }
-        .startup-logo-char.e { left: 40px; animation: char-in 0.6s var(--transition-smooth) 1.3s forwards; color: var(--text-primary); }
-        .startup-logo-char.o { left: 70px; animation: char-in 0.6s var(--transition-smooth) 1.6s forwards; }
-        .startup-logo-char.s { left: 105px; animation: char-in 0.6s var(--transition-smooth) 1.9s forwards; color: var(--text-primary); }
-
-
-        @keyframes char-in {
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        
-        .startup-line {
-            width: 0%;
-            height: 3px;
-            background: var(--accent-primary);
-            margin-top: 30px;
-            border-radius: 3px;
-            animation: line-load 7s cubic-bezier(0.25, 0.1, 0.25, 1) 3s forwards; /* 7s duration, 3s delay */
-        }
-        /* Total startup: ~2.5s (logo) + 7s (line) + 0.8s (fade) = ~10.3s */
-
-        @keyframes line-load {
-            0% { width: 0%; opacity: 0.5; }
-            20% { opacity: 1; }
-            90% { width: 150px; } /* Max width of the line */
-            100% { width: 150px; opacity: 0;}
-        }
-
-        /* --- Main Interface --- */
-        #main-interface {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transform: scale(1.1);
-            animation: interface-appear 0.8s var(--transition-smooth) forwards;
-            position: relative; /* For z-indexing children */
-            background: var(--dynamic-wallpaper, var(--bg-primary)); /* For dynamic wallpaper */
-            transition: transform 0.4s var(--transition-smooth), opacity 0.4s var(--transition-smooth), background 0.5s ease;
-        }
-        #main-interface.app-open {
-            transform: scale(0.92) translateY(-10px);
-            opacity: 0.7;
-            filter: blur(5px);
-            border-radius: var(--border-radius-modal); /* To make corners look good when scaled */
-            overflow: hidden; /* Clip content when scaled */
-        }
-
-        @keyframes interface-appear {
+        @keyframes spark-appear {
             to { opacity: 1; transform: scale(1); }
         }
+        @keyframes spark-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px 10px var(--accent-primary), 0 0 40px 20px rgba(0, 191, 255, 0.5); }
+            50% { transform: scale(1.3); box-shadow: 0 0 30px 15px var(--accent-primary), 0 0 60px 30px rgba(0, 191, 255, 0.7); }
+        }
+
+        .energy-weave {
+            position: absolute;
+            width: 300px; height: 300px; /* Adjust size as needed */
+            opacity: 0;
+            animation: weave-fade-in 1s ease-out 3.5s forwards;
+        }
+        @keyframes weave-fade-in { to { opacity: 1; } }
+
+        .energy-weave .line {
+            position: absolute;
+            background-color: var(--accent-primary);
+            opacity: 0.7;
+            box-shadow: 0 0 8px 1px var(--accent-primary);
+        }
+        /* Example lines - you'd create many more, potentially with JS for randomness */
+        .energy-weave .line.l1 { width: 0%; height: 2px; top: 50%; left: 25%; transform-origin: left; animation: draw-line 2s var(--ease-in-out-quint) 4s forwards; }
+        .energy-weave .line.l2 { width: 2px; height: 0%; left: 50%; top: 25%; transform-origin: top; animation: draw-line 2s var(--ease-in-out-quint) 4.2s forwards; }
+        .energy-weave .line.l3 { width: 0%; height: 2px; top: 30%; left: 30%; transform: rotate(45deg); transform-origin: left; animation: draw-line 1.8s var(--ease-in-out-quint) 4.5s forwards; }
+        /* ... more lines for a complex pattern */
+        @keyframes draw-line {
+            0% { width: 0%; height: 2px; } /* For horizontal */
+            /* Or 0% { width: 2px; height: 0%; } for vertical */
+            100% { width: 50%; height: 2px; } /* Or height: 50% */
+        }
+        /* Simplified: Using fewer, more impactful lines for demo */
+        .energy-weave .line.l1 { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-1px) scaleX(0); transform-origin: center; animation: draw-center-line 2s var(--ease-in-out-quint) 4s forwards; }
+        .energy-weave .line.l2 { width: 2px; height: 100%; left: 50%; top: 0; transform: translateX(-1px) scaleY(0); transform-origin: center; animation: draw-center-line 2s var(--ease-in-out-quint) 4.2s forwards; }
+        @keyframes draw-center-line {
+            to { transform: translateY(-1px) scaleX(1); /* Or translateX(-1px) scaleY(1) */ }
+        }
+
+
+        .startup-logo-glyphs {
+            font-size: 90px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: glyphs-appear 3s var(--ease-out-expo) 6.5s forwards;
+            position: relative;
+            z-index: 10; /* Above weave */
+        }
+        .startup-logo-glyphs span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(30px);
+            text-shadow: 0 0 15px var(--accent-primary), 0 0 30px var(--accent-primary);
+            color: transparent; /* Initially transparent */
+            -webkit-text-stroke: 1px var(--accent-primary); /* Outline effect */
+        }
+        .startup-logo-glyphs .g-m { animation: glyph-reveal 0.8s var(--ease-out-expo) 7s forwards, glyph-fill 1s ease 7.8s forwards; }
+        .startup-logo-glyphs .g-e { animation: glyph-reveal 0.8s var(--ease-out-expo) 7.3s forwards, glyph-fill 1s ease 8.1s forwards; }
+        .startup-logo-glyphs .g-o { animation: glyph-reveal 0.8s var(--ease-out-expo) 7.6s forwards, glyph-fill 1s ease 8.4s forwards; }
+        .startup-logo-glyphs .g-s { animation: glyph-reveal 0.8s var(--ease-out-expo) 7.9s forwards, glyph-fill 1s ease 8.7s forwards; }
+
+        @keyframes glyphs-appear {
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes glyph-reveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glyph-fill { /* Fill the text color */
+            to { color: var(--text-primary); -webkit-text-stroke: 1px var(--accent-primary); }
+        }
+
+        .startup-purge {
+            position: absolute;
+            width: 10px; height: 10px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(1);
+            z-index: 5; /* Below glyphs, above weave for a moment */
+            animation: purge-wave 1.5s var(--ease-out-expo) 9.5s forwards;
+        }
+        @keyframes purge-wave {
+            0% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 0; transform: scale(300); /* Expands to cover screen */ }
+        }
+        /* Total startup: ~1s (spark) + ~2s (pulse) + ~2.5s (weave) + ~2.5s (glyphs) + 1.5s (purge) + 1.2s (fade OS) = ~10.7s + OS fade in */
+        /* Let's increase delays to hit ~12-15s target for actual effect */
+        /* New target: ~14s for visual, then fade to OS. Startup animation is 14 + 1.2 = 15.2s */
+        /* Spark: 1s + 2s pulse = 3s (delay 0) */
+        /* Weave: starts 2.5s, duration 2s. Ends 4.5s */
+        /* Glyphs: starts 4s, reveal/fill lasts ~2.5s. Ends ~6.5s */
+        /* Purge: starts 7s, duration 1.5s. Ends 8.5s */
+        /* Hold logo briefly, then fade startup from 9s (total duration 1.2s) */
+        /* Total = 9 + 1.2 = 10.2s. Need to extend. */
+        /* Spark appear: 1s (delay 0.5) -> 1.5s total. Spark pulse: 2s (delay 1.5) -> 3.5s total. */
+        /* Weave: 2s (delay 3.0) -> 5.0s total. */
+        /* Glyphs appear: 1s (delay 4.5) -> 5.5s. Glyphs reveal/fill: ~2.5s (delay 5.0) -> ~7.5s. */
+        /* Purge wave: 1.5s (delay 8.0) -> 9.5s. */
+        /* Hold logo: till 12.5s. Fade out startup animation: 1.2s (delay 12.5s) -> 13.7s */
+        /* This is the timing I'll implement */
+
+
+        /* --- MAIN INTERFACE & ANIMATIONS --- */
+        #main-interface {
+            display: flex; flex-direction: column;
+            width: 100%; height: 100%;
+            opacity: 0; /* Initially hidden */
+            transform: scale(1.05);
+            background: var(--dynamic-wallpaper, var(--bg-primary));
+            transition: transform var(--transition-interface-scale), opacity var(--transition-interface-scale), 
+                        filter var(--transition-interface-scale), border-radius var(--transition-interface-scale),
+                        background 0.7s ease;
+            will-change: transform, opacity, filter; /* Performance hint */
+        }
+        #main-interface.visible { /* Added by JS after startup */
+            opacity: 1;
+            transform: scale(1);
+        }
+        #main-interface.app-open {
+            transform: scale(0.90) translateY(-15px) translateZ(-100px) rotateX(5deg);
+            opacity: 0.6;
+            filter: blur(8px) brightness(0.7);
+            border-radius: var(--border-radius-modal);
+            overflow: hidden;
+        }
+
 
         /* Status Bar */
         #status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            font-size: 13px;
-            height: 35px;
-            flex-shrink: 0;
-            position: absolute; /* Overlay on top of content */
-            top: 0; left: 0; right: 0;
-            z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 22px; font-size: 14px; height: 40px; flex-shrink: 0;
+            position: absolute; top: 0; left: 0; right: 0; z-index: 100;
             color: var(--text-secondary);
+            transition: opacity 0.3s ease; /* Hide during app transition */
         }
+        #main-interface.app-open #status-bar { opacity: 0; }
         #status-bar .time { font-weight: 600; color: var(--text-primary); }
-        #status-bar .indicators span { margin-left: 10px; }
+        #status-bar .indicators span { margin-left: 12px; }
 
         /* App Grid */
-        #app-grid-container { /* For padding and scrolling */
-            flex-grow: 1;
-            padding: 55px 15px 15px 15px; /* Top padding for status bar */
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        #app-grid-container {
+            flex-grow: 1; padding: 60px 18px 18px 18px;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
         #app-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Fixed 4 columns */
-            gap: 20px; /* Vertical gap */
-            row-gap: 25px; /* Larger vertical gap for names */
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 22px; row-gap: 28px;
         }
 
         .app-icon {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            cursor: pointer;
-            transform: scale(1);
-            transition: transform var(--transition-fast);
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            cursor: pointer; transform: scale(1);
+            transition: transform 0.2s var(--ease-elastic); /* Bouncy press */
         }
-        .app-icon:active {
-            transform: scale(0.90);
-            transition-duration: 0.1s;
-        }
+        .app-icon:active { transform: scale(0.85); transition-duration: 0.1s; }
         .app-icon .icon-bg {
-            width: 64px;
-            height: 64px;
+            width: 68px; height: 68px;
             background-color: var(--bg-secondary);
             border-radius: var(--border-radius-app-icon);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 28px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: background-color var(--transition-fast);
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 10px; font-size: 30px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
+        .app-icon:active .icon-bg { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .app-icon .app-name {
-            font-size: 12px;
-            color: var(--text-primary);
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 12.5px; color: var(--text-primary); width: 100%;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        /* Simple text icons - replace with SVGs ideally */
-        .app-icon[data-app="messages"] .icon-bg { background-color: #007AFF; } /* iOS Blue */
-        .app-icon[data-app="settings"] .icon-bg { background-color: #8E8E93; } /* iOS Gray */
-        .app-icon[data-app="notes"] .icon-bg { background-color: #FFCC00; color: #333; } /* iOS Yellow */
-        .app-icon[data-app="zenmode"] .icon-bg { background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary)); }
-        .app-icon[data-app="browser"] .icon-bg { background-color: #5856D6; } /* iOS Purple */
-        .app-icon[data-app="phone"] .icon-bg { background-color: #34C759; } /* iOS Green */
 
 
         /* Dock */
         #dock {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 12px 10px 15px 10px; /* Extra bottom padding for home indicator space */
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 15px 10px 20px 10px;
             background-color: var(--bg-glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            height: 90px;
-            flex-shrink: 0;
-            border-top-left-radius: var(--border-radius-modal); /* Rounded corners */
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            height: 95px; flex-shrink: 0;
+            border-top-left-radius: var(--border-radius-modal);
             border-top-right-radius: var(--border-radius-modal);
-            z-index: 50; /* Above app grid but below app windows */
+            z-index: 50;
+            transition: transform 0.3s ease, opacity 0.3s ease; /* Hide during app transition */
         }
-        #dock .app-icon .icon-bg { width: 58px; height: 58px; box-shadow: none; background-color: rgba(255,255,255,0.05); }
-        #dock .app-icon .app-name { display: none; } /* No names in dock */
+        #main-interface.app-open #dock { transform: translateY(100%); opacity: 0; }
+        #dock .app-icon .icon-bg { width: 60px; height: 60px; box-shadow: none; background-color: rgba(255,255,255,0.08); }
+        #dock .app-icon .app-name { display: none; }
 
 
-        /* --- App Windows (Modals) --- */
+        /* --- DYNAMIC APP WINDOWS --- */
         .app-window {
-            position: absolute;
-            top: 0; left: 0;
+            position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             background-color: var(--bg-secondary);
             z-index: 500;
-            display: flex; /* Changed from none to flex for transitions */
-            flex-direction: column;
+            display: flex; flex-direction: column;
             opacity: 0;
-            transform: translateY(100%) scale(0.95);
-            border-radius: var(--border-radius-modal); /* Apps are rounded too */
-            overflow: hidden; /* Important for rounded corners */
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
-            transition: opacity var(--transition-smooth), transform var(--transition-smooth);
+            transform: translateY(40vh) scale(0.7) rotateX(-25deg); /* Initial state for opening */
+            transform-origin: 50% 70%; /* Origin for the perspective transform */
+            border-radius: var(--border-radius-modal);
+            overflow: hidden;
+            box-shadow: 0 -15px 50px rgba(0,0,0,0.35);
+            transition: opacity var(--transition-app-open), transform var(--transition-app-open);
             pointer-events: none;
+            will-change: transform, opacity;
         }
-        .app-window.active {
+        .app-window.active { /* App is open */
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0) scale(1) rotateX(0deg);
             pointer-events: auto;
         }
+        .app-window.closing { /* State for closing animation */
+            opacity: 0;
+            transform: translateY(40vh) scale(0.7) rotateX(-25deg) !important; /* Force close anim */
+        }
+
 
         .app-header {
-            display: flex;
-            justify-content: space-between; /* Pushes title to center if back button is present */
-            align-items: center;
-            padding: 0 15px; /* Horizontal padding */
-            height: 50px;
-            flex-shrink: 0;
-            /* background-color: rgba(0,0,0,0.1); Subtle header */
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 18px; height: 55px; flex-shrink: 0;
             border-bottom: 1px solid var(--border-color);
             position: relative;
+            opacity: 0; transform: translateY(-20px); /* Initial for stagger */
+        }
+        .app-window.active .app-header {
+            animation: app-element-in 0.4s var(--ease-out-expo) 0.25s forwards;
         }
         .app-header .app-title {
-            font-size: 17px;
-            font-weight: 600;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+            font-size: 18px; font-weight: 600;
+            position: absolute; left: 50%; transform: translateX(-50%);
         }
         .app-header .close-app-btn {
-            font-size: 16px;
-            color: var(--accent-primary);
-            cursor: pointer;
-            padding: 10px; /* Larger tap target */
-            margin-left: -10px; /* Compensate padding */
-            font-weight: 500;
+            font-size: 17px; color: var(--accent-primary); cursor: pointer;
+            padding: 12px; margin-left: -12px; font-weight: 500;
         }
-        .app-header .action-btn { /* For future actions on right side */
-            font-size: 16px;
-            color: var(--accent-primary);
-            cursor: pointer;
-            padding: 10px;
-            margin-right: -10px;
-        }
-
 
         .app-content {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            flex-grow: 1; padding: 18px;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            opacity: 0; transform: translateY(20px); /* Initial for stagger */
+        }
+        .app-window.active .app-content {
+            animation: app-element-in 0.5s var(--ease-out-expo) 0.35s forwards;
+        }
+        @keyframes app-element-in {
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Specific App Content */
+
+        /* Specific App Styles - minimal changes here, focus was on system anims */
         #notes-app-content textarea {
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            border: none;
-            padding: 5px;
-            color: var(--text-primary);
-            font-size: 17px;
-            line-height: 1.6;
-            resize: none;
+            width: 100%; height: 100%; background-color: transparent; border: none;
+            padding: 5px; color: var(--text-primary); font-size: 18px; line-height: 1.65; resize: none;
         }
         #notes-app-content textarea:focus { outline: none; }
 
         .settings-item {
-            padding: 14px 0;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.15s ease-out;
+            padding: 16px 0; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: background-color 0.15s ease-out;
         }
-        .settings-item:hover { background-color: rgba(255,255,255,0.03); }
+        .settings-item:hover { background-color: rgba(255,255,255,0.02); }
         .settings-item:last-child { border-bottom: none; }
-        .settings-item label { font-size: 16px; }
-        .settings-item select, .settings-item input[type="color"], .settings-item input[type="range"] {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: var(--border-radius-soft);
-            font-size: 15px;
-        }
-        .settings-item input[type="color"] { padding: 4px; width: 40px; height: 30px; }
+        .settings-item label { font-size: 16.5px; }
 
-        .toggle-switch { /* Simplified a bit */
-            position: relative;
-            display: inline-block;
-            width: 51px; height: 31px;
-        }
+        .toggle-switch { position: relative; display: inline-block; width: 51px; height: 31px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #39393D; /* iOS toggle off color */
-            transition: .3s;
-            border-radius: 31px;
-        }
-        .slider:before {
-            position: absolute; content: "";
-            height: 27px; width: 27px;
-            left: 2px; bottom: 2px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--accent-primary); } /* Using accent here */
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #39393D; transition: .3s; border-radius: 31px; }
+        .slider:before { position: absolute; content: ""; height: 27px; width: 27px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        #zenmode-app-content { text-align: center; padding-top: 50px; }
-        #zenmode-timer { font-size: 56px; font-weight: 300; margin: 30px 0; color: var(--text-secondary); }
+        #zenmode-app-content { text-align: center; padding-top: 60px; }
+        #zenmode-timer { font-size: 60px; font-weight: 200; letter-spacing: 1px; margin: 35px 0; color: var(--text-secondary); }
         #start-zen-btn {
-            background-color: var(--accent-primary); color: white;
-            border: none; padding: 15px 30px; border-radius: var(--border-radius-soft);
-            font-size: 17px; font-weight: 500; cursor: pointer;
-            transition: background-color var(--transition-fast);
+            background-color: var(--accent-primary); color: white; border: none;
+            padding: 16px 35px; border-radius: var(--border-radius-soft);
+            font-size: 18px; font-weight: 500; cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
-        #start-zen-btn:hover { background-color: #0090d1; }
-        #start-zen-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; }
+        #start-zen-btn:hover { background-color: #00A0D1; }
+        #start-zen-btn:active { transform: scale(0.95); }
+        #start-zen-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: none;}
 
-        .coming-soon {
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            height: 100%; text-align: center;
-        }
-        .coming-soon-icon { font-size: 48px; margin-bottom: 20px; opacity: 0.3; }
-        .coming-soon-text { font-size: 20px; color: var(--text-secondary); }
+        .coming-soon { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; }
+        .coming-soon-icon { font-size: 52px; margin-bottom: 25px; opacity: 0.2; }
+        .coming-soon-text { font-size: 22px; color: var(--text-secondary); }
 
     </style>
 </head>
@@ -384,87 +379,69 @@
     <div id="meos-screen">
 
         <div id="startup-animation">
-            <div class="startup-logo-container">
-                <span class="startup-logo-char m">M</span>
-                <span class="startup-logo-char e">e</span>
-                <span class="startup-logo-char o">O</span>
-                <span class="startup-logo-char s">S</span>
+            <div class="spark-container">
+                <div class="spark"></div>
             </div>
-            <div class="startup-line"></div>
+            <div class="energy-weave">
+                <!-- Lines can be added dynamically or predefined. Simpler predefinition for now. -->
+                <div class="line l1"></div>
+                <div class="line l2"></div>
+                <div class="line l3" style="width: 70%; height: 2px; top: 40%; left: 15%; transform: translateY(-1px) scaleX(0) rotate(-15deg); transform-origin: center; animation: draw-center-line 1.8s var(--ease-in-out-quint) 4.8s forwards;"></div>
+                <div class="line l4" style="width: 2px; height: 60%; left: 35%; top: 20%; transform: translateX(-1px) scaleY(0) rotate(20deg); transform-origin: center; animation: draw-center-line 1.9s var(--ease-in-out-quint) 5.0s forwards;"></div>
+            </div>
+            <div class="startup-logo-glyphs">
+                <span class="g-m">M</span><span class="g-e">e</span><span class="g-o">O</span><span class="g-s">S</span>
+            </div>
+            <div class="startup-purge"></div>
         </div>
 
-        <div id="main-interface">
+        <div id="main-interface"> <!-- Class .visible added by JS -->
             <div id="status-bar">
                 <span class="time" id="status-time">9:41</span>
-                <div class="indicators">
-                    <span>📶</span>
-                    <span>Wi-Fi</span>
-                    <span>🔋98%</span>
-                </div>
+                <div class="indicators"><span>LTE</span><span>📶</span><span>🔋92%</span></div>
             </div>
-
-            <div id="app-grid-container">
-                <div id="app-grid">
-                    <!-- App icons will be generated by JS for cleaner HTML -->
-                </div>
-            </div>
-
-            <div id="dock">
-                <!-- Dock icons will be generated by JS -->
-            </div>
+            <div id="app-grid-container"><div id="app-grid"></div></div>
+            <div id="dock"></div>
         </div>
 
-        <!-- App Windows -->
+        <!-- App Windows (structure unchanged, animations handled by CSS) -->
         <div id="app-window-notes" class="app-window">
             <div class="app-header">
                 <span class="close-app-btn" data-app="notes">< Notes</span>
-                <span class="app-title"></span> <!-- Title dynamically set or removed -->
+                <span class="app-title">All Notes</span>
             </div>
             <div class="app-content" id="notes-app-content">
-                <textarea placeholder="What's on your mind?"></textarea>
+                <textarea placeholder="Compose your thoughts..."></textarea>
             </div>
         </div>
-
         <div id="app-window-settings" class="app-window">
             <div class="app-header">
                 <span class="close-app-btn" data-app="settings">< Settings</span>
-                 <span class="app-title"></span>
             </div>
             <div class="app-content" id="settings-app-content">
                 <div class="settings-item">
-                    <label for="dynamic-wallpaper-toggle">Dynamic Ambient Wallpaper</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="dynamic-wallpaper-toggle">
-                        <span class="slider"></span>
-                    </label>
+                    <label for="dynamic-wallpaper-toggle">Ambient Flow Wallpaper</label>
+                    <label class="toggle-switch"><input type="checkbox" id="dynamic-wallpaper-toggle" checked><span class="slider"></span></label>
                 </div>
                 <div class="settings-item">
-                    <label for="accent-color-picker">Accent Color</label>
-                    <input type="color" id="accent-color-picker" value="#00AFFF">
+                    <label for="accent-color-picker">System Accent</label>
+                    <input type="color" id="accent-color-picker" value="#00BFFF">
                 </div>
                 <div class="settings-item">
-                    <label>Brightness (Visual)</label>
-                    <input type="range" min="0.5" max="1" step="0.01" value="1" id="brightness-slider" style="width: 120px;">
+                    <label>Interface Brightness</label>
+                    <input type="range" min="0.4" max="1" step="0.01" value="1" id="brightness-slider" style="width: 120px;">
                 </div>
-                <div class="settings-item">
-                    <span>Version</span>
-                    <span>MeOS 2.0 (Nebula)</span>
-                </div>
+                <div class="settings-item"><span>Version</span><span>MeOS 3.0 (Cosmos)</span></div>
             </div>
         </div>
-
         <div id="app-window-zenmode" class="app-window">
-            <div class="app-header">
-                <span class="close-app-btn" data-app="zenmode">< Zen</span>
-                <span class="app-title"></span>
-            </div>
+            <div class="app-header"><span class="close-app-btn" data-app="zenmode">< Zen</span></div>
             <div class="app-content" id="zenmode-app-content">
-                <p style="color: var(--text-secondary); font-size: 18px;">Find your focus.</p>
-                <div id="zenmode-timer">15:00</div>
-                <button id="start-zen-btn">Begin Session</button>
+                <p style="color: var(--text-secondary); font-size: 19px;">Embrace the calm.</p>
+                <div id="zenmode-timer">20:00</div>
+                <button id="start-zen-btn">Begin Journey</button>
             </div>
         </div>
-
         <div id="app-window-coming-soon" class="app-window">
             <div class="app-header">
                 <span class="close-app-btn" data-app="coming-soon">< Back</span>
@@ -472,230 +449,243 @@
             </div>
             <div class="app-content">
                 <div class="coming-soon">
-                    <span class="coming-soon-icon">🛠️</span>
-                    <span class="coming-soon-text">This app is under construction.</span>
-                    <p style="font-size:14px; color: var(--text-secondary); margin-top: 10px;">Coming soon to MeOS!</p>
+                    <span class="coming-soon-icon">🌌</span>
+                    <span class="coming-soon-text">Exploring new horizons...</span>
+                    <p style="font-size:15px; color: var(--text-secondary); margin-top: 15px;">This feature is materializing.</p>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const meosScreen = document.getElementById('meos-screen');
-            const startupAnimation = document.getElementById('startup-animation');
-            const mainInterface = document.getElementById('main-interface');
-            const statusBarTime = document.getElementById('status-time');
-            const appGrid = document.getElementById('app-grid');
-            const dockElement = document.getElementById('dock');
-            const root = document.documentElement;
+    document.addEventListener('DOMContentLoaded', () => {
+        const meosScreen = document.getElementById('meos-screen');
+        const startupAnimation = document.getElementById('startup-animation');
+        const mainInterface = document.getElementById('main-interface');
+        const statusBarTime = document.getElementById('status-time');
+        const appGrid = document.getElementById('app-grid');
+        const dockElement = document.getElementById('dock');
+        const root = document.documentElement;
 
-            const apps = [
-                { id: 'messages', name: 'Messages', icon: '💬', type: 'grid', color: '#007AFF'},
-                { id: 'gallery', name: 'Gallery', icon: '🖼️', type: 'grid', color: '#FF9500'},
-                { id: 'music', name: 'Music', icon: '🎵', type: 'grid', color: '#FF2D55'},
-                { id: 'notes', name: 'Notes', icon: '📝', type: 'grid', working: true, color: '#FFCC00', iconColor: '#333' },
-                { id: 'camera', name: 'Camera', icon: '📷', type: 'grid', color: '#AF52DE'},
-                { id: 'mail', name: 'Mail', icon: '✉️', type: 'grid', color: '#5856D6'},
-                { id: 'maps', name: 'Maps', icon: '🗺️', type: 'grid', color: '#32ADEA'},
-                { id: 'zenmode', name: 'Zen Mode', icon: '🧘', type: 'grid', working: true, gradient: 'linear-gradient(45deg, var(--accent-primary), var(--accent-secondary))' },
-                { id: 'weather', name: 'Weather', icon: '🌦️', type: 'grid', color: '#00C7BE'},
-                { id: 'calendar', name: 'Calendar', icon: '📅', type: 'grid', color: '#FF3B30'},
-                { id: 'store', name: 'AppStore', icon: '🛍️', type: 'grid', color: '#007AFF'},
-                { id: 'health', name: 'Health', icon: '❤️', type: 'grid', color: '#FF2D55'},
-                { id: 'phone', name: 'Phone', icon: '📞', type: 'dock', color: '#34C759'},
-                { id: 'browser', name: 'Browser', icon: '🌐', type: 'dock', color: '#5856D6'},
-                { id: 'files', name: 'Files', icon: '📁', type: 'dock', color: '#FF9500'},
-                { id: 'settings', name: 'Settings', icon: '⚙️', type: 'dock', working: true, color: '#8E8E93' }
-            ];
+        // Adjusted startup timing (total visual: ~13.7s)
+        const STARTUP_DURATION_MS = 13700; 
 
-            function createAppIconElement(app) {
-                const appIcon = document.createElement('div');
-                appIcon.className = 'app-icon';
-                appIcon.dataset.app = app.id;
+        // --- Cinematic Startup Sequence ---
+        // CSS handles most of it. JS just hides it after the duration.
+        // Update startup animation CSS delays for the 13.7s duration:
+        // Spark appear: 0.5s delay, 1s duration -> end 1.5s
+        // Spark pulse: 1.5s delay, 2s duration (1 cycle for demo) -> end 3.5s
+        // Weave fade-in: 3.0s delay, 1s duration -> end 4.0s
+        // Weave lines: start 3.5s, longest takes 2s -> end 5.5s
+        // Glyphs appear: 5.0s delay, 1s duration -> end 6.0s
+        // Glyphs reveal/fill: starts 5.5s, longest takes ~2.5s to complete fill -> end ~8.0s
+        // Purge wave: 8.5s delay, 1.5s duration -> end 10.0s
+        // Hold logo / final effects: up to 12.5s
+        // Startup animation element fade: 12.5s delay, 1.2s duration -> end 13.7s
 
-                const iconBg = document.createElement('div');
-                iconBg.className = 'icon-bg';
-                iconBg.textContent = app.icon;
-                if (app.color) iconBg.style.backgroundColor = app.color;
-                if (app.gradient) iconBg.style.background = app.gradient;
-                if (app.iconColor) iconBg.style.color = app.iconColor;
+        // Adjust CSS animation delays in <style> to match this new timing:
+        // .spark: animation: spark-appear 1s var(--ease-out-expo) 0.5s forwards, spark-pulse 2s var(--ease-in-out-quint) 1.5s 1; /* 1 iteration for fixed end */
+        // .energy-weave: animation: weave-fade-in 1s ease-out 3.0s forwards;
+        // .energy-weave .line.l1: animation-delay: 3.5s;
+        // .energy-weave .line.l2: animation-delay: 3.7s;
+        // .energy-weave .line.l3: animation-delay: 4.0s; /* Example update */
+        // .startup-logo-glyphs: animation-delay: 5.0s;
+        // .startup-logo-glyphs .g-m: animation: glyph-reveal 0.8s var(--ease-out-expo) 5.5s forwards, glyph-fill 1s ease 6.3s forwards; /* Example update */
+        // ... update all glyph delays similarly
+        // .startup-purge: animation-delay: 8.5s;
+        // #startup-animation: transition: opacity 1.2s var(--ease-in-out-quint) 12.5s;
 
 
-                const appName = document.createElement('span');
-                appName.className = 'app-name';
-                if (app.type !== 'dock') { // Dock icons don't have names visible
-                    appName.textContent = app.name;
-                }
-                
-                appIcon.appendChild(iconBg);
-                appIcon.appendChild(appName);
+        setTimeout(() => {
+            startupAnimation.classList.add('hidden');
+            mainInterface.classList.add('visible');
+        }, STARTUP_DURATION_MS);
 
-                appIcon.addEventListener('click', () => openApp(app.id, app.name, app.working));
-                return appIcon;
-            }
 
-            apps.forEach(app => {
-                const iconEl = createAppIconElement(app);
-                if (app.type === 'grid') {
-                    appGrid.appendChild(iconEl);
-                } else if (app.type === 'dock') {
-                    dockElement.appendChild(iconEl);
-                }
-            });
+        const appsData = [
+            { id: 'messages', name: 'Chatter', icon: '💬', type: 'grid', color: '#007AFF'},
+            { id: 'gallery', name: 'Moments', icon: '🖼️', type: 'grid', color: '#FF9500'},
+            { id: 'music', name: 'Flow', icon: '🎧', type: 'grid', color: '#FF2D55'},
+            { id: 'notes', name: 'Canvas', icon: '📝', type: 'grid', working: true, color: '#FFCC00', iconColor: '#333' },
+            { id: 'camera', name: 'Lens', icon: '📸', type: 'grid', color: '#AF52DE'},
+            { id: 'mail', name: 'EchoMail', icon: '✉️', type: 'grid', color: '#5856D6'},
+            { id: 'zenmode', name: 'Serenity', icon: '🧘', type: 'grid', working: true, gradient: 'linear-gradient(45deg, var(--accent-primary), #3DDCE3)' },
+            { id: 'store', name: 'App Hub', icon: '🌟', type: 'grid', color: '#00C7BE'},
+            { id: 'phone', name: 'Connect', icon: '📞', type: 'dock', color: '#34C759'},
+            { id: 'browser', name: 'Portal', icon: '🌐', type: 'dock', color: '#5AC8FA'},
+            { id: 'files', name: 'Vault', icon: '🗂️', type: 'dock', color: '#FFD60A'},
+            { id: 'settings', name: 'Control', icon: '⚙️', type: 'dock', working: true, color: '#8E8E93' }
+        ];
+
+        function createAppIconElement(app) {
+            const appIcon = document.createElement('div');
+            appIcon.className = 'app-icon';
+            appIcon.dataset.app = app.id;
+
+            const iconBg = document.createElement('div');
+            iconBg.className = 'icon-bg';
+            iconBg.textContent = app.icon;
+            if (app.color) iconBg.style.backgroundColor = app.color;
+            if (app.gradient) iconBg.style.background = app.gradient;
+            if (app.iconColor) iconBg.style.color = app.iconColor;
             
-            // --- Startup Sequence ---
-            // Startup animation duration is CSS controlled (~10.3s)
-            setTimeout(() => {
-                startupAnimation.classList.add('hidden');
-                mainInterface.style.opacity = '0'; // Prepare for animation
-                mainInterface.style.display = 'flex';
-                // Trigger reflow
-                mainInterface.getBoundingClientRect(); 
-                mainInterface.style.animation = 'interface-appear 0.8s var(--transition-smooth) forwards';
-            }, 10300);
+            const appNameEl = document.createElement('span');
+            appNameEl.className = 'app-name';
+            if (app.type !== 'dock') appNameEl.textContent = app.name;
+            
+            appIcon.appendChild(iconBg);
+            appIcon.appendChild(appNameEl);
+            appIcon.addEventListener('click', () => openApp(app.id, app.name, app.working));
+            return appIcon;
+        }
 
-            // --- Status Bar Time ---
-            function updateTime() {
-                const now = new Date();
-                const hours = now.getHours();
-                const minutes = now.getMinutes();
-                const formattedHours = hours % 12 === 0 ? 12 : hours % 12; // Show 12 for 0 hours (midnight)
-                const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
-                // statusBarTime.textContent = `${formattedHours}:${formattedMinutes} ${ampm}`; // AM/PM removed for cleaner look
-                statusBarTime.textContent = `${hours}:${formattedMinutes}`; // 24 hour for now, or could be setting
-            }
-            updateTime();
-            setInterval(updateTime, 1000 * 30);
+        appsData.forEach(app => {
+            const iconEl = createAppIconElement(app);
+            if (app.type === 'grid') appGrid.appendChild(iconEl);
+            else if (app.type === 'dock') dockElement.appendChild(iconEl);
+        });
+        
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            statusBarTime.textContent = `${hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000 * 30);
 
-            // --- App Handling ---
-            let currentOpenApp = null;
+        let currentOpenAppWindow = null;
+        let isTransitioning = false;
 
-            function openApp(appId, appName, isWorking) {
-                if (currentOpenApp) return; // Prevent opening multiple apps
+        function openApp(appId, appName, isWorking) {
+            if (isTransitioning || currentOpenAppWindow) return;
+            isTransitioning = true;
 
-                mainInterface.classList.add('app-open');
-                let targetWindowId = isWorking ? `app-window-${appId}` : 'app-window-coming-soon';
-                const targetWindow = document.getElementById(targetWindowId);
+            mainInterface.classList.add('app-open');
+            let targetWindowId = isWorking ? `app-window-${appId}` : 'app-window-coming-soon';
+            const targetWindow = document.getElementById(targetWindowId);
 
-                if (targetWindow) {
-                    currentOpenApp = targetWindow;
-                    if (!isWorking) {
-                        document.getElementById('coming-soon-title').textContent = appName;
-                    } else {
-                        // Set title for working apps if needed, e.g., for Notes could be 'New Note'
-                        // targetWindow.querySelector('.app-title').textContent = appName;
-                    }
-                    targetWindow.classList.add('active');
+            if (targetWindow) {
+                currentOpenAppWindow = targetWindow;
+                if (!isWorking) {
+                    document.getElementById('coming-soon-title').textContent = appName;
                 }
-            }
+                // Reset animations for staggered content by removing and re-adding class for keyframes
+                targetWindow.querySelectorAll('.app-header, .app-content').forEach(el => {
+                    el.style.animation = 'none';
+                    el.offsetHeight; /* trigger reflow */
+                    el.style.animation = '';
+                });
 
-            document.querySelectorAll('.close-app-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (currentOpenApp) {
-                        currentOpenApp.classList.remove('active');
-                        mainInterface.classList.remove('app-open');
+                targetWindow.classList.remove('closing'); // Ensure no closing class
+                targetWindow.classList.add('active');
+                
+                // Use transitionend to know when the app window is fully open
+                targetWindow.addEventListener('transitionend', function onOpenEnd() {
+                    isTransitioning = false;
+                    targetWindow.removeEventListener('transitionend', onOpenEnd);
+                });
+            } else {
+                isTransitioning = false; // Should not happen if IDs are correct
+                 mainInterface.classList.remove('app-open');
+            }
+        }
+
+        document.querySelectorAll('.close-app-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isTransitioning || !currentOpenAppWindow) return;
+                isTransitioning = true;
+
+                // Add a 'closing' class to trigger the reverse animation specifically
+                currentOpenAppWindow.classList.add('closing');
+                currentOpenAppWindow.classList.remove('active'); // This might fight with closing, ensure closing has !important or higher specificity for transform
+
+                mainInterface.classList.remove('app-open');
+                
+                // Listen for the transition to end on the app window
+                currentOpenAppWindow.addEventListener('transitionend', function onCloseEnd(event) {
+                    // Make sure we're listening to the correct transition (e.g., opacity or transform)
+                    if (event.propertyName === 'opacity' || event.propertyName === 'transform') {
+                        currentOpenAppWindow.classList.remove('closing');
                         
-                        // Specific app cleanup
-                        const appName = btn.dataset.app;
+                        const appName = btn.dataset.app; // appName from button that triggered close
                         if (appName === 'zenmode' && zenInterval) {
                             clearInterval(zenInterval);
-                            zenTime = 15 * 60; // Reset timer
-                            document.getElementById('zenmode-timer').textContent = "15:00";
+                            zenTime = 20 * 60;
+                            document.getElementById('zenmode-timer').textContent = "20:00";
                             document.getElementById('start-zen-btn').disabled = false;
+                            document.getElementById('start-zen-btn').textContent = "Begin Journey";
                         }
-                        currentOpenApp = null;
+                        currentOpenAppWindow = null;
+                        isTransitioning = false;
+                        currentOpenAppWindow.removeEventListener('transitionend', onCloseEnd);
                     }
                 });
+                 // Fallback if transitionend doesn't fire reliably (e.g., element removed too fast)
+                setTimeout(() => {
+                    if (isTransitioning && currentOpenAppWindow && currentOpenAppWindow.classList.contains('closing')) {
+                        currentOpenAppWindow.classList.remove('closing');
+                        currentOpenAppWindow = null; // Ensure it's cleared
+                        isTransitioning = false;
+                    }
+                }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-app-open') || '0.6s') * 1000 + 100);
+
+
             });
+        });
+        
+        // Settings App
+        const dynamicWallpaperToggle = document.getElementById('dynamic-wallpaper-toggle');
+        const accentColorPicker = document.getElementById('accent-color-picker');
+        const brightnessSlider = document.getElementById('brightness-slider');
+        let dynamicWallpaperInterval;
 
-            // --- Settings App ---
-            const dynamicWallpaperToggle = document.getElementById('dynamic-wallpaper-toggle');
-            const accentColorPicker = document.getElementById('accent-color-picker');
-            const brightnessSlider = document.getElementById('brightness-slider');
-            let dynamicWallpaperInterval;
-
-            function setDynamicAmbientWallpaper() {
-                const hue = Math.floor(Math.random() * 360);
-                const saturation = 20 + Math.floor(Math.random() * 20); // 20-40% (subtle)
-                const lightness = 8 + Math.floor(Math.random() * 7);  // 8-15% (dark)
-                // mainInterface.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                root.style.setProperty('--dynamic-wallpaper', `hsl(${hue}, ${saturation}%, ${lightness}%)`);
-            }
-
-            dynamicWallpaperToggle.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    setDynamicAmbientWallpaper();
-                    dynamicWallpaperInterval = setInterval(setDynamicAmbientWallpaper, 15000); // Change every 15s
-                } else {
-                    clearInterval(dynamicWallpaperInterval);
-                    // mainInterface.style.background = var(--bg-primary); // Revert to default
-                    root.style.removeProperty('--dynamic-wallpaper');
-                }
-            });
-             // Initial check for dynamic wallpaper
-            if (dynamicWallpaperToggle.checked) {
+        function setDynamicAmbientWallpaper() {
+            const hue = Math.floor(Math.random() * 360);
+            const saturation = 30 + Math.floor(Math.random() * 25); // 30-55%
+            const lightness = 5 + Math.floor(Math.random() * 8);  // 5-13% (very dark)
+            root.style.setProperty('--dynamic-wallpaper', `hsl(${hue}, ${saturation}%, ${lightness}%)`);
+        }
+        dynamicWallpaperToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
                 setDynamicAmbientWallpaper();
-                dynamicWallpaperInterval = setInterval(setDynamicAmbientWallpaper, 15000);
+                dynamicWallpaperInterval = setInterval(setDynamicAmbientWallpaper, 12000);
+            } else {
+                clearInterval(dynamicWallpaperInterval);
+                root.style.removeProperty('--dynamic-wallpaper');
+                meosScreen.style.background = getComputedStyle(root).getPropertyValue('--bg-primary');
             }
+        });
+        if (dynamicWallpaperToggle.checked) { setDynamicAmbientWallpaper(); dynamicWallpaperInterval = setInterval(setDynamicAmbientWallpaper, 12000); }
 
+        accentColorPicker.addEventListener('input', (e) => root.style.setProperty('--accent-primary', e.target.value));
+        const savedAccent = localStorage.getItem('meos-accent-color-v3');
+        if (savedAccent) { root.style.setProperty('--accent-primary', savedAccent); accentColorPicker.value = savedAccent; }
+        accentColorPicker.addEventListener('change', (e) => localStorage.setItem('meos-accent-color-v3', e.target.value));
 
-            accentColorPicker.addEventListener('input', (e) => {
-                root.style.setProperty('--accent-primary', e.target.value);
-            });
-            // Load saved accent color or set default
-            const savedAccent = localStorage.getItem('meos-accent-color');
-            if (savedAccent) {
-                root.style.setProperty('--accent-primary', savedAccent);
-                accentColorPicker.value = savedAccent;
-            }
-            accentColorPicker.addEventListener('change', (e) => { // Save on final change
-                localStorage.setItem('meos-accent-color', e.target.value);
-            });
+        brightnessSlider.addEventListener('input', (e) => { meosScreen.style.opacity = e.target.value; });
 
+        // Zen Mode
+        const zenTimerDisplay = document.getElementById('zenmode-timer');
+        const startZenBtn = document.getElementById('start-zen-btn');
+        let zenTime = 20 * 60; let zenInterval;
 
-            brightnessSlider.addEventListener('input', (e) => {
-                meosScreen.style.opacity = e.target.value;
-            });
-
-
-            // --- Zen Mode App ---
-            const zenTimerDisplay = document.getElementById('zenmode-timer');
-            const startZenBtn = document.getElementById('start-zen-btn');
-            let zenTime = 15 * 60; // 15 minutes
-            let zenInterval;
-
-            function updateZenTimer() {
-                const minutes = Math.floor(zenTime / 60);
-                let seconds = zenTime % 60;
-                seconds = seconds < 10 ? '0' + seconds : seconds;
-                zenTimerDisplay.textContent = `${minutes}:${seconds}`;
-                if (zenTime > 0) {
-                    zenTime--;
-                } else {
-                    clearInterval(zenInterval);
-                    zenTimerDisplay.textContent = "Session Complete";
-                    startZenBtn.disabled = false;
-                    startZenBtn.textContent = "Begin Again";
-                }
-            }
-
-            startZenBtn.addEventListener('click', () => {
-                if (startZenBtn.disabled) return;
-                clearInterval(zenInterval); // Clear existing
-                zenTime = 15 * 60; // Reset
-                updateZenTimer();
-                zenInterval = setInterval(updateZenTimer, 1000);
-                startZenBtn.disabled = true;
-                startZenBtn.textContent = "In Session...";
-            });
-
+        function updateZenTimer() {
+            const minutes = Math.floor(zenTime / 60);
+            let seconds = zenTime % 60;
+            zenTimerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+            if (zenTime > 0) zenTime--;
+            else { clearInterval(zenInterval); zenTimerDisplay.textContent = "Complete"; startZenBtn.disabled = false; startZenBtn.textContent = "Begin Anew"; }
+        }
+        startZenBtn.addEventListener('click', () => {
+            if (startZenBtn.disabled) return;
+            clearInterval(zenInterval); zenTime = 20 * 60; updateZenTimer();
+            zenInterval = setInterval(updateZenTimer, 1000);
+            startZenBtn.disabled = true; startZenBtn.textContent = "In Progress...";
         });
 
-        // Prevent gestures that break the illusion
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        // Basic double tap zoom prevention handled by viewport meta tag (maximum-scale=1.0)
+    });
+    document.addEventListener('contextmenu', event => event.preventDefault());
     </script>
 </body>
 </html>
