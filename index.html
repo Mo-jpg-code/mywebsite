@@ -2,173 +2,243 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Learning Jump AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Hide & Collect</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f0f0; margin-top: 20px; }
-        .container { display: flex; flex-direction: row; align-items: flex-start; gap: 20px; }
-        canvas { border: 1px solid black; background-color: #e0e0e0; }
-        #gameCanvas { background-color: #d0e0f0; }
-        #aiVisionCanvas { background-color: #f0f0d0; }
-        .stats { border: 1px solid #ccc; padding: 10px; background-color: white; min-width: 200px; }
-        .stats p { margin: 5px 0; }
-        h1, h2 { text-align: center; }
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #222;
+            color: #eee;
+            margin: 0;
+            padding: 10px;
+            overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
+        }
+        .container {
+            display: flex;
+            flex-direction: column; /* Stack game and AI vision on mobile */
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px; /* Max width for game area */
+        }
+        canvas {
+            border: 1px solid #555;
+            background-color: #333;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        #gameCanvas { background-color: #405060; }
+        #aiVisionCanvas { background-color: #444; }
+        .stats {
+            border: 1px solid #555;
+            padding: 10px;
+            background-color: #3a3a3a;
+            width: calc(100% - 22px); /* Full width minus padding/border */
+            max-width: 378px; /* Consistent with canvas max-width */
+            box-sizing: border-box;
+        }
+        .stats p { margin: 6px 0; font-size: 0.9em; }
+        h1, h2 { text-align: center; margin-top: 5px; margin-bottom: 10px; }
+        h2 { font-size: 1.1em; }
+
+        @media (min-width: 768px) { /* For wider screens, side-by-side */
+            .container {
+                flex-direction: row;
+                align-items: flex-start;
+                max-width: 800px;
+            }
+            .game-area { flex: 2; }
+            .ai-info { flex: 1; }
+            .stats { width: auto; max-width: none; }
+        }
     </style>
 </head>
 <body>
-    <h1>Self-Learning Jump AI</h1>
+    <h1>AI Hide & Collect</h1>
 
     <div class="container">
-        <div>
+        <div class="game-area">
             <h2>Game World</h2>
-            <canvas id="gameCanvas" width="600" height="300"></canvas>
+            <canvas id="gameCanvas" width="300" height="450"></canvas>
         </div>
-        <div>
-            <h2>AI "Vision" (Discretized State)</h2>
+        <div class="ai-info">
+            <h2>AI "Vision"</h2>
             <canvas id="aiVisionCanvas" width="150" height="150"></canvas>
             <div class="stats">
                 <h2>Stats</h2>
                 <p>Episode: <span id="episode">0</span></p>
-                <p>Cookies (Successes): <span id="cookies">0</span></p>
-                <p>Punishments (Fails): <span id="punishments">0</span></p>
-                <p>Epsilon (Exploration): <span id="epsilon">1.00</span></p>
+                <p>Cookies (Coins): <span id="cookies">0</span></p>
+                <p>Punishments (Caught): <span id="punishments">0</span></p>
+                <p>Epsilon: <span id="epsilon">1.00</span></p>
                 <p>Last Action: <span id="lastAction">-</span></p>
-                <p>Learning Rate (Alpha): <span id="alpha">0.1</span></p>
-                <p>Discount (Gamma): <span id="gamma">0.9</span></p>
+                <p>Q-Table Size: <span id="qTableSize">0</span></p>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Game Elements ---
         const gameCanvas = document.getElementById('gameCanvas');
         const gameCtx = gameCanvas.getContext('2d');
         const aiVisionCanvas = document.getElementById('aiVisionCanvas');
         const aiVisionCtx = aiVisionCanvas.getContext('2d');
 
-        // --- DOM Elements for Stats ---
         const episodeEl = document.getElementById('episode');
         const cookiesEl = document.getElementById('cookies');
         const punishmentsEl = document.getElementById('punishments');
         const epsilonEl = document.getElementById('epsilon');
         const lastActionEl = document.getElementById('lastAction');
-        const alphaEl = document.getElementById('alpha');
-        const gammaEl = document.getElementById('gamma');
+        const qTableSizeEl = document.getElementById('qTableSize');
 
         // --- Game Constants ---
-        const GRAVITY = 0.5;
-        const PLAYER_JUMP_FORCE = -10; // Negative is up
-        const PLAYER_MOVE_SPEED = 3;
-        const GROUND_Y = gameCanvas.height - 20;
-        const OBSTACLE_WIDTH = 30;
-        const OBSTACLE_HEIGHT = 60;
-        const GOAL_LINE_X = 500;
-        const GOAL_LINE_WIDTH = 5;
-        const MAX_STEPS_PER_EPISODE = 500; // To prevent infinite loops if stuck
+        const PLAYER_SIZE = 15;
+        const HUNTER_SIZE = 15;
+        const COIN_RADIUS = 7;
+        const MOVE_SPEED = PLAYER_SIZE / 2; // Move by half its size for grid-like feel if desired
+        const MAX_STEPS_PER_EPISODE = 300;
 
-        // --- Player Object ---
-        let player = {
-            x: 50,
-            y: GROUND_Y - 30, // Start on ground
-            width: 20,
-            height: 30,
-            vy: 0, // Vertical velocity
-            onGround: true
-        };
-
-        // --- Obstacle Object ---
-        let obstacle = {
-            x: 300,
-            y: GROUND_Y - OBSTACLE_HEIGHT,
-            width: OBSTACLE_WIDTH,
-            height: OBSTACLE_HEIGHT
-        };
-        
-        // --- AI Q-Learning Parameters ---
-        let qTable = {}; // { "state_string": [q_action0, q_action1, q_action2, q_action3] }
-        const LEARNING_RATE = 0.1; // Alpha
-        const DISCOUNT_FACTOR = 0.9; // Gamma
-        let epsilon = 1.0; // Exploration rate
-        const EPSILON_DECAY = 0.999; // Slower decay for more exploration
-        const MIN_EPSILON = 0.01;
-
-        // Actions: 0: Do Nothing, 1: Move Forward, 2: Jump, 3: Move Forward + Jump
-        const ACTIONS = [
-            { move: false, jump: false, name: "Nothing" },
-            { move: true,  jump: false, name: "Move" },
-            { move: false, jump: true,  name: "Jump" },
-            { move: true,  jump: true,  name: "Move+Jump" }
+        // --- Game Objects ---
+        let player = { x: 50, y: 50, width: PLAYER_SIZE, height: PLAYER_SIZE, color: 'blue' };
+        let hunter = { x: gameCanvas.width - 50, y: gameCanvas.height - 50, width: HUNTER_SIZE, height: HUNTER_SIZE, color: 'red' };
+        let coins = [];
+        let obstacles = [
+            { x: 100, y: 80, width: 20, height: 150, color: '#777' },
+            { x: 180, y: 250, width: 100, height: 20, color: '#777' },
+            { x: 30, y: 300, width: 80, height: 20, color: '#777' },
+            { x: gameCanvas.width / 2 - 10, y: 0, width: 20, height: 70, color: '#777' },
+            { x: gameCanvas.width / 2 - 10, y: gameCanvas.height - 70, width: 20, height: 70, color: '#777' }
         ];
 
-        // --- Game State Variables ---
-        let cookies = 0;
-        let punishments = 0;
+        // --- AI Q-Learning Parameters ---
+        let qTable = {};
+        const LEARNING_RATE = 0.1; // Alpha
+        const DISCOUNT_FACTOR = 0.9; // Gamma
+        let epsilon = 1.0;
+        const EPSILON_DECAY = 0.9995; // Slower decay
+        const MIN_EPSILON = 0.05;
+
+        // Actions: 0:Up, 1:Down, 2:Left, 3:Right, 4:Stay
+        const ACTIONS = [
+            { dx: 0, dy: -MOVE_SPEED, name: "Up" },
+            { dx: 0, dy: MOVE_SPEED, name: "Down" },
+            { dx: -MOVE_SPEED, dy: 0, name: "Left" },
+            { dx: MOVE_SPEED, dy: 0, name: "Right" },
+            { dx: 0, dy: 0, name: "Stay" }
+        ];
+
+        let scoreCookies = 0;
+        let scorePunishments = 0;
         let episodeCount = 0;
         let currentSteps = 0;
 
-        // --- Helper: Get Discretized State ---
-        // This function converts the continuous game state into a discrete representation
-        // that the AI can use as a key in the Q-table.
-        // We discretize distance to obstacle, player's height relative to obstacle top, and if on ground.
-        function getDiscretizedState() {
-            const distToObstacleX = Math.floor((obstacle.x - (player.x + player.width)) / 40); // Buckets of 40px
-            const playerTopY = player.y;
-            const obstacleTopY = obstacle.y;
-            const heightDiffToObstacleTop = Math.floor((playerTopY - obstacleTopY) / 30); // Buckets of 30px
-            const playerIsBeforeObstacle = (player.x + player.width) < obstacle.x;
-            const playerIsOverObstacle = (player.x < obstacle.x + obstacle.width) && ((player.x + player.width) > obstacle.x);
-            const playerHasPassedObstacle = player.x > (obstacle.x + obstacle.width);
-
-            // Simplified AI vision state:
-            // 0: Far before obstacle
-            // 1: Near before obstacle
-            // 2: Directly under/level with obstacle (horizontally)
-            // 3: Past obstacle
-            let horizontalPosCategory;
-            if (distToObstacleX > 2) horizontalPosCategory = 0; // Far
-            else if (distToObstacleX >= 0 && playerIsBeforeObstacle) horizontalPosCategory = 1; // Near
-            else if (playerIsOverObstacle) horizontalPosCategory = 2; // Under/Over
-            else horizontalPosCategory = 3; // Past
-
-
-            // Height categories relative to obstacle top:
-            // 0: Significantly below obstacle top
-            // 1: Near or at obstacle top
-            // 2: Significantly above obstacle top
-            let verticalPosCategory;
-            if (heightDiffToObstacleTop > 1) verticalPosCategory = 0; // Below
-            else if (heightDiffToObstacleTop >= -1) verticalPosCategory = 1; // Near/Level
-            else verticalPosCategory = 2; // Above
-            
-            // Is player approaching obstacle or moving away from it (if past)
-            // This can help differentiate states when player is past the obstacle.
-            const playerVelXSign = Math.sign(PLAYER_MOVE_SPEED); // Assuming constant forward speed when moving.
-
-            return `${horizontalPosCategory}_${verticalPosCategory}_${player.onGround}_${playerVelXSign}`;
+        // --- Helper Functions ---
+        function rectCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
         }
 
-        // --- Helper: Choose Action (Epsilon-Greedy) ---
+        function pointInRect(px, py, rect) {
+            return px > rect.x && px < rect.x + rect.width &&
+                   py > rect.y && py < rect.y + rect.height;
+        }
+        
+        function spawnCoin() {
+            let coinX, coinY, validPosition;
+            do {
+                validPosition = true;
+                coinX = COIN_RADIUS + Math.random() * (gameCanvas.width - 2 * COIN_RADIUS);
+                coinY = COIN_RADIUS + Math.random() * (gameCanvas.height - 2 * COIN_RADIUS);
+                // Ensure coin doesn't spawn inside an obstacle
+                for (const obs of obstacles) {
+                    if (pointInRect(coinX, coinY, obs) || 
+                        Math.hypot(coinX - (obs.x + obs.width/2), coinY - (obs.y + obs.height/2)) < COIN_RADIUS + Math.max(obs.width, obs.height)/2 ) { // Basic check
+                        validPosition = false;
+                        break;
+                    }
+                }
+                // Ensure coin is not too close to player or hunter initially (optional)
+                 if (Math.hypot(coinX - player.x, coinY - player.y) < PLAYER_SIZE * 2) validPosition = false;
+
+            } while (!validPosition);
+            coins = [{ x: coinX, y: coinY, radius: COIN_RADIUS, color: 'lime' }];
+        }
+
+        function getAngleCategory(dx, dy) { // 8 sectors
+            const angle = Math.atan2(dy, dx) + Math.PI; // Range 0 to 2PI
+            return Math.floor(angle / (Math.PI / 4)) % 8; // Map to 0-7
+        }
+
+        function getDistanceCategory(dist) { // 3 categories
+            if (dist < PLAYER_SIZE * 3) return 0; // Close
+            if (dist < PLAYER_SIZE * 8) return 1; // Medium
+            return 2; // Far
+        }
+        
+        function checkLocalObstacle(x, y, width, height) {
+            const checkRect = {x, y, width, height};
+            for (const obs of obstacles) {
+                if (rectCollision(checkRect, obs)) return true;
+            }
+            return false;
+        }
+
+        function getDiscretizedState() {
+            // 1. Hunter relative to Player
+            const relHx = hunter.x - player.x;
+            const relHy = hunter.y - player.y;
+            const angleH = getAngleCategory(relHx, relHy);
+            const distH = getDistanceCategory(Math.hypot(relHx, relHy));
+
+            // 2. Nearest Coin relative to Player
+            let angleC = 0, distC = 2; // Default if no coin (shouldn't happen if one always exists)
+            if (coins.length > 0) {
+                const coin = coins[0];
+                const relCx = coin.x - player.x;
+                const relCy = coin.y - player.y;
+                angleC = getAngleCategory(relCx, relCy);
+                distC = getDistanceCategory(Math.hypot(relCx, relCy));
+            }
+            
+            // 3. Local Obstacle Probes (slightly larger than player for detection)
+            const probeDist = PLAYER_SIZE * 0.5; // How far to "feel" for an obstacle
+            const obsN = checkLocalObstacle(player.x, player.y - probeDist, player.width, probeDist) ? 1 : 0;
+            const obsS = checkLocalObstacle(player.x, player.y + player.height, player.width, probeDist) ? 1 : 0;
+            const obsE = checkLocalObstacle(player.x + player.width, player.y, probeDist, player.height) ? 1 : 0;
+            const obsW = checkLocalObstacle(player.x - probeDist, player.y, probeDist, player.height) ? 1 : 0;
+
+            return `${angleH}_${distH}_${angleC}_${distC}_${obsN}_${obsS}_${obsE}_${obsW}`;
+        }
+
+
         function chooseAction(state) {
             if (!qTable[state]) {
-                qTable[state] = Array(ACTIONS.length).fill(0); // Initialize Q-values for new state
+                qTable[state] = Array(ACTIONS.length).fill(0);
+                qTableSizeEl.textContent = Object.keys(qTable).length;
             }
-
             if (Math.random() < epsilon) {
-                return Math.floor(Math.random() * ACTIONS.length); // Explore: random action
+                return Math.floor(Math.random() * ACTIONS.length);
             } else {
-                // Exploit: choose best action
                 const qValues = qTable[state];
-                return qValues.indexOf(Math.max(...qValues));
+                // If multiple max values, pick one randomly to break ties
+                const maxQ = Math.max(...qValues);
+                const bestActions = [];
+                for(let i=0; i<qValues.length; i++) {
+                    if (qValues[i] === maxQ) bestActions.push(i);
+                }
+                return bestActions[Math.floor(Math.random() * bestActions.length)];
             }
         }
 
-        // --- Helper: Update Q-Table ---
         function updateQTable(prevState, action, reward, nextState) {
-            if (!qTable[prevState]) { // Should already exist from chooseAction
-                qTable[prevState] = Array(ACTIONS.length).fill(0);
-            }
-            if (!qTable[nextState]) { // Initialize if next state is new
+            if (!qTable[prevState]) qTable[prevState] = Array(ACTIONS.length).fill(0); // Should exist
+            if (!qTable[nextState]) {
                 qTable[nextState] = Array(ACTIONS.length).fill(0);
+                qTableSizeEl.textContent = Object.keys(qTable).length;
             }
 
             const oldQValue = qTable[prevState][action];
@@ -177,172 +247,253 @@
             qTable[prevState][action] = newQValue;
         }
 
-        // --- Game Reset ---
-        function resetGame(isSuccess) {
-            player.x = 50;
-            player.y = GROUND_Y - player.height;
-            player.vy = 0;
-            player.onGround = true;
+        function resetGame() {
+            player.x = PLAYER_SIZE * 2;
+            player.y = PLAYER_SIZE * 2;
+            hunter.x = gameCanvas.width - HUNTER_SIZE * 3;
+            hunter.y = gameCanvas.height - HUNTER_SIZE * 3;
+            
+            // Ensure hunter and player don't start on top of each other or obstacles (basic check)
+            let safeSpawn = false;
+            while(!safeSpawn) {
+                safeSpawn = true;
+                player.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - 3 * PLAYER_SIZE);
+                player.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - 3 * PLAYER_SIZE);
+                for(const obs of obstacles) {
+                    if(rectCollision(player, obs)) {
+                        safeSpawn = false;
+                        break;
+                    }
+                }
+            }
+             safeSpawn = false;
+            while(!safeSpawn) {
+                safeSpawn = true;
+                hunter.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - 3 * PLAYER_SIZE);
+                hunter.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - 3 * PLAYER_SIZE);
+                if (Math.hypot(hunter.x-player.x, hunter.y-player.y) < PLAYER_SIZE * 5) { // Don't spawn hunter too close to player
+                    safeSpawn = false; continue;
+                }
+                for(const obs of obstacles) {
+                    if(rectCollision(hunter, obs)) {
+                        safeSpawn = false;
+                        break;
+                    }
+                }
+            }
+
+
+            spawnCoin();
             currentSteps = 0;
             episodeCount++;
 
-            // Update stats
             episodeEl.textContent = episodeCount;
-            cookiesEl.textContent = cookies;
-            punishmentsEl.textContent = punishments;
-
-            // Decay epsilon
-            if (epsilon > MIN_EPSILON) {
-                epsilon *= EPSILON_DECAY;
-            }
+            cookiesEl.textContent = scoreCookies;
+            punishmentsEl.textContent = scorePunishments;
+            if (epsilon > MIN_EPSILON) epsilon *= EPSILON_DECAY;
             epsilonEl.textContent = epsilon.toFixed(3);
         }
 
-        // --- Collision Detection ---
-        function checkCollision(rect1, rect2) {
-            return rect1.x < rect2.x + rect2.width &&
-                   rect1.x + rect1.width > rect2.x &&
-                   rect1.y < rect2.y + rect2.height &&
-                   rect1.y + rect1.height > rect2.y;
-        }
+        function moveEntity(entity, dx, dy) {
+            const oldX = entity.x;
+            const oldY = entity.y;
+            let newX = entity.x + dx;
+            let newY = entity.y + dy;
 
-        // --- Game Update Logic (called by AI loop) ---
-        function updateGame(actionIndex) {
-            const action = ACTIONS[actionIndex];
-            lastActionEl.textContent = action.name;
-
-            let reward = -0.1; // Small penalty for each step to encourage speed
-
-            // Apply actions
-            if (action.move) {
-                player.x += PLAYER_MOVE_SPEED;
-            }
-            if (action.jump && player.onGround) {
-                player.vy = PLAYER_JUMP_FORCE;
-                player.onGround = false;
-            }
-
-            // Physics
-            player.vy += GRAVITY;
-            player.y += player.vy;
-
-            // Ground collision
-            if (player.y + player.height >= GROUND_Y) {
-                player.y = GROUND_Y - player.height;
-                player.vy = 0;
-                player.onGround = true;
-            }
-
-            // Boundary checks (simple respawn if out of left/right bounds)
-            if (player.x + player.width < 0 || player.x > gameCanvas.width) {
-                reward = -10; // Severe punishment for going off screen
-                punishments++;
-                return { reward, done: true };
-            }
+            // Canvas boundary collision
+            if (newX < 0) newX = 0;
+            if (newX + entity.width > gameCanvas.width) newX = gameCanvas.width - entity.width;
+            if (newY < 0) newY = 0;
+            if (newY + entity.height > gameCanvas.height) newY = gameCanvas.height - entity.height;
             
-            // Obstacle collision
-            if (checkCollision(player, obstacle)) {
-                reward = -10; // Punishment for hitting obstacle
-                punishments++;
-                return { reward, done: true };
-            }
+            // Obstacle collision for the intended move
+            let tempEntity = { ...entity, x: newX, y: newY };
+            let collidedX = false;
+            let collidedY = false;
 
-            // Goal check
-            if (player.x + player.width > GOAL_LINE_X && player.x < GOAL_LINE_X + GOAL_LINE_WIDTH) {
-                if (player.y + player.height > obstacle.y) { // Must be on ground or slightly above, not falling from sky
-                     reward = 10; // Cookie!
-                     cookies++;
-                     return { reward, done: true };
+            // Check X-axis move first
+            tempEntity.x = newX;
+            tempEntity.y = oldY;
+            for (const obs of obstacles) {
+                if (rectCollision(tempEntity, obs)) {
+                    newX = oldX; // Cannot move in X
+                    collidedX = true;
+                    break;
                 }
             }
             
-            // Timeout
+            // Check Y-axis move
+            tempEntity.x = oldX; // Reset x for y-check based on original x
+            tempEntity.y = newY;
+             for (const obs of obstacles) {
+                if (rectCollision(tempEntity, obs)) {
+                    newY = oldY; // Cannot move in Y
+                    collidedY = true;
+                    break;
+                }
+            }
+            
+            // If both directions individually are fine, check combined move (for corners)
+            if (!collidedX && !collidedY && dx !== 0 && dy !== 0) {
+                tempEntity.x = newX;
+                tempEntity.y = newY;
+                for (const obs of obstacles) {
+                     if (rectCollision(tempEntity, obs)) {
+                        // Prioritize one direction or revert both. Let's revert both for simplicity.
+                        // More advanced: try sliding by reverting only one.
+                        // For this, if combined fails, we could try just X then just Y.
+                        // But since we check X and Y separately first, this should be okay.
+                        // If only X was valid, and only Y was valid, then newX, newY is only based on one
+                        // or the other being reverted if that specific axis failed.
+                        // Re-evaluate newX, newY if only one was blocked
+                        if (rectCollision({...entity, x: entity.x + dx, y: oldY}, obs)) newX = oldX;
+                        if (rectCollision({...entity, x: oldX, y: entity.y + dy}, obs)) newY = oldY;
+                        break;
+                    }
+                }
+            }
+
+            entity.x = newX;
+            entity.y = newY;
+            return (newX === oldX && newY === oldY); // Return true if stuck (hit obstacle)
+        }
+
+
+        function updateGame(actionIndex) {
+            const action = ACTIONS[actionIndex];
+            lastActionEl.textContent = action.name;
+            let reward = -0.1; // Small penalty per step
+
+            // --- Player Movement ---
+            const playerStuck = moveEntity(player, action.dx, action.dy);
+            if (playerStuck && (action.dx !== 0 || action.dy !== 0)) { // Penalize if tried to move but couldn't
+                reward -= 1;
+            }
+
+            // --- Hunter Movement ---
+            // Hunter tries to move towards player, avoiding obstacles
+            let hunterDx = 0, hunterDy = 0;
+            if (player.x < hunter.x) hunterDx = -MOVE_SPEED * 0.8; // Hunter slightly slower or same speed
+            else if (player.x > hunter.x) hunterDx = MOVE_SPEED * 0.8;
+            if (player.y < hunter.y) hunterDy = -MOVE_SPEED * 0.8;
+            else if (player.y > hunter.y) hunterDy = MOVE_SPEED * 0.8;
+            
+            // Normalize diagonal speed (optional, makes movement more consistent)
+            const hMagnitude = Math.hypot(hunterDx, hunterDy);
+            if (hMagnitude > MOVE_SPEED * 0.8) {
+                hunterDx = (hunterDx / hMagnitude) * MOVE_SPEED * 0.8;
+                hunterDy = (hunterDy / hMagnitude) * MOVE_SPEED * 0.8;
+            }
+            moveEntity(hunter, hunterDx, hunterDy);
+
+
+            // --- Collision Checks & Rewards ---
+            // Player vs Hunter
+            if (rectCollision(player, hunter)) {
+                reward -= 10;
+                scorePunishments++;
+                return { reward, done: true };
+            }
+
+            // Player vs Coins
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const coin = coins[i];
+                if (Math.hypot((player.x + player.width/2) - coin.x, (player.y + player.height/2) - coin.y) < player.width/2 + coin.radius) {
+                    reward += 20;
+                    scoreCookies++;
+                    coins.splice(i, 1);
+                    spawnCoin(); // Spawn a new one
+                    return { reward, done: true }; // End episode on success
+                }
+            }
+            
             currentSteps++;
             if (currentSteps >= MAX_STEPS_PER_EPISODE) {
-                reward = -5; // Punishment for taking too long
-                punishments++;
+                reward -= 5; // Timeout punishment
+                scorePunishments++;
                 return { reward, done: true };
             }
 
             return { reward, done: false };
         }
 
-        // --- Drawing Functions ---
         function drawGame() {
-            // Clear canvas
             gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-            // Draw ground
-            gameCtx.fillStyle = '#70b070'; // Greenish
-            gameCtx.fillRect(0, GROUND_Y, gameCanvas.width, gameCanvas.height - GROUND_Y);
-
-            // Draw player
-            gameCtx.fillStyle = 'blue';
+            obstacles.forEach(obs => {
+                gameCtx.fillStyle = obs.color;
+                gameCtx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            });
+            coins.forEach(coin => {
+                gameCtx.beginPath();
+                gameCtx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+                gameCtx.fillStyle = coin.color;
+                gameCtx.fill();
+            });
+            gameCtx.fillStyle = player.color;
             gameCtx.fillRect(player.x, player.y, player.width, player.height);
-
-            // Draw obstacle
-            gameCtx.fillStyle = 'red';
-            gameCtx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-
-            // Draw goal line
-            gameCtx.fillStyle = 'green';
-            gameCtx.fillRect(GOAL_LINE_X, 0, GOAL_LINE_WIDTH, gameCanvas.height);
+            gameCtx.fillStyle = hunter.color;
+            gameCtx.fillRect(hunter.x, hunter.y, hunter.width, hunter.height);
         }
 
         function drawAiVision() {
             aiVisionCtx.clearRect(0, 0, aiVisionCanvas.width, aiVisionCanvas.height);
+            const stateStr = getDiscretizedState();
+            const parts = stateStr.split('_').map(Number);
+            // [angleH, distH, angleC, distC, obsN, obsS, obsE, obsW]
+
+            const centerX = aiVisionCanvas.width / 2;
+            const centerY = aiVisionCanvas.height / 2;
+            const visionPlayerSize = 10;
+
+            // Draw Player indicator
+            aiVisionCtx.fillStyle = player.color;
+            aiVisionCtx.fillRect(centerX - visionPlayerSize/2, centerY - visionPlayerSize/2, visionPlayerSize, visionPlayerSize);
+
+            // Draw Hunter direction/distance
+            if (parts.length >= 2) {
+                const angleH_rad = (parts[0] * (Math.PI / 4)) - Math.PI; // Convert sector back to approx angle
+                const distFactorH = (2 - parts[1]) / 2; // 0 (far) -> 1, 1 (mid) -> 0.5, 2 (close) -> 0
+                const visionDistH = (aiVisionCanvas.width / 2 - visionPlayerSize) * distFactorH;
+                aiVisionCtx.beginPath();
+                aiVisionCtx.moveTo(centerX, centerY);
+                aiVisionCtx.lineTo(centerX + Math.cos(angleH_rad) * visionDistH, centerY + Math.sin(angleH_rad) * visionDistH);
+                aiVisionCtx.strokeStyle = hunter.color;
+                aiVisionCtx.lineWidth = 2 + parts[1]; // Thicker if closer
+                aiVisionCtx.stroke();
+                aiVisionCtx.fillStyle = hunter.color;
+                aiVisionCtx.fillRect(centerX + Math.cos(angleH_rad) * visionDistH - 3, centerY + Math.sin(angleH_rad) * visionDistH - 3, 6, 6);
+            }
+
+            // Draw Coin direction/distance
+            if (parts.length >= 4 && coins.length > 0) {
+                const angleC_rad = (parts[2] * (Math.PI / 4)) - Math.PI;
+                const distFactorC = (2 - parts[3]) / 2;
+                const visionDistC = (aiVisionCanvas.width / 2 - visionPlayerSize) * distFactorC;
+                aiVisionCtx.beginPath();
+                aiVisionCtx.moveTo(centerX, centerY);
+                aiVisionCtx.lineTo(centerX + Math.cos(angleC_rad) * visionDistC, centerY + Math.sin(angleC_rad) * visionDistC);
+                aiVisionCtx.strokeStyle = coins[0].color;
+                aiVisionCtx.lineWidth = 1 + parts[3];
+                aiVisionCtx.stroke();
+                aiVisionCtx.beginPath();
+                aiVisionCtx.arc(centerX + Math.cos(angleC_rad) * visionDistC, centerY + Math.sin(angleC_rad) * visionDistC, 4, 0, Math.PI*2);
+                aiVisionCtx.fillStyle = coins[0].color;
+                aiVisionCtx.fill();
+            }
             
-            const stateStr = getDiscretizedState(); // Use the same state representation
-            const parts = stateStr.split('_'); // [horizontalPos, verticalPos, onGround, velXSign]
+            // Draw Obstacle indicators
+            const obsIndicatorSize = 15;
+            aiVisionCtx.fillStyle = 'rgba(128, 128, 128, 0.7)';
+            if (parts[4]) aiVisionCtx.fillRect(centerX - obsIndicatorSize/2, centerY - visionPlayerSize/2 - obsIndicatorSize, obsIndicatorSize, obsIndicatorSize); // N
+            if (parts[5]) aiVisionCtx.fillRect(centerX - obsIndicatorSize/2, centerY + visionPlayerSize/2, obsIndicatorSize, obsIndicatorSize); // S
+            if (parts[6]) aiVisionCtx.fillRect(centerX + visionPlayerSize/2, centerY - obsIndicatorSize/2, obsIndicatorSize, obsIndicatorSize); // E
+            if (parts[7]) aiVisionCtx.fillRect(centerX - visionPlayerSize/2 - obsIndicatorSize, centerY - obsIndicatorSize/2, obsIndicatorSize, obsIndicatorSize); // W
 
-            const cellWidth = aiVisionCanvas.width / 4; // For horizontal categories
-            const cellHeight = aiVisionCanvas.height / 3; // For vertical categories
-
-            // --- Visualize Horizontal Position Category ---
-            // 0: Far before, 1: Near before, 2: Under/Over, 3: Past
-            const horizCat = parseInt(parts[0]);
-            aiVisionCtx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Red tint for obstacle area approximation
-            if (horizCat === 0) aiVisionCtx.fillRect(0, 0, cellWidth, aiVisionCanvas.height);
-            else if (horizCat === 1) aiVisionCtx.fillRect(cellWidth, 0, cellWidth, aiVisionCanvas.height);
-            else if (horizCat === 2) aiVisionCtx.fillRect(2 * cellWidth, 0, cellWidth, aiVisionCanvas.height);
-            else aiVisionCtx.fillRect(3 * cellWidth, 0, cellWidth, aiVisionCanvas.height);
-
-            // --- Visualize Vertical Position Category ---
-            // 0: Below, 1: Near/Level, 2: Above (relative to obstacle top)
-            const vertCat = parseInt(parts[1]);
-            aiVisionCtx.fillStyle = 'rgba(0, 0, 255, 0.3)'; // Blue tint for player height approximation
-            if (vertCat === 0) aiVisionCtx.fillRect(0, 2 * cellHeight, aiVisionCanvas.width, cellHeight); // Player is low
-            else if (vertCat === 1) aiVisionCtx.fillRect(0, cellHeight, aiVisionCanvas.width, cellHeight); // Player is mid
-            else aiVisionCtx.fillRect(0, 0, aiVisionCanvas.width, cellHeight); // Player is high
-
-            // --- Visualize On Ground ---
-            const onGround = parts[2] === 'true';
-            aiVisionCtx.fillStyle = onGround ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 255, 0, 0.5)'; // Green if on ground, Yellow if in air
-            aiVisionCtx.fillRect(aiVisionCanvas.width - 20, aiVisionCanvas.height - 20, 20, 20); // Small indicator box
-
-            // Draw grid lines for clarity
-            aiVisionCtx.strokeStyle = '#aaa';
-            aiVisionCtx.lineWidth = 1;
-            for (let i = 1; i < 4; i++) { // Horizontal lines
-                aiVisionCtx.beginPath();
-                aiVisionCtx.moveTo(i * cellWidth, 0);
-                aiVisionCtx.lineTo(i * cellWidth, aiVisionCanvas.height);
-                aiVisionCtx.stroke();
-            }
-            for (let i = 1; i < 3; i++) { // Vertical lines
-                aiVisionCtx.beginPath();
-                aiVisionCtx.moveTo(0, i * cellHeight);
-                aiVisionCtx.lineTo(aiVisionCanvas.width, i * cellHeight);
-                aiVisionCtx.stroke();
-            }
-
-            // Simple text of state
-            aiVisionCtx.fillStyle = 'black';
-            aiVisionCtx.font = '10px Arial';
+            aiVisionCtx.fillStyle = '#ccc';
+            aiVisionCtx.font = '8px Arial';
             aiVisionCtx.textAlign = 'center';
             aiVisionCtx.fillText(stateStr, aiVisionCanvas.width / 2, aiVisionCanvas.height - 5);
         }
-
 
         // --- Main AI Loop ---
         let previousState = null;
@@ -350,48 +501,28 @@
 
         function aiLoop() {
             const currentState = getDiscretizedState();
-            
-            // If there was a previous state, update Q-table based on the outcome of that action
-            // This is deferred because we need the 'reward' and 'nextState' (which is 'currentState' now)
-            if (previousState !== null && previousAction !== null) {
-                // The reward calculation happens in updateGame, which was called in the *previous* iteration
-                // So, the 'gameOutcome.reward' we got before is the reward for 'previousState' and 'previousAction'
-                // This is a bit tricky: we update based on the *result* of the *previous* action.
-                // For the very first step of an episode, previousState will be null.
-                // The 'reward' is associated with transitioning FROM previousState TO currentState.
-                // Let's re-think: The updateQTable should happen AFTER an action is taken and outcome observed.
-            }
-
             const actionToTake = chooseAction(currentState);
-            const gameOutcome = updateGame(actionToTake); // This applies the action and returns reward & done status
-
-            const nextStateAfterAction = getDiscretizedState(); // State after action is taken
-
-            // Now update Q-table with (currentState, actionToTake, gameOutcome.reward, nextStateAfterAction)
+            
+            const gameOutcome = updateGame(actionToTake); // Applies action, returns reward & done
+            const nextStateAfterAction = getDiscretizedState(); // Get state *after* action
+            
             updateQTable(currentState, actionToTake, gameOutcome.reward, nextStateAfterAction);
 
-            // Drawing
             drawGame();
             drawAiVision();
 
             if (gameOutcome.done) {
-                resetGame(gameOutcome.reward > 0); // Pass if it was a success (cookie)
-                previousState = null; // Reset for new episode
-                previousAction = null;
-            } else {
-                previousState = currentState; // Store for next iteration's Q-update (though we update immediately now)
-                previousAction = actionToTake;
+                resetGame();
             }
         }
 
         // --- Initialize and Start ---
         function init() {
-            alphaEl.textContent = LEARNING_RATE;
-            gammaEl.textContent = DISCOUNT_FACTOR;
-            resetGame(false); // Initial reset
+            spawnCoin(); // Initial coin
+            resetGame(); // Initial reset to set up episode 0 correctly
             drawGame();
             drawAiVision();
-            setInterval(aiLoop, 200); // Slow down for visualization (200ms per step)
+            setInterval(aiLoop, 75); // Faster loop
         }
 
         window.onload = init;
