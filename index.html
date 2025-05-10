@@ -2,599 +2,503 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Satellite Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Funny Chemical Simulator</title>
     <style>
-        :root {
-            --primary-bg: #0a0a1a; --panel-bg: rgba(25, 25, 50, 0.92); --text-color: #e0e0e0;
-            --accent-color: #3498db; --highlight-color: #58a6ff; --border-color: rgba(255, 255, 255, 0.15);
-            --button-bg: rgba(52, 152, 219, 0.6); --button-hover-bg: rgba(52, 152, 219, 0.9);
-            --danger-color: rgba(231, 76, 60, 0.8);
+        /* Basic Reset & Global Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
         }
+
         body {
-            margin: 0; overflow: hidden; background-color: var(--primary-bg); color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            overscroll-behavior: none; position: fixed; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Align to top */
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f0f0, #c0c0c0);
+            color: #333;
+            padding: 10px;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
-        #app-container { width: 100%; height: 100%; position: relative; }
-        #renderer-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--primary-bg);
-            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000;
-            transition: opacity 0.5s ease-out;
+
+        /* App Container */
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px; /* Max width for larger phones/tablets */
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            padding: 15px;
         }
-        #loading-spinner {
-            border: 6px solid #333; border-top: 6px solid var(--accent-color); border-radius: 50%;
-            width: 50px; height: 50px; animation: spin 1s linear infinite;
+
+        h1 {
+            color: #5D3FD3; /* Fun purple */
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            text-align: center;
         }
-        #loading-text { margin-top: 20px; font-size: 1.1em; color: #aaa; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .overlay-panel {
-            position: fixed; background-color: var(--panel-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            border-top: 1px solid var(--border-color); box-shadow: 0 -5px 20px rgba(0,0,0,0.3); color: var(--text-color);
-            z-index: 100; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto;
-            display: flex; flex-direction: column;
+
+        /* Chemical Selector */
+        #chemical-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 15px;
         }
-        .panel-header {
-            padding: 12px 15px; font-size: 1.2em; color: var(--highlight-color); border-bottom: 1px solid var(--border-color);
-            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+
+        .chemical-btn {
+            padding: 12px 8px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            color: white;
+            min-height: 60px; /* Ensure buttons have some height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-        .panel-header .close-btn {
-            background: none; border: none; color: var(--text-color); font-size: 1.8em;
-            padding: 5px; line-height: 1; cursor: pointer;
+
+        .chemical-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
-        .panel-content { padding: 15px; flex-grow: 1; overflow-y: auto; }
-        #info-panel {
-            bottom: 0; left: 0; right: 0; max-height: 65vh; transform: translateY(100%);
-            border-top-left-radius: 12px; border-top-right-radius: 12px;
+        .chemical-btn.selected {
+            border-color: #FFD700; /* Gold border for selected */
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #FFD700;
         }
-        #info-panel.visible { transform: translateY(0); }
-        #info-panel p { margin: 6px 0; font-size: 0.9em; line-height: 1.5; }
-        #info-panel strong { color: #a0c8ff; }
-        #follow-satellite-toggle {
-            background-color: var(--button-bg); color: white; border: none; padding: 12px 15px;
-            border-radius: 8px; cursor: pointer; margin-top: 15px; transition: background-color 0.2s;
-            display: block; width: 100%; font-size: 0.95em;
+
+        /* Beaker (Canvas) Area */
+        #beaker-area {
+            width: 100%;
+            max-width: 300px; /* Control beaker size */
+            aspect-ratio: 3/4; /* Maintain beaker proportions */
+            margin: 0 auto 15px auto;
+            position: relative;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 133"><path d="M10 130 Q50 135 90 130 L95 10 Q50 0 5 10 Z" fill="rgba(200,220,255,0.2)" stroke="%238888AA" stroke-width="3"/><line x1="15" y1="30" x2="25" y2="30" stroke="%238888AA" stroke-width="2"/><line x1="15" y1="50" x2="25" y2="50" stroke="%238888AA" stroke-width="2"/><line x1="15" y1="70" x2="25" y2="70" stroke="%238888AA" stroke-width="2"/><line x1="15" y1="90" x2="25" y2="90" stroke="%238888AA" stroke-width="2"/><line x1="15" y1="110" x2="25" y2="110" stroke="%238888AA" stroke-width="2"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
-        #follow-satellite-toggle:hover, #follow-satellite-toggle:active { background-color: var(--button-hover-bg); }
-        #follow-satellite-toggle.following { background-color: var(--danger-color); }
-        #filter-panel {
-            top: 0; bottom: 0; right: 0; width: 85vw; max-width: 320px; transform: translateX(100%);
-            border-top: none; border-left: 1px solid var(--border-color); box-shadow: -5px 0 20px rgba(0,0,0,0.3);
-            border-top-left-radius: 12px; border-bottom-left-radius: 12px;
+
+        #reaction-canvas {
+            position: absolute;
+            top: 5%; /* Adjust to fit inside SVG beaker visual */
+            left: 6%;
+            width: 88%;
+            height: 90%;
+            /* background-color: rgba(255,0,0,0.1); for debugging bounds */
         }
-        #filter-panel.visible { transform: translateX(0); }
-        .filter-group { margin-bottom: 18px; }
-        .filter-group label { display: block; margin-bottom: 6px; font-size: 0.9em; color: #aabbcc; }
-        .filter-group select, .filter-group input[type="number"] {
-            width: 100%; padding: 10px; border-radius: 6px; box-sizing: border-box;
-            border: 1px solid rgba(255,255,255,0.2); background-color: rgba(10,10,20,0.8);
-            color: var(--text-color); font-size: 0.9em;
+
+        /* Message Area */
+        #message-area {
+            width: 100%;
+            min-height: 50px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #e0e0ff;
+            border: 1px dashed #5D3FD3;
+            border-radius: 8px;
+            text-align: center;
+            font-style: italic;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .year-filter-inputs { display: flex; gap: 10px; }
-        .filter-buttons button {
-            background: var(--button-bg); border: none; color: white; padding: 12px 15px; margin-top: 10px;
-            border-radius: 8px; cursor: pointer; transition: background-color 0.2s; font-size: 0.95em; width: calc(50% - 5px);
+
+        /* Controls */
+        #controls {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
         }
-        .filter-buttons button:hover, .filter-buttons button:active { background: var(--button-hover-bg); }
-        .filter-buttons button.clear { background: rgba(200, 80, 80, 0.7); }
-        #visible-sat-count-container { font-size:0.85em; color:#8899aa; margin-top:15px; text-align: center; }
-        #search-overlay {
-            top: 0; left: 0; right: 0; bottom: 0; transform: translateY(-100%); border-top: none;
-            box-shadow: none; border-radius: 0; display: flex; flex-direction: column;
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: white;
         }
-        #search-overlay.visible { transform: translateY(0); }
-        #search-input-container {
-            padding: 10px; background-color: rgba(10,10,20,0.7); flex-shrink: 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        #search-input {
-            width: 100%; padding: 12px 15px; border-radius: 25px; box-sizing: border-box;
-            border: 1px solid rgba(255,255,255,0.2); background-color: rgba(30,30,60,0.8);
-            color: var(--text-color); font-size: 1em; outline: none;
-        }
-        #search-results { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-        #search-results li {
-            padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer;
-            transition: background-color 0.2s; font-size: 0.95em;
-        }
-        #search-results li:hover, #search-results li:active { background-color: rgba(52, 152, 219, 0.2); }
-        #search-results li:last-child { border-bottom: none; }
-        #timeline-container {
-            position: fixed; bottom: 60px; left: 10px; right: 10px; background-color: var(--panel-bg);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--border-color);
-            border-radius: 10px; padding: 8px 12px; z-index: 90; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; align-items: center;
-        }
-        #timeline-slider { width: 100%; cursor: pointer; margin: 5px 0; }
-        #time-display { font-size: 0.75em; color: #ccc; margin-bottom: 5px; }
-        #time-controls button {
-            background: var(--button-bg); border: none; color: white; padding: 6px 10px; margin: 0 3px;
-            border-radius: 6px; cursor: pointer; font-size: 0.8em; min-width: 36px;
-        }
-        #time-controls { display: flex; justify-content: center; width: 100%;}
-        #time-speed { font-size: 0.8em; color: #ccc; margin-left: 8px;}
-        #main-controls-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 50px; background-color: var(--primary-bg);
-            border-top: 1px solid var(--border-color); display: flex; justify-content: space-around;
-            align-items: center; z-index: 200; padding: 0 10px;
-        }
-        .control-button {
-            background: none; border: none; color: var(--text-color); font-size: 1.6em;
-            padding: 10px 15px; cursor: pointer; opacity: 0.8; transition: opacity 0.2s;
-        }
-        .control-button:hover, .control-button:active { opacity: 1; color: var(--highlight-color); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: rgba(52, 152, 219, 0.4); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(52, 152, 219, 0.7); }
+
+        #mix-btn { background-color: #4CAF50; /* Green */ }
+        #mix-btn:hover { background-color: #45a049; }
+        #mix-btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+
+        #clear-btn { background-color: #f44336; /* Red */ }
+        #clear-btn:hover { background-color: #da190b; }
+
     </style>
 </head>
 <body>
     <div id="app-container">
-        <div id="renderer-container"></div>
-        <div id="loading-screen">
-            <div id="loading-spinner"></div>
-            <div id="loading-text">Initializing Celestial Sphere...</div>
+        <h1>Wacky Chem Lab!</h1>
+
+        <div id="chemical-selector">
+            <!-- Chemical buttons will be generated by JS -->
         </div>
-        <div id="info-panel" class="overlay-panel">
-            <div class="panel-header">
-                <span id="sat-name-header">Satellite Info</span>
-                <button class="close-btn" onclick="hideInfoPanel()">×</button>
-            </div>
-            <div class="panel-content">
-                <p><strong>Name:</strong> <span id="sat-name"></span></p>
-                <p><strong>NORAD ID:</strong> <span id="sat-norad-id"></span></p>
-                <p><strong>Int'l Des:</strong> <span id="sat-intl-des"></span></p>
-                <p><strong>Launch:</strong> <span id="sat-launch-date"></span> (<span id="sat-launch-year"></span>)</p>
-                <p><strong>Country:</strong> <span id="sat-country"></span></p>
-                <p><strong>Orbit:</strong> <span id="sat-orbit-type"></span></p>
-                <p><strong>Constellation:</strong> <span id="sat-constellation"></span></p>
-                <p><strong>Altitude:</strong> <span id="sat-altitude"></span> km</p>
-                <p><strong>Velocity:</strong> <span id="sat-velocity"></span> km/s</p>
-                <p><strong>Period:</strong> <span id="sat-period"></span> min</p>
-                <p><strong>Inclination:</strong> <span id="sat-inclination"></span>°</p>
-                <p><strong>Lat/Lon:</strong> <span id="sat-lat"></span>° / <span id="sat-lon"></span>°</p>
-                <button id="follow-satellite-toggle" onclick="toggleFollowSatellite()">Follow Satellite</button>
-            </div>
+
+        <div id="beaker-area">
+            <canvas id="reaction-canvas"></canvas>
         </div>
-        <div id="filter-panel" class="overlay-panel">
-            <div class="panel-header">
-                <span>Filters</span>
-                <button class="close-btn" onclick="toggleFilterPanel(false)">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="filter-group">
-                    <label for="filter-launch-year-min">Launch Year:</label>
-                    <div class="year-filter-inputs">
-                        <input type="number" id="filter-launch-year-min" min="1957" placeholder="Min">
-                        <input type="number" id="filter-launch-year-max" min="1957" placeholder="Max">
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <label for="filter-country">Country:</label>
-                    <select id="filter-country"><option value="">All</option></select>
-                </div>
-                <div class="filter-group">
-                    <label for="filter-orbit-type">Orbit Type:</label>
-                    <select id="filter-orbit-type">
-                        <option value="">All</option> <option value="LEO">LEO</option> <option value="MEO">MEO</option>
-                        <option value="GEO">GEO</option> <option value="HEO">HEO</option> <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="filter-constellation">Constellation:</label>
-                    <select id="filter-constellation"><option value="">All</option></select>
-                </div>
-                <div class="filter-buttons">
-                    <button id="apply-filters-btn">Apply</button>
-                    <button id="clear-filters-btn" class="clear">Clear</button>
-                </div>
-                 <p id="visible-sat-count-container">Visible: <span id="visible-sat-count">N/A</span></p>
-            </div>
+
+        <div id="message-area">
+            <p id="reaction-message">Select two chemicals and hit Mix!</p>
         </div>
-        <div id="search-overlay" class="overlay-panel">
-             <div class="panel-header">
-                <span>Search Satellites</span>
-                <button class="close-btn" onclick="toggleSearchOverlay(false)">×</button>
-            </div>
-            <div id="search-input-container">
-                <input type="text" id="search-input" placeholder="Search (e.g., ISS, Starlink)">
-            </div>
-            <ul id="search-results"></ul>
-        </div>
-        <div id="timeline-container">
-            <div id="time-display">Sim Time: N/A</div>
-            <input type="range" id="timeline-slider" min="0" max="1440" value="0" step="1">
-            <div id="time-controls">
-                <button id="time-rewind"><<</button>
-                <button id="time-play-pause">Play</button>
-                <button id="time-forward">>></button>
-                <button id="time-reset">Reset</button>
-                <span id="time-speed">1x</span>
-            </div>
-        </div>
-        <div id="main-controls-bar">
-            <button class="control-button" id="search-toggle-btn" title="Search"></button>
-            <button class="control-button" id="filter-toggle-btn" title="Filter"></button>
+
+        <div id="controls">
+            <button id="mix-btn" class="control-btn" disabled>Mix!</button>
+            <button id="clear-btn" class="control-btn">Clear</button>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.1.3/satellite.min.js"></script>
+
     <script>
-        let scene, camera, renderer, earth, clouds, stars, controls;
-        let clock = new THREE.Clock();
-        let allSatellitesData = [];
-        let satelliteObjects = new Map();
-        const EARTH_RADIUS_KM = 6371;
-        const MU_EARTH = 398600.4418;
-        const SCALE_FACTOR = 1 / EARTH_RADIUS_KM;
-        let targetSatelliteObject;
-        let raycaster, pointer = new THREE.Vector2();
-        const loadingScreen = document.getElementById('loading-screen');
-        const loadingText = document.getElementById('loading-text');
-        const rendererContainer = document.getElementById('renderer-container');
-        const infoPanel = document.getElementById('info-panel');
-        const filterPanel = document.getElementById('filter-panel');
-        const searchOverlay = document.getElementById('search-overlay');
-        const searchInput = document.getElementById('search-input');
-        const searchResultsList = document.getElementById('search-results');
-        const followSatelliteToggleBtn = document.getElementById('follow-satellite-toggle');
-        let currentTime = new Date();
-        let timeScale = 1;
-        let timePaused = false;
-        const timelineSlider = document.getElementById('timeline-slider');
-        const timeDisplay = document.getElementById('time-display');
-        const timePlayPauseBtn = document.getElementById('time-play-pause');
-        const timeRewindBtn = document.getElementById('time-rewind');
-        const timeForwardBtn = document.getElementById('time-forward');
-        const timeResetBtn = document.getElementById('time-reset');
-        const timeSpeedDisplay = document.getElementById('time-speed');
-        let initialTime = new Date();
-        let focusedSatellitePathLine = null;
-        let isFollowingSatellite = false;
-        let isCameraAnimating = false;
-        let cameraFocusTargetPosition = new THREE.Vector3();
-        let desiredCameraPosition = new THREE.Vector3();
-        const currentYear = new Date().getFullYear();
+        // --- Global Variables & Constants ---
+        const chemicals = [
+            { id: 'giggle', name: 'Giggle Gas', color: '#FF69B4', description: "Warning: May cause uncontrollable chuckles." },
+            { id: 'slime', name: 'Slime Sauce', color: '#32CD32', description: "It's gooey, it's green, it's... science?" },
+            { id: 'boom', name: 'Boom Powder', color: '#FF4500', description: "Handle with EXTREME care (or don't)." },
+            { id: 'sparkle', name: 'Sparkle Potion', color: '#8A2BE2', description: "Makes everything fabulously glittery!" },
+            { id: 'stink', name: 'Stench Bomb', color: '#8B4513', description: "Pee-yew! Smells like old socks and regret." },
+            { id: 'shrink', name: 'Shrinky Dink Fluid', color: '#00CED1', description: "Makes things adorably tiny."}
+        ];
 
-        const orbitControlsScript = document.createElement('script');
-        orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
-        orbitControlsScript.onload = () => { initApp(); animateApp(); };
-        document.head.appendChild(orbitControlsScript);
+        let selectedChemicals = [];
+        const chemicalSelectorDiv = document.getElementById('chemical-selector');
+        const mixBtn = document.getElementById('mix-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const reactionMessageEl = document.getElementById('reaction-message');
+        
+        const canvas = document.getElementById('reaction-canvas');
+        const ctx = canvas.getContext('2d');
+        let canvasWidth, canvasHeight;
+        let animationFrameId = null;
+        let particles = []; // For visual effects
+        let currentBeakerLiquid = { color: 'rgba(200,220,255,0.1)', level: 0 }; // level 0 to 1
 
-        function initApp() {
-            setupThreeJS();
-            loadSatellitesAndMetadata();
-            setupUIEventListeners();
-            setupTimeControls();
-            updateTimeDisplay();
-            document.getElementById('filter-launch-year-min').max = currentYear;
-            document.getElementById('filter-launch-year-max').max = currentYear;
-            document.getElementById('filter-launch-year-max').placeholder = currentYear;
-            document.getElementById('filter-launch-year-min').value = 1957;
-            document.getElementById('filter-launch-year-max').value = currentYear;
-            window.addEventListener('resize', onWindowResize, false);
-            rendererContainer.addEventListener('pointerdown', onPointerDown, false);
-            hideLoadingScreen();
+        // --- Canvas & Animation Utilities ---
+        function resizeCanvas() {
+            const beakerArea = document.getElementById('beaker-area');
+            // Set canvas internal resolution to its display size
+            canvas.width = canvas.getBoundingClientRect().width;
+            canvas.height = canvas.getBoundingClientRect().height;
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            drawBeakerContents(); // Redraw after resize
         }
-        function hideLoadingScreen(){
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         }
-        function setupThreeJS() {
-            loadingText.innerText = "Setting up 3D scene...";
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 1000);
-            camera.position.z = 3.5;
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            rendererContainer.appendChild(renderer.domElement);
-            const ambientLight = new THREE.AmbientLight(0x707090, 1.2); scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-            directionalLight.position.set(5, 3, 5); scene.add(directionalLight);
-            loadingText.innerText = "Loading Earth textures...";
-            const textureLoader = new THREE.TextureLoader();
-            const earthTexture = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg');
-            const earthSpecularMap = textureLoader.load('https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73776/world.topo.bathy.200412.3x1350x675.PPM');
-            const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture, specularMap: earthSpecularMap, specular: new THREE.Color('grey')});
-            const earthGeometry = new THREE.SphereGeometry(1, 48, 48);
-            earth = new THREE.Mesh(earthGeometry, earthMaterial); scene.add(earth);
-            const cloudTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_2048.png');
-            const cloudMaterial = new THREE.MeshPhongMaterial({ map: cloudTexture, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
-            const cloudGeometry = new THREE.SphereGeometry(1.008, 48, 48);
-            clouds = new THREE.Mesh(cloudGeometry, cloudMaterial); scene.add(clouds);
-            loadingText.innerText = "Generating starfield...";
-            const starGeometry = new THREE.BufferGeometry();
-            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.006, sizeAttenuation: true });
-            const starVertices = [];
-            for (let i = 0; i < 8000; i++) {
-                const r = Math.random() * 150 + 70; const phi = Math.random() * Math.PI * 2; const theta = Math.random() * Math.PI;
-                starVertices.push(r * Math.sin(theta) * Math.cos(phi), r * Math.sin(theta) * Math.sin(phi), r * Math.cos(theta));
+
+        // --- Particle System (Simple) ---
+        class Particle {
+            constructor(x, y, vx, vy, radius, color, life) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.radius = radius;
+                this.color = color;
+                this.life = life;
+                this.initialLife = life;
             }
-            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-            stars = new THREE.Points(starGeometry, starMaterial); scene.add(stars);
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; controls.dampingFactor = 0.08;
-            controls.minDistance = 1.15; controls.maxDistance = 80; controls.enablePan = true;
-            raycaster = new THREE.Raycaster();
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1; // Gravity
+                this.life--;
+                this.alpha = Math.max(0, this.life / this.initialLife);
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color.replace(')', `, ${this.alpha})`).replace('rgb(', 'rgba(');
+                ctx.fill();
+            }
         }
-        function setupUIEventListeners() {
-            document.getElementById('search-toggle-btn').addEventListener('click', () => toggleSearchOverlay(true));
-            document.getElementById('filter-toggle-btn').addEventListener('click', () => toggleFilterPanel(true));
-            document.getElementById('apply-filters-btn').addEventListener('click', () => { applyFilters(); toggleFilterPanel(false); });
-            document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
-            searchInput.addEventListener('input', handleSearch);
-            searchResultsList.addEventListener('click', handleSearchResultClick);
-        }
-        function toggleSearchOverlay(show) { searchOverlay.classList.toggle('visible', show); if(show) searchInput.focus(); }
-        function toggleFilterPanel(show) { filterPanel.classList.toggle('visible', show); }
-        function showInfoPanel() { infoPanel.classList.add('visible'); }
-        function hideInfoPanel() { infoPanel.classList.remove('visible'); if (targetSatelliteObject) { deselectSatellite(); } }
-        async function loadSatellitesAndMetadata() {
-            loadingText.innerText = "Fetching satellite TLE data...";
-            const uniqueCountries = new Set(); const uniqueConstellations = new Set();
-            try {
-                const proxyUrl = 'https://corsproxy.io/?';
-                const tleUrl = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle';
-                let tleData;
-                try {
-                    const response = await fetch(tleUrl);
-                    if (!response.ok) throw new Error(`Direct fetch failed: ${response.status}`);
-                    tleData = await response.text();
-                } catch (e) {
-                    console.warn("Direct fetch failed, trying proxy...", e.message);
-                    const proxyResponse = await fetch(proxyUrl + encodeURIComponent(tleUrl));
-                    if(!proxyResponse.ok) throw new Error(`Proxy fetch failed: ${proxyResponse.status}`);
-                    tleData = await proxyResponse.text();
+
+        function animate() {
+            clearCanvas();
+            drawBeakerContents();
+
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            if (particles.length > 0 || (currentBeakerLiquid.targetLevel && Math.abs(currentBeakerLiquid.level - currentBeakerLiquid.targetLevel) > 0.01)) {
+                // Animate liquid level change
+                if (currentBeakerLiquid.targetLevel) {
+                    currentBeakerLiquid.level += (currentBeakerLiquid.targetLevel - currentBeakerLiquid.level) * 0.1;
+                     if (Math.abs(currentBeakerLiquid.level - currentBeakerLiquid.targetLevel) <= 0.01) {
+                        currentBeakerLiquid.level = currentBeakerLiquid.targetLevel;
+                        delete currentBeakerLiquid.targetLevel; // Stop animating level once reached
+                    }
                 }
-                loadingText.innerText = "Parsing TLE data & calculating metadata...";
-                const tleLines = tleData.trim().split('\n');
-                for (let i = 0; i < tleLines.length; i += 3) {
-                    const name = tleLines[i].trim(); const tle1 = tleLines[i+1].trim(); const tle2 = tleLines[i+2].trim();
-                    if (!name || !tle1 || !tle2) continue;
-                    try {
-                        const satrec = satellite.twoline2satrec(tle1, tle2);
-                        const noradId = tle2.substring(2, 7).trim(); const intlDes = tle1.substring(9, 17).trim();
-                        let launchYear = parseInt(intlDes.substring(0, 2)); launchYear += (launchYear < 57) ? 2000 : 1900;
-                        const periodMinutes = (2 * Math.PI) / satrec.no;
-                        const approxAltitudeKm = calculateAltitudeFromPeriod(periodMinutes);
-                        const inclinationDeg = satellite.degrees(satrec.inclo);
-                        let orbitType = 'Other';
-                        if (approxAltitudeKm < 2000) orbitType = 'LEO';
-                        else if (Math.abs(periodMinutes - 1436.07) < 30 && inclinationDeg < 15) orbitType = 'GEO';
-                        else if (approxAltitudeKm >= 2000 && approxAltitudeKm < 35700) orbitType = 'MEO';
-                        else if (satrec.ecco > 0.25) orbitType = 'HEO';
-                        const country = getCountryFromIntlDes(intlDes, name); const constellation = inferConstellation(name);
-                        uniqueCountries.add(country); uniqueConstellations.add(constellation);
-                        allSatellitesData.push({ name, satrec, noradId, intlDes, launchDate: `${launchYear}-XX-XX`, launchYear, country, periodMinutes, approxAltitudeKm, inclinationDeg, orbitType, constellation });
-                    } catch (e) { }
+                animationFrameId = requestAnimationFrame(animate);
+            } else {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        function startAnimation() {
+            if (!animationFrameId) {
+                animate();
+            }
+        }
+        
+        function drawBeakerContents() {
+            clearCanvas(); // Clear previous frame
+            if (currentBeakerLiquid.level > 0) {
+                const liquidHeight = canvasHeight * currentBeakerLiquid.level;
+                const liquidY = canvasHeight - liquidHeight;
+                
+                ctx.fillStyle = currentBeakerLiquid.color;
+                ctx.beginPath();
+                ctx.moveTo(0, liquidY); // Start left
+                // Simple wave effect
+                for (let x = 0; x <= canvasWidth; x += 5) {
+                    const yOffset = Math.sin((x + Date.now() * 0.002) * 0.1) * 3 * Math.min(1, currentBeakerLiquid.level / 0.2); // More wave for fuller beaker
+                    ctx.lineTo(x, liquidY + yOffset);
                 }
-                populateFilterDropdowns(uniqueCountries, uniqueConstellations);
-                createSatelliteVisuals(allSatellitesData); applyFilters();
-            } catch (error) { loadingText.innerText = "Error loading satellite data."; console.error("Error loading satellite data:", error); }
+                ctx.lineTo(canvasWidth, liquidY); // End right before wave
+                ctx.lineTo(canvasWidth, canvasHeight); // Bottom right
+                ctx.lineTo(0, canvasHeight);    // Bottom left
+                ctx.closePath();
+                ctx.fill();
+            }
         }
-        function calculateAltitudeFromPeriod(periodMinutes) {
-            if (!periodMinutes || periodMinutes <= 0) return 0; const T_seconds = periodMinutes * 60;
-            const a_cubed = (T_seconds * T_seconds * MU_EARTH) / (4 * Math.PI * Math.PI); const a = Math.cbrt(a_cubed);
-            return a - EARTH_RADIUS_KM;
-        }
-        function inferConstellation(name) {
-            const lowerName = name.toLowerCase();
-            if (lowerName.includes('starlink')) return 'Starlink'; if (lowerName.includes('gps') || lowerName.includes('navstar')) return 'GPS';
-            if (lowerName.includes('glonass')) return 'GLONASS'; if (lowerName.includes('galileo')) return 'Galileo';
-            if (lowerName.includes('beidou') || lowerName.includes('compass')) return 'BeiDou'; if (lowerName.includes('iridium')) return 'Iridium';
-            if (lowerName.includes('oneweb')) return 'OneWeb'; if (lowerName.includes('planet') || lowerName.includes('skysat') || lowerName.includes('dove')) return 'Planet Labs';
-            return 'Other';
-        }
-        function getCountryFromIntlDes(intlDesFull, name) {
-            const commonCountryCodes = { 'US': 'USA', 'SU': 'Russia (USSR)', 'F': 'France', 'CN': 'China', 'J': 'Japan', 'I': 'Italy', 'IN': 'India', 'CA': 'Canada', 'DE': 'Germany', 'UK': 'UK', 'ES': 'Spain', 'AR': 'Argentina', 'BR': 'Brazil', 'AU': 'Australia', 'KR': 'South Korea', 'IL': 'Israel', 'UAE': 'UAE', 'EU': 'ESA', 'AS': 'AsiaSat', 'SES': 'SES', 'INT': 'Intelsat', 'ITS': 'ITS', 'LU': 'Luxembourg' };
-            const upperName = name ? name.toUpperCase() : "";
-            for (const code in commonCountryCodes) { if (upperName.includes(code + "-") || upperName.includes(code + " ")) return commonCountryCodes[code]; }
-            if (intlDesFull) { const parts = intlDesFull.split('-'); if (parts.length > 1) { const potentialCode = parts[parts.length-1].replace(/[A-Z]+$/, '').substring(0,2); if(commonCountryCodes[potentialCode]) return commonCountryCodes[potentialCode]; } }
-            return "Unknown";
-        }
-        function populateFilterDropdowns(countries, constellations) {
-            const countrySelect = document.getElementById('filter-country'); Array.from(countries).sort().forEach(c => { if(c !== "Unknown") countrySelect.add(new Option(c, c)); });
-            const constellSelect = document.getElementById('filter-constellation'); Array.from(constellations).sort().forEach(c => { if(c !== "Other") constellSelect.add(new Option(c,c)); });
-        }
-        function createSatelliteVisuals(satsData) {
-            loadingText.innerText = `Visualizing ${satsData.length} satellites...`;
-            const satMaterial = new THREE.MeshBasicMaterial({ color: 0xffcc00 }); const satSelectedMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            const satGeometry = new THREE.SphereGeometry(0.004, 5, 5);
-            satsData.forEach(satData => {
-                const satMesh = new THREE.Mesh(satGeometry, satMaterial.clone());
-                satMesh.userData = { ...satData, defaultMaterial: satMaterial, selectedMaterial: satSelectedMaterial };
-                satMesh.visible = false; scene.add(satMesh); satelliteObjects.set(satData.noradId, satMesh);
+
+
+        // --- Chemical & Reaction Logic ---
+        function populateChemicals() {
+            chemicals.forEach(chem => {
+                const btn = document.createElement('button');
+                btn.classList.add('chemical-btn');
+                btn.dataset.id = chem.id;
+                btn.textContent = chem.name;
+                btn.style.backgroundColor = chem.color;
+                // Simple contrast for text
+                const brightness = (parseInt(chem.color.slice(1,3), 16) * 299 +
+                                    parseInt(chem.color.slice(3,5), 16) * 587 +
+                                    parseInt(chem.color.slice(5,7), 16) * 114) / 1000;
+                btn.style.color = brightness > 128 ? 'black' : 'white';
+
+                btn.addEventListener('click', () => selectChemical(chem, btn));
+                chemicalSelectorDiv.appendChild(btn);
             });
-            updateSatellitePositions(true);
         }
-        function applyFilters() {
-            const minLaunchYear = parseInt(document.getElementById('filter-launch-year-min').value) || 1957;
-            const maxLaunchYear = parseInt(document.getElementById('filter-launch-year-max').value) || currentYear;
-            const countryFilter = document.getElementById('filter-country').value;
-            const orbitTypeFilter = document.getElementById('filter-orbit-type').value;
-            const constellationFilter = document.getElementById('filter-constellation').value;
-            let visibleCount = 0;
-            allSatellitesData.forEach(satData => {
-                const satMesh = satelliteObjects.get(satData.noradId); if (!satMesh) return;
-                let passesFilters = true;
-                if (satData.launchYear < minLaunchYear || satData.launchYear > maxLaunchYear) passesFilters = false;
-                if (countryFilter && satData.country !== countryFilter) passesFilters = false;
-                if (orbitTypeFilter && satData.orbitType !== orbitTypeFilter) passesFilters = false;
-                if (constellationFilter && satData.constellation !== constellationFilter) passesFilters = false;
-                satMesh.visible = passesFilters; if (passesFilters) visibleCount++;
-            });
-            document.getElementById('visible-sat-count').textContent = `${visibleCount} / ${allSatellitesData.length}`;
-            if (targetSatelliteObject && !targetSatelliteObject.visible) deselectSatellite();
-        }
-        function clearFilters() {
-            document.getElementById('filter-launch-year-min').value = 1957; document.getElementById('filter-launch-year-max').value = currentYear;
-            document.getElementById('filter-country').value = ""; document.getElementById('filter-orbit-type').value = "";
-            document.getElementById('filter-constellation').value = ""; applyFilters();
-        }
-        function updateSatellitePositions(forceUpdateAll = false) {
-            if (allSatellitesData.length === 0) return; if (timePaused && !forceUpdateAll) return;
-            const gmst = satellite.gstime(currentTime);
-            allSatellitesData.forEach(satData => {
-                const satMesh = satelliteObjects.get(satData.noradId); if (!satMesh) return;
-                const isCurrentlyTargeted = targetSatelliteObject && targetSatelliteObject.userData && targetSatelliteObject.userData.noradId === satData.noradId;
-                if (!forceUpdateAll && !satMesh.visible && !isCurrentlyTargeted) return;
-                try {
-                    const positionAndVelocity = satellite.propagate(satData.satrec, currentTime);
-                    if (!positionAndVelocity.position || !positionAndVelocity.velocity) return;
-                    const pEci = positionAndVelocity.position; const vEci = positionAndVelocity.velocity;
-                    const geodetic = satellite.eciToGeodetic(pEci, gmst);
-                    satData.latitude = satellite.degreesLat(geodetic.latitude); satData.longitude = satellite.degreesLong(geodetic.longitude);
-                    satData.altitude = geodetic.height; satData.velocity = Math.sqrt(vEci.x**2 + vEci.y**2 + vEci.z**2);
-                    satMesh.position.set( pEci.x*SCALE_FACTOR, pEci.z*SCALE_FACTOR, -pEci.y*SCALE_FACTOR );
-                    if (isCurrentlyTargeted && focusedSatellitePathLine) { drawOrbitPathForSatellite(satData); }
-                } catch (e) { }
-            });
-            if (targetSatelliteObject) { updateLiveInfoPanel(targetSatelliteObject.userData); }
-        }
-        function setupTimeControls() {
-            initialTime = new Date(currentTime); timelineSlider.max = 24 * 60;
-            timelineSlider.addEventListener('input', (event) => {
-                const minutesOffset = parseInt(event.target.value); currentTime = new Date(initialTime.getTime() + minutesOffset * 60000);
-                updateSatellitePositions(true); updateTimeDisplay(); if (targetSatelliteObject) drawOrbitPathForSatellite(targetSatelliteObject.userData);
-            });
-            timePlayPauseBtn.addEventListener('click', () => { timePaused = !timePaused; timePlayPauseBtn.textContent = timePaused ? "Play" : "Pause"; });
-            timeRewindBtn.addEventListener('click', () => { timeScale = Math.max(0.1, timeScale / 2); updateTimeSpeedDisplay(); });
-            timeForwardBtn.addEventListener('click', () => { timeScale = Math.min(1024*2, timeScale * 2); updateTimeSpeedDisplay(); });
-            timeResetBtn.addEventListener('click', () => {
-                currentTime = new Date(initialTime); timeScale = 1; timePaused = false; timePlayPauseBtn.textContent = "Pause";
-                timelineSlider.value = 0; updateTimeSpeedDisplay(); updateTimeDisplay(); updateSatellitePositions(true);
-                if (targetSatelliteObject) drawOrbitPathForSatellite(targetSatelliteObject.userData);
-            });
-            updateTimeSpeedDisplay();
-        }
-        function updateTimeSpeedDisplay() { timeSpeedDisplay.textContent = `${timeScale}x`; }
-        function updateTimeDisplay() {
-            timeDisplay.textContent = `Sim Time: ${currentTime.toLocaleTimeString()} UTC`;
-            const diffMinutes = (currentTime.getTime() - initialTime.getTime()) / 60000;
-            timelineSlider.value = Math.round(Math.max(0, Math.min(timelineSlider.max, diffMinutes)));
-        }
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        function onPointerDown(event) {
-            let targetElement = event.target;
-            while(targetElement != null) {
-                if (targetElement.id === 'info-panel' || targetElement.id === 'filter-panel' || targetElement.id === 'search-overlay' || targetElement.id === 'timeline-container' || targetElement.id === 'main-controls-bar') return;
-                targetElement = targetElement.parentElement;
+
+        function selectChemical(chemical, buttonElement) {
+            const index = selectedChemicals.findIndex(sc => sc.id === chemical.id);
+            if (index > -1) { // Already selected, de-select
+                selectedChemicals.splice(index, 1);
+                buttonElement.classList.remove('selected');
+            } else {
+                if (selectedChemicals.length < 2) {
+                    selectedChemicals.push(chemical);
+                    buttonElement.classList.add('selected');
+                } else {
+                    // Optional: Notify user they can only select 2
+                    reactionMessageEl.textContent = "Max 2 chemicals! Clear selection or unselect one.";
+                    setTimeout(() => reactionMessageEl.textContent = "Select two chemicals and hit Mix!", 2000);
+                }
             }
-            pointer.x = (event.clientX / window.innerWidth) * 2 - 1; pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(pointer, camera);
-            const visibleSatelliteMeshes = Array.from(satelliteObjects.values()).filter(mesh => mesh.visible);
-            const intersects = raycaster.intersectObjects(visibleSatelliteMeshes);
-            if (intersects.length > 0) {
-                const newIntersectedObject = intersects[0].object;
-                if (targetSatelliteObject !== newIntersectedObject) selectSatellite(newIntersectedObject);
-            } else { if (!infoPanel.classList.contains('visible')) { deselectSatellite(); } }
+            mixBtn.disabled = selectedChemicals.length !== 2;
         }
-        function selectSatellite(satObject) {
-            if (targetSatelliteObject) { targetSatelliteObject.material = satObject.userData.defaultMaterial; }
-            targetSatelliteObject = satObject; targetSatelliteObject.material = satObject.userData.selectedMaterial;
-            displaySatelliteInfo(targetSatelliteObject.userData); drawOrbitPathForSatellite(targetSatelliteObject.userData);
-            focusOnSatelliteCamera(targetSatelliteObject); isFollowingSatellite = false; updateFollowButton(); showInfoPanel();
+
+        function clearSelections() {
+            selectedChemicals = [];
+            document.querySelectorAll('.chemical-btn.selected').forEach(btn => btn.classList.remove('selected'));
+            mixBtn.disabled = true;
+            reactionMessageEl.textContent = "Selections cleared. Ready for a new mix!";
+            currentBeakerLiquid = { color: 'rgba(200,220,255,0.1)', level: 0, targetLevel: 0 };
+            particles = [];
+            startAnimation(); // To clear canvas and animate liquid out
         }
-        function deselectSatellite() {
-            if (targetSatelliteObject) { targetSatelliteObject.material = targetSatelliteObject.userData.defaultMaterial; }
-            targetSatelliteObject = null; clearOrbitPath(); isFollowingSatellite = false; updateFollowButton(); controls.autoRotate = false;
-        }
-        function displaySatelliteInfo(satData) {
-            document.getElementById('sat-name-header').textContent = satData.name || 'Satellite Info';
-            document.getElementById('sat-name').textContent = satData.name || 'N/A';
-            document.getElementById('sat-norad-id').textContent = satData.noradId || 'N/A';
-            document.getElementById('sat-intl-des').textContent = satData.intlDes || 'N/A';
-            document.getElementById('sat-launch-date').textContent = satData.launchDate?.substring(0,10) || 'N/A';
-            document.getElementById('sat-launch-year').textContent = satData.launchYear || 'N/A';
-            document.getElementById('sat-country').textContent = satData.country || 'N/A';
-            document.getElementById('sat-orbit-type').textContent = satData.orbitType || 'N/A';
-            document.getElementById('sat-constellation').textContent = satData.constellation || 'N/A';
-            updateLiveInfoPanel(satData);
-        }
-        function updateLiveInfoPanel(satData){
-            document.getElementById('sat-altitude').textContent = satData.altitude ? satData.altitude.toFixed(0) : 'N/A';
-            document.getElementById('sat-velocity').textContent = satData.velocity ? satData.velocity.toFixed(1) : 'N/A';
-            document.getElementById('sat-period').textContent = satData.periodMinutes ? satData.periodMinutes.toFixed(0) : 'N/A';
-            document.getElementById('sat-inclination').textContent = satData.inclinationDeg ? satData.inclinationDeg.toFixed(1) : 'N/A';
-            document.getElementById('sat-lat').textContent = satData.latitude ? satData.latitude.toFixed(2) : 'N/A';
-            document.getElementById('sat-lon').textContent = satData.longitude ? satData.longitude.toFixed(2) : 'N/A';
-        }
-        function drawOrbitPathForSatellite(satData) {
-            if (!satData || !satData.satrec) return; clearOrbitPath();
-            const points = []; const segments = 90; const orbitDurationMinutes = satData.periodMinutes || 90;
-            const timeStepMinutes = orbitDurationMinutes / segments; let tempTime = new Date(currentTime.getTime());
-            for (let i = 0; i <= segments; i++) {
-                try {
-                    const pnv = satellite.propagate(satData.satrec, tempTime);
-                    if (pnv.position) points.push(new THREE.Vector3( pnv.position.x*SCALE_FACTOR, pnv.position.z*SCALE_FACTOR, -pnv.position.y*SCALE_FACTOR ));
-                } catch (e) { }
-                tempTime = new Date(tempTime.getTime() + timeStepMinutes * 60000);
+
+        function mixChemicals() {
+            if (selectedChemicals.length !== 2) return;
+
+            const [chem1, chem2] = selectedChemicals;
+            let reactionText = `Mixing ${chem1.name} and ${chem2.name}... `;
+            
+            // Ensure consistent order for defining reactions
+            const ids = [chem1.id, chem2.id].sort().join('-');
+
+            // Update beaker base color and level
+            const r1 = parseInt(chem1.color.slice(1,3),16), g1 = parseInt(chem1.color.slice(3,5),16), b1 = parseInt(chem1.color.slice(5,7),16);
+            const r2 = parseInt(chem2.color.slice(1,3),16), g2 = parseInt(chem2.color.slice(3,5),16), b2 = parseInt(chem2.color.slice(5,7),16);
+            const mixedR = Math.floor((r1+r2)/2);
+            const mixedG = Math.floor((g1+g2)/2);
+            const mixedB = Math.floor((b1+b2)/2);
+            
+            currentBeakerLiquid.color = `rgb(${mixedR},${mixedG},${mixedB})`;
+            currentBeakerLiquid.targetLevel = 0.75; // Animate fill to 75%
+            particles = []; // Clear old particles
+
+            // --- Define "Funny" Reactions ---
+            switch (ids) {
+                case 'boom-giggle':
+                    reactionText += "KABOOM! ...of laughter! Confetti everywhere!";
+                    for (let i = 0; i < 100; i++) {
+                        particles.push(new Particle(
+                            canvasWidth / 2, canvasHeight * 0.7,
+                            (Math.random() - 0.5) * 10, (Math.random() - 0.7) * 10, // Upward burst
+                            Math.random() * 5 + 2,
+                            `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`,
+                            100 + Math.random() * 50
+                        ));
+                    }
+                    break;
+                case 'giggle-slime':
+                    reactionText += "Wobbly, giggly slime! It's trying to escape!";
+                     currentBeakerLiquid.targetLevel = 0.9; // Slime expands
+                    for (let i = 0; i < 50; i++) { // Bubbles
+                        particles.push(new Particle(
+                            Math.random() * canvasWidth * 0.8 + canvasWidth * 0.1, canvasHeight * 0.8,
+                            (Math.random() - 0.5) * 1, -(Math.random() * 2 + 1), // Rising bubbles
+                            Math.random() * 8 + 4, chem1.color,
+                            80 + Math.random() * 40
+                        ));
+                    }
+                    break;
+                case 'slime-sparkle':
+                    reactionText += "Sparkly, glamorous goo! So shiny!";
+                    currentBeakerLiquid.color = chem2.color; // Sparkle color dominates
+                    for (let i = 0; i < 150; i++) { // Sparkles
+                        particles.push(new Particle(
+                            Math.random() * canvasWidth, canvasHeight * (0.25 + Math.random() * 0.5), // within liquid
+                            (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, // slow drift
+                            Math.random() * 2 + 1, 'white',
+                            120 + Math.random() * 60
+                        ));
+                    }
+                    break;
+                case 'boom-stink':
+                    reactionText += "POOF! A cloud of... questionable aroma. Yikes!";
+                    currentBeakerLiquid.color = chem2.color;
+                    currentBeakerLiquid.targetLevel = 0.3; // some evaporates
+                    for (let i = 0; i < 80; i++) { // Smoke cloud
+                        particles.push(new Particle(
+                            canvasWidth/2, canvasHeight * 0.6,
+                            (Math.random() - 0.5) * 3, -(Math.random() * 1.5 + 0.5), // Rising, spreading smoke
+                            Math.random() * 15 + 10, `rgba(100,100,80,0.7)`, // brownish smoke
+                            100 + Math.random() * 50
+                        ));
+                    }
+                    break;
+                case 'shrink-sparkle':
+                    reactionText += "Tiny, shimmering wonders! So cute!";
+                    currentBeakerLiquid.targetLevel = 0.2; // It shrinks!
+                    for (let i = 0; i < 100; i++) { // Tiny sparkles
+                        particles.push(new Particle(
+                            Math.random() * canvasWidth, canvasHeight * (0.8 + Math.random() * 0.1), // near bottom
+                            (Math.random() - 0.5) * 0.2, (Math.random() - 0.5) * 0.2,
+                            Math.random() * 1.5 + 0.5, 'white',
+                            100 + Math.random() * 30
+                        ));
+                    }
+                    break;
+                case 'giggle-stink':
+                    reactionText += "It smells awful, but you can't stop laughing!";
+                     for (let i = 0; i < 30; i++) { // Giggle bubbles
+                        particles.push(new Particle(
+                            Math.random() * canvasWidth * 0.8 + canvasWidth * 0.1, canvasHeight * 0.8,
+                            (Math.random() - 0.5) * 1, -(Math.random() * 2 + 1),
+                            Math.random() * 6 + 3, chem1.color, 80
+                        ));
+                    }
+                    for (let i = 0; i < 30; i++) { // Stink clouds
+                        particles.push(new Particle(
+                            Math.random() * canvasWidth * 0.8 + canvasWidth * 0.1, canvasHeight * 0.7,
+                            (Math.random() - 0.5) * 1, -(Math.random() * 1 + 0.2),
+                            Math.random() * 10 + 5, chem2.color.replace(')', ', 0.5)'), 80 // semi-transparent
+                        ));
+                    }
+                    break;
+                // Add more reactions here!
+                // e.g. 'boom-shrink', 'slime-stink', 'sparkle-stink', 'shrink-slime', 'boom-sparkle' etc.
+                case 'boom-slime':
+                    reactionText += "A sticky explosion! Everything is covered in bouncy slime!";
+                    currentBeakerLiquid.targetLevel = 0.85;
+                    for (let i = 0; i < 70; i++) { // Bouncy slime globs
+                        particles.push(new Particle(
+                            canvasWidth / 2, canvasHeight * 0.7,
+                            (Math.random() - 0.5) * 8, (Math.random() - 0.6) * 9,
+                            Math.random() * 8 + 4, chem2.color, // Slime color
+                            120 + Math.random() * 60
+                        ));
+                    }
+                     // Make some particles "stick" to beaker walls (visual trick)
+                    setTimeout(() => {
+                        for(let i=0; i<5; i++) {
+                             particles.push(new Particle(
+                                Math.random() < 0.5 ? canvasWidth*0.1 : canvasWidth*0.9, canvasHeight * (0.3 + Math.random()*0.4),
+                                0,0, // stationary
+                                Math.random() * 10 + 5, chem2.color,
+                                200 // long life
+                            ));
+                        }
+                        startAnimation();
+                    }, 800);
+                    break;
+
+                default:
+                    reactionText += "Hmm, a curious fizzle. Nothing too dramatic, just a new color perhaps!";
+                    // Default gentle fizz
+                     for (let i = 0; i < 30; i++) {
+                        particles.push(new Particle(
+                            Math.random() * canvasWidth * 0.6 + canvasWidth * 0.2, canvasHeight * 0.8,
+                            (Math.random() - 0.5) * 0.5, -(Math.random() * 1 + 0.5),
+                            Math.random() * 3 + 1, 'white',
+                            60 + Math.random() * 30
+                        ));
+                    }
             }
-            if (points.length > 1) {
-                const pathGeometry = new THREE.BufferGeometry().setFromPoints(points);
-                const pathMaterial = new THREE.LineBasicMaterial({ color: 0x00dddd, linewidth: 1, transparent: true, opacity: 0.6 });
-                focusedSatellitePathLine = new THREE.Line(pathGeometry, pathMaterial); scene.add(focusedSatellitePathLine);
-            }
+
+            reactionMessageEl.textContent = reactionText;
+            startAnimation(); // Start animation loop for particles and liquid
+            // Auto clear selection for next mix, but keep visuals
+            selectedChemicals = [];
+            document.querySelectorAll('.chemical-btn.selected').forEach(btn => btn.classList.remove('selected'));
+            mixBtn.disabled = true;
         }
-        function clearOrbitPath() {
-            if (focusedSatellitePathLine) {
-                scene.remove(focusedSatellitePathLine); focusedSatellitePathLine.geometry.dispose();
-                focusedSatellitePathLine.material.dispose(); focusedSatellitePathLine = null;
-            }
-        }
-        function focusOnSatelliteCamera(satelliteObject) { if (!satelliteObject) return; isCameraAnimating = true; controls.autoRotate = false; }
-        function toggleFollowSatellite() {
-            if (!targetSatelliteObject) return; isFollowingSatellite = !isFollowingSatellite; updateFollowButton();
-            if (isFollowingSatellite) isCameraAnimating = false;
-        }
-        function updateFollowButton() {
-            if (isFollowingSatellite && targetSatelliteObject) { followSatelliteToggleBtn.textContent = "Stop Following"; followSatelliteToggleBtn.classList.add('following'); }
-            else { followSatelliteToggleBtn.textContent = "Follow Satellite"; followSatelliteToggleBtn.classList.remove('following'); }
-            followSatelliteToggleBtn.style.display = targetSatelliteObject ? 'block' : 'none';
-        }
-        function handleSearch(event) {
-            const query = event.target.value.toLowerCase(); searchResultsList.innerHTML = ''; if (query.length < 1) return;
-            const results = allSatellitesData.filter(sat => sat.name.toLowerCase().includes(query) || sat.noradId.includes(query)).slice(0, 20);
-            if (results.length > 0) { results.forEach(sat => { const li = document.createElement('li'); li.textContent = `${sat.name} (${sat.noradId})`; li.dataset.noradId = sat.noradId; searchResultsList.appendChild(li); }); }
-            else { const li = document.createElement('li'); li.textContent = "No satellites found."; li.style.cursor = "default"; searchResultsList.appendChild(li); }
-        }
-        function handleSearchResultClick(event) {
-            if (event.target.tagName === 'LI' && event.target.dataset.noradId) {
-                const noradId = event.target.dataset.noradId; const satObject = satelliteObjects.get(noradId);
-                if (satObject) { selectSatellite(satObject); toggleSearchOverlay(false); }
-            }
-        }
-        function animateApp() {
-            requestAnimationFrame(animateApp); const elapsedDelta = clock.getDelta();
-            if(!timePaused){
-                const simElapsedTimeMs = elapsedDelta * 1000 * timeScale;
-                currentTime = new Date(currentTime.getTime() + simElapsedTimeMs);
-                updateTimeDisplay(); updateSatellitePositions();
-            }
-            const rotationSpeedFactor = (timePaused ? 0.1 : timeScale) * elapsedDelta * 2;
-            earth.rotation.y += 0.005 * rotationSpeedFactor;
-            if (clouds) clouds.rotation.y += 0.008 * rotationSpeedFactor;
-            if (stars) stars.rotation.y += 0.002 * rotationSpeedFactor;
-            if (targetSatelliteObject) {
-                targetSatelliteObject.getWorldPosition(cameraFocusTargetPosition);
-                if (isCameraAnimating) {
-                    controls.target.lerp(cameraFocusTargetPosition, 0.08);
-                    let alt = targetSatelliteObject.userData.approxAltitudeKm || 1000; let distFactor = 0.08;
-                    if (alt < 1000) distFactor = 0.04; else if (alt > 30000) distFactor = 0.2;
-                    const offset = new THREE.Vector3().subVectors(camera.position, controls.target).normalize().multiplyScalar(distFactor);
-                    desiredCameraPosition.addVectors(cameraFocusTargetPosition, offset);
-                    camera.position.lerp(desiredCameraPosition, 0.08);
-                    if (camera.position.distanceTo(desiredCameraPosition) < 0.001 && controls.target.distanceTo(cameraFocusTargetPosition) < 0.001) isCameraAnimating = false;
-                } else if (isFollowingSatellite) { controls.target.copy(cameraFocusTargetPosition); }
-            }
-            controls.update(); renderer.render(scene, camera);
-        }
+
+        // --- Event Listeners ---
+        mixBtn.addEventListener('click', mixChemicals);
+        clearBtn.addEventListener('click', clearSelections);
+        window.addEventListener('resize', resizeCanvas);
+        document.addEventListener('DOMContentLoaded', () => {
+            populateChemicals();
+            resizeCanvas(); // Initial canvas setup
+            // Initial beaker content draw (empty)
+            currentBeakerLiquid.level = 0;
+            currentBeakerLiquid.targetLevel = 0;
+            drawBeakerContents(); 
+        });
+
     </script>
 </body>
 </html>
