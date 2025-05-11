@@ -3,685 +3,847 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Hide & Collect - DQN Agent</title>
-    <!-- Import TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <title>Micro Flight Simulator</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #121212; color: #e0e0e0; margin: 0; padding: 5px; overscroll-behavior: none; }
-        .controls { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 6px; background-color: #222; border-radius: 5px; width: calc(100% - 10px); max-width: 880px; box-sizing: border-box;}
-        .controls div { display: flex; flex-direction: column; align-items: center; }
-        .controls label { font-size: 0.75em; margin-bottom: 1px; color: #bbb;}
-        .controls input[type="range"], .controls input[type="number"] { width: 90px; background-color: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 3px;}
-        .controls span { font-size: 0.75em; color: #ccc; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 450px; }
-        canvas { border: 1px solid #333; background-color: #1c1c1c; max-width: 100%; height: auto; display: block; }
-        #gameCanvas { background-color: #283848; }
-        #lossCanvas { background-color: #252525; }
-        .stats { border: 1px solid #333; padding: 7px; background-color: #222; width: calc(100% - 16px); max-width: 430px; box-sizing: border-box; }
-        .stats p { margin: 3px 0; font-size: 0.75em; color: #ccc;}
-        h1 {font-size: 1.4em; color: #fff;} h2 { font-size: 0.9em; color: #ddd;}
-        .player-speed-indicator { font-weight: bold; }
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Prevent default touch behaviors like pinch-zoom */
+        }
 
-        @media (min-width: 800px) {
-            .container { flex-direction: row; align-items: flex-start; max-width: 900px; }
-            .game-area { flex: 3; }
-            .ai-info { flex: 2; }
-            .controls input[type="range"], .controls input[type="number"] { width: 110px; }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px; /* Max width for larger screens */
+            height: 100%;
+            background-color: #222;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1; /* Canvas takes available vertical space */
+            background-color: #000;
+            overflow: hidden; /* Crucial for camera */
+        }
+
+        canvas {
+            display: block;
+            background-color: #334466; /* Sky blue */
+        }
+        
+        #ui-panel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            background-color: #333;
+            padding: 5px 0;
+            box-sizing: border-box;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 5px 10px;
+        }
+
+        .controls-row button, .controls-row input[type="range"] {
+            padding: 8px 12px;
+            margin: 2px;
+            background-color: #555;
+            color: white;
+            border: 1px solid #777;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .controls-row input[type="range"] {
+            flex-grow: 1;
+            max-width: 150px;
+        }
+
+        .controls-row button:active {
+            background-color: #777;
+        }
+        .controls-row label {
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+
+        #telemetry {
+            font-size: 0.8em;
+            text-align: center;
+            padding: 3px;
+            background-color: #2a2a2a;
+        }
+        
+        /* Build Mode Specific UI */
+        #part-palette {
+            display: flex;
+            flex-wrap: wrap; /* Allow parts to wrap */
+            justify-content: center;
+            padding: 5px;
+            background-color: #282828;
+            max-height: 150px; /* Limit palette height */
+            overflow-y: auto;
+        }
+
+        .part-button {
+            border: 1px solid #666;
+            background-color: #444;
+            color: white;
+            padding: 5px;
+            margin: 3px;
+            cursor: pointer;
+            min-width: 60px;
+            text-align: center;
+            font-size: 0.7em;
+            border-radius: 3px;
+        }
+        .part-button.selected {
+            background-color: #007bff;
+            border-color: #0056b3;
+        }
+
+        #staging-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+            background-color: #2c2c2c;
+        }
+        #staging-ui h4 { margin: 2px 0 5px 0; font-size: 0.8em;}
+        .stage-container {
+            border: 1px dashed #555;
+            padding: 3px;
+            margin-bottom: 3px;
+            width: 90%;
+            min-height: 20px;
+            font-size: 0.7em;
+        }
+        .stage-part {
+            background-color: #383838;
+            padding: 2px;
+            margin: 1px;
+            border-radius: 2px;
+            font-size: 0.9em; /* relative to parent */
+        }
+
+        #build-mode-controls button, #flight-mode-controls button {
+            flex-grow: 1;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <h1>AI Hide & Collect - DQN Agent (TF.js)</h1>
-
-    <div class="controls">
-        <div><label for="simSpeedControl">Sim Speed (ms):</label><input type="range" id="simSpeedControl" min="1" max="200" value="10"><span id="simSpeedValue">10</span></div>
-        <div><label for="trainingIterControl">Train Iter/Step:</label><input type="range" id="trainingIterControl" min="0" max="10" value="1"><span id="trainingIterValue">1</span></div>
-        <div><label for="batchSizeControl">Batch Size:</label><input type="number" id="batchSizeControl" min="8" max="256" step="8" value="32"></div>
-        <div><label for="learningRateControl">Learning Rate:</label><input type="number" id="learningRateControl" min="0.00001" max="0.01" step="0.00001" value="0.00025"></div>
-        <div><label for="fastSpeedCostControl">Fast Speed Cost:</label><input type="range" id="fastSpeedCostControl" min="0" max="1" step="0.01" value="0.05"><span id="fastSpeedCostValue">0.05</span></div>
-    </div>
-
-    <div class="container">
-        <div class="game-area">
-            <h2>Game World (<span class="player-speed-indicator" id="playerSpeedIndicator">NORMAL</span>)</h2>
-            <canvas id="gameCanvas" width="360" height="540"></canvas>
+    <div id="game-container">
+        <div id="canvas-container">
+            <canvas id="gameCanvas"></canvas>
         </div>
-        <div class="ai-info">
-            <h2>AI Training Loss</h2>
-            <canvas id="lossCanvas" width="180" height="180"></canvas>
-            <div class="stats">
-                <h2>Stats</h2>
-                <p>Episode: <span id="episode">0</span></p>
-                <p>Cookies: <span id="cookies">0</span> | Punishments: <span id="punishments">0</span></p>
-                <p>Epsilon: <span id="epsilon">1.000</span></p>
-                <p>Last Action: <span id="lastAction">-</span></p>
-                <p>Replay Buffer: <span id="replayBufferSize">0</span> / <span id="replayBufferCapacity">0</span></p>
-                <p>Total Steps: <span id="totalSteps">0</span></p>
-                <p>Avg. Reward / Ep: <span id="avgReward">N/A</span></p>
-                <p>Avg. Loss: <span id="avgLoss">N/A</span></p>
+        
+        <div id="ui-panel">
+            <div id="telemetry">Alt: 0m | Vel: 0m/s | Fuel: 100% | Stage: 0</div>
+
+            <!-- Build Mode UI -->
+            <div id="build-mode-ui">
+                <div id="part-palette"></div>
+                <div id="staging-ui">
+                    <h4>Staging</h4>
+                    <div id="stages-display"></div>
+                    <div class="controls-row">
+                        <button id="addStageBtn">Add Stage</button>
+                        <button id="clearRocketBtn">Clear Rocket</button>
+                    </div>
+                </div>
+                <div class="controls-row" id="build-mode-controls">
+                    <button id="launchBtn">Launch!</button>
+                </div>
+            </div>
+
+            <!-- Flight Mode UI -->
+            <div id="flight-mode-ui" class="hidden">
+                 <div class="controls-row">
+                    <label for="throttleSlider">Throttle:</label>
+                    <input type="range" id="throttleSlider" min="0" max="100" value="0">
+                    <span id="throttleValue">0%</span>
+                </div>
+                <div class="controls-row" id="flight-mode-controls">
+                    <button id="stageBtn">Stage!</button>
+                    <button id="resetFlightBtn">To Builder</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- DOM Elements ---
-        const gameCanvas = document.getElementById('gameCanvas');
-        const gameCtx = gameCanvas.getContext('2d');
-        const lossCanvas = document.getElementById('lossCanvas');
-        const lossCtx = lossCanvas.getContext('2d');
-        const playerSpeedIndicatorEl = document.getElementById('playerSpeedIndicator');
-        const episodeEl = document.getElementById('episode');
-        const cookiesEl = document.getElementById('cookies');
-        const punishmentsEl = document.getElementById('punishments');
-        const epsilonEl = document.getElementById('epsilon');
-        const lastActionEl = document.getElementById('lastAction');
-        const replayBufferSizeEl = document.getElementById('replayBufferSize');
-        const replayBufferCapacityEl = document.getElementById('replayBufferCapacity');
-        const totalStepsEl = document.getElementById('totalSteps');
-        const avgRewardEl = document.getElementById('avgReward');
-        const avgLossEl = document.getElementById('avgLoss');
+        // Game Constants
+        const PX_PER_METER = 5; // Pixels per meter for drawing
+        const GRAVITY = 9.81;   // m/s^2
+        const TIME_STEP = 1/60; // s, for physics updates
 
-        const simSpeedControl = document.getElementById('simSpeedControl');
-        const simSpeedValue = document.getElementById('simSpeedValue');
-        const trainingIterControl = document.getElementById('trainingIterControl');
-        const trainingIterValue = document.getElementById('trainingIterValue');
-        const batchSizeControl = document.getElementById('batchSizeControl');
-        const learningRateControl = document.getElementById('learningRateControl');
-        const fastSpeedCostControl = document.getElementById('fastSpeedCostControl');
-        const fastSpeedCostValue = document.getElementById('fastSpeedCostValue');
+        // Canvas and Context
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // --- Game Constants & Config ---
-        const PLAYER_SIZE = 12; 
-        const HUNTER_SIZE = 12;
-        const COIN_RADIUS = 6;
-        const NORMAL_SPEED_MULTIPLIER = 1.0;
-        const FAST_SPEED_MULTIPLIER = 1.75; 
-        const BASE_MOVE_SPEED = PLAYER_SIZE; 
-        const HUNTER_BASE_SPEED = PLAYER_SIZE * 0.9; 
-        let MAX_STEPS_PER_EPISODE = 400;
-        let FAST_ACTION_COST = 0.05; 
-        const MAX_DIST_NORM = Math.hypot(gameCanvas.width, gameCanvas.height);
-        const MAX_PROBE_STEPS_NORM = 2; // probeClearSteps returns 0, 1, or 2
-        const MAX_COVER_DIST_CATEGORIES_NORM = 2; // distToCover returns 0, 1, or 2 for 3 categories
-
-        // --- Game Objects & State ---
-        let player = { x: 50, y: 50, width: PLAYER_SIZE, height: PLAYER_SIZE, color: 'deepskyblue', currentSpeedMultiplier: NORMAL_SPEED_MULTIPLIER };
-        let hunter = { x: gameCanvas.width - 50, y: gameCanvas.height - 50, width: HUNTER_SIZE, height: HUNTER_SIZE, color: 'crimson', lastDx:0, lastDy:0 };
-        let coins = [];
-        let obstacles = [ 
-            { x: 0, y: 100, width: gameCanvas.width/3, height: 20, color: '#4a4a4a' },
-            { x: gameCanvas.width * 2/3, y: 100, width: gameCanvas.width/3, height: 20, color: '#4a4a4a' },
-            { x: gameCanvas.width/2 - 10, y: 0, width: 20, height: gameCanvas.height/4, color: '#4a4a4a' },
-            { x: gameCanvas.width/2 - 10, y: gameCanvas.height*3/4, width: 20, height: gameCanvas.height/4, color: '#4a4a4a' },
-            { x: 80, y: 250, width: 100, height: 15, color: '#4a4a4a' },
-            { x: gameCanvas.width - 180, y: 250, width: 100, height: 15, color: '#4a4a4a' },
-            { x: 40, y: gameCanvas.height - 150, width: 15, height: 100, color: '#4a4a4a' },
-            { x: gameCanvas.width - 55, y: gameCanvas.height - 150, width: 15, height: 100, color: '#4a4a4a' },
-            { x: gameCanvas.width/2 - 50, y: gameCanvas.height/2 - 10, width: 100, height: 20, color: '#4a4a4a' }
-        ];
-
-        const baseActions = [
-            { dx: 0, dy: -1, name: "Up" }, { dx: 0, dy: 1, name: "Down" },
-            { dx: -1, dy: 0, name: "Left" }, { dx: 1, dy: 0, name: "Right" },
-            { dx: 0, dy: 0, name: "Stay" }
-        ];
-        const ACTIONS = [];
-        baseActions.forEach(ba => {
-            ACTIONS.push({ ...ba, speedMultiplier: NORMAL_SPEED_MULTIPLIER, name: ba.name + " (N)" });
-            if (ba.name !== "Stay") { ACTIONS.push({ ...ba, speedMultiplier: FAST_SPEED_MULTIPLIER, name: ba.name + " (F)" }); }
-        });
-        const NUM_ACTIONS = ACTIONS.length; // Should be 9
-
-        // --- DQN Agent Parameters ---
-        let STATE_SIZE; // Determined after first call to get_state_vector
-        const REPLAY_BUFFER_CAPACITY = 10000;
-        let BATCH_SIZE = 32;
-        const DISCOUNT_FACTOR = 0.99; // Higher discount for more foresight
-        let LEARNING_RATE = 0.00025;
-        let epsilon = 1.0;
-        const EPSILON_DECAY = 0.9998; // Slower decay needed for DQN
-        const MIN_EPSILON = 0.01;
-        const TARGET_NETWORK_UPDATE_FREQUENCY = 200; // In game steps
-        let trainingIterationsPerStep = 1;
-
-        let dqnAgent;
-        let lossHistory = [];
-        const MAX_LOSS_HISTORY = 100;
-
-        let scoreCookies = 0, scorePunishments = 0, episodeCount = 0;
-        let currentStepsInEpisode = 0, cumulativeTotalSteps = 0;
-        let totalRewardCollectedThisEpisode = 0;
-        let episodeRewardsHistory = [];
-        const AVG_REWARD_HISTORY_LENGTH = 50;
-        let simIntervalId = null, currentSimSpeed = 10;
+        // UI Elements
+        const telemetryDisplay = document.getElementById('telemetry');
+        const partPaletteDiv = document.getElementById('part-palette');
+        const stagesDisplayDiv = document.getElementById('stages-display');
+        const addStageBtn = document.getElementById('addStageBtn');
+        const clearRocketBtn = document.getElementById('clearRocketBtn');
+        const launchBtn = document.getElementById('launchBtn');
+        const throttleSlider = document.getElementById('throttleSlider');
+        const throttleValueSpan = document.getElementById('throttleValue');
+        const stageBtn = document.getElementById('stageBtn');
+        const resetFlightBtn = document.getElementById('resetFlightBtn');
+        const buildModeUI = document.getElementById('build-mode-ui');
+        const flightModeUI = document.getElementById('flight-mode-ui');
         
-        // --- Helper Functions (Collision, Spawning, Pathfinding - largely same) ---
-        function rectCollision(r1, r2) { return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x && r1.y < r2.y + r2.height && r1.y + r1.height > r2.y; }
-        function spawnCoin() { 
-             let coinX, coinY, validPosition;
-            const maxAttempts = 100; let attempts = 0;
-            do {
-                validPosition = true; attempts++;
-                coinX = COIN_RADIUS + Math.random() * (gameCanvas.width - 2 * COIN_RADIUS);
-                coinY = COIN_RADIUS + Math.random() * (gameCanvas.height - 2 * COIN_RADIUS);
-                for (const obs of obstacles) { if (coinX > obs.x && coinX < obs.x + obs.width && coinY > obs.y && coinY < obs.y + obs.height) { validPosition = false; break; } }
-                if (!validPosition) continue;
-                if (Math.hypot(coinX - (player.x+player.width/2), coinY - (player.y+player.height/2)) < PLAYER_SIZE * 5 + COIN_RADIUS) validPosition = false;
-                if (Math.hypot(coinX - (hunter.x+hunter.width/2), coinY - (hunter.y+hunter.height/2)) < HUNTER_SIZE * 5 + COIN_RADIUS) validPosition = false;
-            } while (!validPosition && attempts < maxAttempts);
-            if (!validPosition) { coinX = gameCanvas.width * Math.random(); coinY = gameCanvas.height * Math.random(); }
-            coins = [{ x: coinX, y: coinY, radius: COIN_RADIUS, color: 'gold' }];
-        }
-        function getAngleCategory(dx, dy, numCategories = 8) { const angle = Math.atan2(dy, dx) + Math.PI; return Math.floor(angle / (2 * Math.PI / numCategories)) % numCategories; } // Not directly used by NN, but could be for hunter or helpers
-        
-        function probeClearSteps(entity, unitDirX, unitDirY, moveSpeed, maxProbeSteps = 2) {
-            let clearSteps = 0;
-            for (let i = 1; i <= maxProbeSteps; i++) {
-                const probeRect = { x: entity.x + unitDirX * i * moveSpeed, y: entity.y + unitDirY * i * moveSpeed, width: entity.width, height: entity.height };
-                if (probeRect.x < 0 || probeRect.x + probeRect.width > gameCanvas.width || probeRect.y < 0 || probeRect.y + probeRect.height > gameCanvas.height) break;
-                let collision = false;
-                for (const obs of obstacles) { if (rectCollision(probeRect, obs)) { collision = true; break; } }
-                if (collision) break;
-                clearSteps++;
-            }
-            return clearSteps; // Returns 0, 1, or 2
-        }
-        function isPathClear(e1, e2, obsArr, e1ProbeSize) { 
-            const e1cx = e1.x + e1.width/2, e1cy = e1.y + e1.height/2;
-            const e2cx = e2.x + (e2.radius ? e2.radius : e2.width/2), e2cy = e2.y + (e2.radius ? e2.radius : e2.height/2);
-            const dx = e2cx-e1cx, dy = e2cy-e1cy, dist = Math.hypot(dx,dy);
-            if(dist < e1ProbeSize/2) return true;
-            const samples = Math.max(3, Math.ceil(dist / (e1ProbeSize/1.5)));
-            for(let i=0; i<=samples; ++i){
-                const t = i/samples;
-                const pr = {x: e1cx + t*dx - e1ProbeSize/4, y: e1cy + t*dy - e1ProbeSize/4, width: e1ProbeSize/2, height: e1ProbeSize/2};
-                for(const o of obsArr){ if(rectCollision(pr,o)) return false;}
-            }
-            return true;
-        }
-        function distToCoverValue(playerEntity, hunterEntity, obstaclesArr) { // Renamed from distToCover
-            const playerIsVisibleToHunter = isPathClear(hunterEntity, playerEntity, obstaclesArr, hunterEntity.width/2);
-            if (!playerIsVisibleToHunter) return 0; // Already covered
+        // Game State
+        let gameState = 'BUILD'; // BUILD or FLIGHT
+        let cameraY = 0; // For scrolling the view during flight
+        let rocket = {
+            parts: [],       // { def, x, y, stageIndex, instanceId }
+            stages: [[]],    // Array of arrays of part instanceIds
+            currentStageIndex: 0,
+            width: 0,        // Max width of the rocket
+            totalMass: 0,    // kg
+            totalFuel: 0,    // units
+            currentFuel: 0,  // units
+            thrust: 0,       // N
+            throttle: 0,     // 0-1
+            altitude: 0,     // m
+            velocityY: 0,    // m/s
+            centerOfMassY: 0 // Relative to bottom of rocket
+        };
+        let nextPartInstanceId = 0;
 
-            let minDist = Infinity;
-            const pCx = playerEntity.x + playerEntity.width / 2;
-            const pCy = playerEntity.y + playerEntity.height / 2;
-            
-            for (const obs of obstaclesArr) {
-                const obsMidX = obs.x + obs.width / 2;
-                const obsMidY = obs.y + obs.height / 2;
-                const tempPlayerAtObsMid = { ...playerEntity, x: obsMidX - playerEntity.width/2, y: obsMidY - playerEntity.height/2 };
-                if (!isPathClear(hunterEntity, tempPlayerAtObsMid, obstaclesArr, hunterEntity.width/2)) {
-                    if (isPathClear(playerEntity, { x: obsMidX, y: obsMidY, radius: 1 }, obstaclesArr, playerEntity.width/2)) {
-                         minDist = Math.min(minDist, Math.hypot(obsMidX - pCx, obsMidY - pCy));
-                    }
+        // Part Definitions
+        const PART_DEFINITIONS = {
+            // Dimensions in meters, mass in kg, fuel in "units" (e.g., liters or kg)
+            // ISP in seconds (simplified efficiency metric)
+            // Connection points: 'top', 'bottom', 'side' (not used yet)
+            // spriteColor: color for drawing
+            // type: 'pod', 'tank', 'engine', 'decoupler' (decoupler not fully implemented)
+            commandPod: { 
+                name: 'Command Pod', type: 'pod', 
+                width: 2, height: 1.5, mass: 500, 
+                spriteColor: '#cccccc', connectionPoints: ['bottom'] 
+            },
+            smallTank: { 
+                name: 'Small Tank', type: 'tank', 
+                width: 2, height: 2, mass: 100, fuel: 800, 
+                spriteColor: '#aaaaaa', connectionPoints: ['top', 'bottom']
+            },
+            mediumTank: {
+                name: 'Medium Tank', type: 'tank',
+                width: 3, height: 4, mass: 200, fuel: 2000,
+                spriteColor: '#bbbbbb', connectionPoints: ['top', 'bottom']
+            },
+            smallEngine: { 
+                name: 'Small Engine', type: 'engine', 
+                width: 1.5, height: 1.2, mass: 150, baseThrust: 40000, isp: 280, 
+                spriteColor: '#888888', connectionPoints: ['top'] 
+            },
+            largeEngine: {
+                name: 'Large Engine', type: 'engine',
+                width: 2.8, height: 2.5, mass: 800, baseThrust: 250000, isp: 310,
+                spriteColor: '#777777', connectionPoints: ['top']
+            }
+        };
+        let selectedPartKey = null;
+
+        // --- Utility Functions ---
+        function resizeCanvas() {
+            canvas.width = canvasContainer.clientWidth;
+            canvas.height = canvasContainer.clientHeight;
+            draw(); // Redraw after resize
+        }
+
+        function getPartById(instanceId) {
+            return rocket.parts.find(p => p.instanceId === instanceId);
+        }
+        
+        function getPartDefinition(partKey) {
+            return PART_DEFINITIONS[partKey];
+        }
+
+        // --- Build Mode Logic ---
+        function populatePartPalette() {
+            partPaletteDiv.innerHTML = '';
+            for (const key in PART_DEFINITIONS) {
+                const partDef = PART_DEFINITIONS[key];
+                const button = document.createElement('button');
+                button.classList.add('part-button');
+                button.textContent = partDef.name;
+                button.dataset.partKey = key;
+                button.onclick = () => selectPart(key, button);
+                partPaletteDiv.appendChild(button);
+            }
+        }
+
+        function selectPart(partKey, buttonElement) {
+            selectedPartKey = partKey;
+            document.querySelectorAll('.part-button.selected').forEach(btn => btn.classList.remove('selected'));
+            if (buttonElement) buttonElement.classList.add('selected');
+        }
+
+        function addPartToRocket(partDefKey, attachToInstanceId = null, clickYCanvas) {
+            if (!partDefKey) return;
+            const partDef = getPartDefinition(partDefKey);
+            let newPartY = 0; // Relative y from bottom of rocket
+            let newPartXOffset = 0; // For now, centered
+
+            if (rocket.parts.length === 0) {
+                if (partDef.type !== 'pod' && partDef.type !== 'engine') { // First part usually pod or engine if building upwards
+                     // Allow any part as first part for simplicity in this demo
                 }
-            }
-            if (minDist === Infinity) return 2; // Furthest category
-            if (minDist < PLAYER_SIZE * 2.5) return 0; // Close cover
-            if (minDist < PLAYER_SIZE * 6) return 1;   // Medium cover
-            return 2; // Far cover
-        }
-
-        // --- State Vector for DQN ---
-        function get_state_vector() {
-            const pCx = player.x + player.width/2, pCy = player.y + player.height/2;
-            const hCx = hunter.x + hunter.width/2, hCy = hunter.y + hunter.height/2;
-
-            const state = [];
-            // Player pos (normalized)
-            state.push(pCx / gameCanvas.width);
-            state.push(pCy / gameCanvas.height);
-
-            // Hunter relative pos & dist & angle (normalized)
-            const relHx = hCx - pCx;
-            const relHy = hCy - pCy;
-            const hDist = Math.hypot(relHx, relHy);
-            state.push(relHx / gameCanvas.width); // Can be negative
-            state.push(relHy / gameCanvas.height); // Can be negative
-            state.push(hDist / MAX_DIST_NORM);
-            state.push(Math.atan2(relHy, relHx) / Math.PI); // -1 to 1
-
-            // Coin relative pos & dist & angle (normalized, or zeros if no coin)
-            if (coins.length > 0) {
-                const coin = coins[0];
-                const relCx = coin.x - pCx;
-                const relCy = coin.y - pCy;
-                const cDist = Math.hypot(relCx, relCy);
-                state.push(relCx / gameCanvas.width);
-                state.push(relCy / gameCanvas.height);
-                state.push(cDist / MAX_DIST_NORM);
-                state.push(Math.atan2(relCy, relCx) / Math.PI);
-                state.push(isPathClear(player, coin, obstacles, PLAYER_SIZE/2) ? 1.0 : 0.0); // coinLOS
             } else {
-                state.push(0, 0, 0, 0, 0); // Placeholder for no coin
-            }
-            
-            // Hunter LOS & Cover
-            state.push(isPathClear(hunter, player, obstacles, HUNTER_SIZE/2) ? 1.0 : 0.0); // hunterLOS
-            state.push(distToCoverValue(player, hunter, obstacles) / MAX_COVER_DIST_CATEGORIES_NORM);
-
-            // Hunter's last move (normalized)
-            state.push(hunter.lastDx / (HUNTER_BASE_SPEED * 1.5)); // Normalize by potential max speed
-            state.push(hunter.lastDy / (HUNTER_BASE_SPEED * 1.5));
-
-            // Clearance around player (normalized)
-            const moveUnit = BASE_MOVE_SPEED;
-            state.push(probeClearSteps(player, 0, -1, moveUnit) / MAX_PROBE_STEPS_NORM); // N
-            state.push(probeClearSteps(player, 0, 1, moveUnit) / MAX_PROBE_STEPS_NORM);  // S
-            state.push(probeClearSteps(player, 1, 0, moveUnit) / MAX_PROBE_STEPS_NORM);  // E
-            state.push(probeClearSteps(player, -1, 0, moveUnit) / MAX_PROBE_STEPS_NORM); // W
-            
-            if (!STATE_SIZE) STATE_SIZE = state.length; // Set STATE_SIZE once
-            return state;
-        }
-
-        // --- Replay Buffer Class ---
-        class ReplayBuffer {
-            constructor(capacity) {
-                this.capacity = capacity;
-                this.buffer = [];
-                this.position = 0;
-                replayBufferCapacityEl.textContent = capacity;
-            }
-            push(state, action, reward, next_state, done) {
-                if (this.buffer.length < this.capacity) {
-                    this.buffer.push(null);
+                const attachToPart = attachToInstanceId ? getPartById(attachToInstanceId) : rocket.parts[rocket.parts.length - 1];
+                if (!attachToPart) {
+                    console.error("Cannot find part to attach to.");
+                    return;
                 }
-                this.buffer[this.position] = {state, action, reward, next_state, done};
-                this.position = (this.position + 1) % this.capacity;
-                replayBufferSizeEl.textContent = this.buffer.length;
-            }
-            sample(batchSize) {
-                const batch = [];
-                const max = this.buffer.length;
-                if (max < batchSize) return null; // Not enough samples yet
-
-                for (let i = 0; i < batchSize; i++) {
-                    batch.push(this.buffer[Math.floor(Math.random() * max)]);
-                }
-                return batch;
-            }
-            size() { return this.buffer.length; }
-        }
-
-        // --- DQN Agent Class ---
-        class DQNAgent {
-            constructor(stateSize, actionSize) {
-                this.stateSize = stateSize;
-                this.actionSize = actionSize;
-                this.replayBuffer = new ReplayBuffer(REPLAY_BUFFER_CAPACITY);
-                this.optimizer = tf.train.adam(LEARNING_RATE);
-
-                this.onlineNetwork = this._buildModel();
-                this.targetNetwork = this._buildModel();
-                this.updateTargetNetwork(); // Initialize target network
-            }
-
-            _buildModel() {
-                const model = tf.sequential();
-                model.add(tf.layers.dense({inputShape: [this.stateSize], units: 64, activation: 'relu'}));
-                model.add(tf.layers.dense({units: 64, activation: 'relu'}));
-                model.add(tf.layers.dense({units: this.actionSize, activation: 'linear'})); // Q-values
-                model.compile({optimizer: this.optimizer, loss: 'meanSquaredError'});
-                return model;
-            }
-
-            updateTargetNetwork() {
-                this.targetNetwork.setWeights(this.onlineNetwork.getWeights());
-            }
-
-            act(state) {
-                if (Math.random() <= epsilon) {
-                    return Math.floor(Math.random() * this.actionSize);
-                }
-                const qValues = tf.tidy(() => this.onlineNetwork.predict(tf.tensor2d([state])));
-                const action = tf.tidy(() => qValues.argMax(1).dataSync()[0]);
-                qValues.dispose();
-                return action;
-            }
-
-            remember(state, action, reward, nextState, done) {
-                this.replayBuffer.push(state, action, reward, nextState, done);
-            }
-
-            async train(batchSize) {
-                if (this.replayBuffer.size() < batchSize) return null;
-
-                const batch = this.replayBuffer.sample(batchSize);
-                if (!batch) return null;
-
-                const states = tf.tensor2d(batch.map(e => e.state));
-                const nextStates = tf.tensor2d(batch.map(e => e.next_state));
+                const attachToDef = getPartDefinition(attachToPart.def);
                 
-                let loss = null;
-                await tf.tidy(async () => { // Ensure tf.tidy handles async operations properly
-                    // Predict Q-values for current states from online network
-                    const currentQValues = this.onlineNetwork.predict(states);
-
-                    // Predict Q-values for next states using target network for values, online for actions (Double DQN)
-                    const nextOnlineQValues = this.onlineNetwork.predict(nextStates); // For selecting best action in next state
-                    const nextTargetQValues = this.targetNetwork.predict(nextStates); // For getting Q value of that action
-
-                    const targetQValuesData = currentQValues.arraySync(); // Get a mutable copy
-
-                    for (let i = 0; i < batch.length; i++) {
-                        const { action, reward, done } = batch[i];
-                        if (done) {
-                            targetQValuesData[i][action] = reward;
-                        } else {
-                            // Double DQN: Q_target = r + gamma * Q_target_net(s', argmax_a' Q_online_net(s', a'))
-                            const bestNextAction = nextOnlineQValues.slice([i, 0], [1, this.actionSize]).argMax(1).dataSync()[0];
-                            const nextQ = nextTargetQValues.slice([i, bestNextAction], [1, 1]).dataSync()[0];
-                            targetQValuesData[i][action] = reward + DISCOUNT_FACTOR * nextQ;
-                        }
-                    }
-                    
-                    const targetQValues = tf.tensor2d(targetQValuesData);
-                    const history = await this.onlineNetwork.fit(states, targetQValues, {
-                        epochs: 1, verbose: 0
-                    });
-                    loss = history.history.loss[0];
-                    
-                    targetQValues.dispose();
-                    
-                }); // End tf.tidy
-
-                states.dispose();
-                nextStates.dispose();
-                // nextOnlineQValues and nextTargetQValues should be disposed by their tf.tidy scopes or need manual disposal if used outside
-                // currentQValues is used to create targetQValuesData and should be disposed after that
-
-                return loss;
+                // Simple stacking: new part goes on top of attachToPart
+                newPartY = attachToPart.y + attachToDef.height;
             }
+
+            const newPart = {
+                def: partDefKey,
+                x: newPartXOffset, // X is relative to rocket centerline (0 for now)
+                y: newPartY,       // Y is relative to rocket bottom (0)
+                stageIndex: rocket.stages.length - 1, // Add to current last stage by default
+                instanceId: nextPartInstanceId++
+            };
+            rocket.parts.push(newPart);
+            rocket.stages[newPart.stageIndex].push(newPart.instanceId);
             
-            updateLearningRate(newLr) {
-                LEARNING_RATE = newLr;
-                // Recreate optimizer with new learning rate if TFJS doesn't allow dynamic LR update on existing optimizer easily
-                // For Adam, TFJS typically caches learning rate on creation.
-                // A common approach is to dispose old optimizer and create new.
-                if (this.optimizer) this.optimizer.dispose();
-                this.optimizer = tf.train.adam(LEARNING_RATE);
-                this.onlineNetwork.compile({optimizer: this.optimizer, loss: 'meanSquaredError'});
-
-            }
+            // Sort parts by Y for drawing and CoM calculation
+            rocket.parts.sort((a, b) => a.y - b.y); 
+            
+            calculateRocketProperties();
+            updateStagingUI();
+            draw();
         }
 
+        function calculateRocketProperties() {
+            rocket.totalMass = 0;
+            rocket.totalFuel = 0;
+            let weightedMassSumY = 0;
+            rocket.width = 0;
 
-        // --- Game Logic (largely same, but integrates DQN) ---
-        function resetGame() {
-            totalRewardCollectedThisEpisode = 0;
-            player.currentSpeedMultiplier = NORMAL_SPEED_MULTIPLIER;
-            playerSpeedIndicatorEl.textContent = "NORMAL";
-            playerSpeedIndicatorEl.style.color = "lime";
-
-            let attempts = 0; const maxSpawnAttempts = 50;
-            do { player.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - PLAYER_SIZE*3); player.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - PLAYER_SIZE*3); attempts++; } while (obstacles.some(obs => rectCollision(player, obs)) && attempts < maxSpawnAttempts);
-             if (attempts >= maxSpawnAttempts) { player.x = PLAYER_SIZE; player.y = PLAYER_SIZE; }
-            
-            attempts = 0;
-            do { hunter.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - HUNTER_SIZE*3); hunter.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - HUNTER_SIZE*3); attempts++; } 
-            while ((obstacles.some(obs => rectCollision(hunter, obs)) || Math.hypot(player.x-hunter.x, player.y-hunter.y) < gameCanvas.width/3) && attempts < maxSpawnAttempts);
-            if (attempts >= maxSpawnAttempts) { hunter.x = gameCanvas.width - HUNTER_SIZE*2; hunter.y = gameCanvas.height - HUNTER_SIZE*2; }
-
-
-            spawnCoin(); currentStepsInEpisode = 0; episodeCount++;
-            episodeEl.textContent = episodeCount; cookiesEl.textContent = scoreCookies; punishmentsEl.textContent = scorePunishments;
-            
-            // Epsilon decay is now handled in main loop or agent if needed
-            epsilonEl.textContent = epsilon.toFixed(3);
-
-            if (episodeRewardsHistory.length > 0) {
-                const sum = episodeRewardsHistory.reduce((a, b) => a + b, 0);
-                avgRewardEl.textContent = (sum / episodeRewardsHistory.length).toFixed(2);
+            rocket.parts.forEach(partInstance => {
+                const def = getPartDefinition(partInstance.def);
+                rocket.totalMass += def.mass;
+                if (def.fuel) rocket.totalFuel += def.fuel;
+                // For CoM, y is part's bottom. Use center of part for CoM calc.
+                weightedMassSumY += def.mass * (partInstance.y + def.height / 2);
+                if (def.width > rocket.width) rocket.width = def.width;
+            });
+            rocket.currentFuel = rocket.totalFuel;
+            if (rocket.totalMass > 0) {
+                rocket.centerOfMassY = weightedMassSumY / rocket.totalMass;
             } else {
-                avgRewardEl.textContent = "N/A";
+                rocket.centerOfMassY = 0;
             }
         }
 
-        function moveEntity(entity, dxNorm, dyNorm, speedMultiplierVal) { // Same as previous enhanced version
-            const moveDist = speedMultiplierVal * (entity === player ? BASE_MOVE_SPEED : HUNTER_BASE_SPEED);
-            const moveX = dxNorm * moveDist;
-            const moveY = dyNorm * moveDist;
-            
-            const oldX = entity.x, oldY = entity.y;
-            let newX = entity.x + moveX, newY = entity.y + moveY;
+        function clearRocket() {
+            rocket.parts = [];
+            rocket.stages = [[]]; // Reset to one empty stage
+            rocket.currentStageIndex = 0;
+            calculateRocketProperties();
+            updateStagingUI();
+            nextPartInstanceId = 0;
+            cameraY = 0; // Reset camera for build mode
+            draw();
+        }
 
-            if (newX < 0) newX = 0; if (newX + entity.width > gameCanvas.width) newX = gameCanvas.width - entity.width;
-            if (newY < 0) newY = 0; if (newY + entity.height > gameCanvas.height) newY = gameCanvas.height - entity.height;
-            
-            let finalX = oldX, finalY = oldY;
-            
-            let tempRectX = {...entity, x: newX};
-            let collisionX = obstacles.some(o=>rectCollision(tempRectX,o));
-            if(!collisionX) finalX = newX;
-
-            let tempRectY = {...entity, x: (collisionX ? oldX : newX), y: newY}; // Test Y move from potentially new X
-            let collisionY = obstacles.some(o=>rectCollision(tempRectY,o));
-            if(!collisionY) finalY = newY;
-            else if (!collisionX) finalY = oldY; // If X moved but Y can't, keep new X and old Y
-
-
-            // If both X and Y were intended moves and direct combined move is blocked, re-evaluate
-            if (dxNorm !== 0 && dyNorm !== 0) {
-                let tempRectXY = {...entity, x:newX, y:newY};
-                if(obstacles.some(o=>rectCollision(tempRectXY,o))) { // Full diagonal blocked
-                     // Try X only
-                    tempRectX = {...entity, x:newX, y:oldY};
-                    if(!obstacles.some(o=>rectCollision(tempRectX,o))){
-                        finalX = newX; finalY = oldY;
-                    } else { // Try Y only
-                        tempRectY = {...entity, x:oldX, y:newY};
-                         if(!obstacles.some(o=>rectCollision(tempRectY,o))){
-                            finalX = oldX; finalY = newY;
-                         } else { // Both components blocked
-                            finalX = oldX; finalY = oldY;
-                         }
+        // --- Staging UI Logic ---
+        function updateStagingUI() {
+            stagesDisplayDiv.innerHTML = '';
+            rocket.stages.forEach((stagePartsInstanceIds, stageIdx) => {
+                const stageDiv = document.createElement('div');
+                stageDiv.classList.add('stage-container');
+                stageDiv.innerHTML = `<strong>Stage ${stageIdx}</strong> ${stageIdx === rocket.currentStageIndex && gameState === 'FLIGHT' ? "(Active)" : ""}`;
+                
+                stagePartsInstanceIds.forEach(instanceId => {
+                    const partInstance = getPartById(instanceId);
+                    if (partInstance) {
+                        const partDef = getPartDefinition(partInstance.def);
+                        const partElement = document.createElement('div');
+                        partElement.classList.add('stage-part');
+                        partElement.textContent = `${partDef.name} (ID: ${instanceId})`;
+                        
+                        // Allow moving parts between stages (simplified)
+                        partElement.onclick = () => {
+                            if (gameState === 'BUILD') promptMovePartStage(instanceId, stageIdx);
+                        };
+                        stageDiv.appendChild(partElement);
                     }
-                } else { // Full diagonal clear
-                    finalX = newX; finalY = newY;
-                }
-            } else if (dxNorm !== 0) { // Only X move intended
-                if (collisionX) finalX = oldX;
-            } else if (dyNorm !== 0) { // Only Y move intended
-                 tempRectY = {...entity, x: oldX, y: newY}; // Re-check Y from original X if X was not intended
-                 if(obstacles.some(o=>rectCollision(tempRectY,o))) finalY = oldY;
-            }
-
-
-            entity.x = finalX; entity.y = finalY;
-            if(entity === hunter){ hunter.lastDx = finalX - oldX; hunter.lastDy = finalY - oldY;}
-            return (finalX === oldX && finalY === oldY && (dxNorm !==0 || dyNorm !==0) );
-        }
-        
-        function updateGame(actionIndex) {
-            const action = ACTIONS[actionIndex];
-            lastActionEl.textContent = action.name;
-            player.currentSpeedMultiplier = action.speedMultiplier; 
-            playerSpeedIndicatorEl.textContent = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "FAST" : "NORMAL";
-            playerSpeedIndicatorEl.style.color = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "orangered" : "lime";
-
-            let reward = -0.01; 
-            if (action.speedMultiplier === FAST_SPEED_MULTIPLIER) reward -= FAST_ACTION_COST; 
-
-            const playerStuck = moveEntity(player, action.dx, action.dy, player.currentSpeedMultiplier);
-            if (playerStuck) reward -= 0.1; 
-
-            const hTargetX = player.x + player.width/2, hTargetY = player.y + player.height/2;
-            const hCurrX = hunter.x + hunter.width/2, hCurrY = hunter.y + hunter.height/2;
-            let hdxNorm=0, hdyNorm=0;
-            const diffX = hTargetX - hCurrX; const diffY = hTargetY - hCurrY;
-            const distToPlayer = Math.hypot(diffX, diffY);
-
-            if (distToPlayer > HUNTER_BASE_SPEED / 2) { 
-                hdxNorm = diffX / distToPlayer; 
-                hdyNorm = diffY / distToPlayer; 
-            }
-            moveEntity(hunter, hdxNorm, hdyNorm, NORMAL_SPEED_MULTIPLIER); 
-
-            const currentStateVector = get_state_vector(); // For reward shaping based on perception
-            const hunterLOS_val = currentStateVector[10]; // Index for hunterLOS
-            const hDist_norm = currentStateVector[4]; // Index for hDist_norm
-            if (hunterLOS_val === 1.0 && hDist_norm < (PLAYER_SIZE * 4) / MAX_DIST_NORM) { // Visible and close-medium
-                reward -= 0.25; 
-            }
-
-            if (rectCollision(player, hunter)) { 
-                const finalReward = -25; scorePunishments++; totalRewardCollectedThisEpisode += finalReward; 
-                return { reward: finalReward, done: true }; 
-            }
-            if (coins.length > 0) { 
-                const c = coins[0]; 
-                if (Math.hypot((player.x+player.width/2)-c.x, (player.y+player.height/2)-c.y) < player.width/2+c.radius) { 
-                    const finalReward = 30; scoreCookies++; coins.splice(0,1); totalRewardCollectedThisEpisode += finalReward; 
-                    return { reward: finalReward, done: true };
-                }
-            }
-            
-            totalRewardCollectedThisEpisode += reward;
-            currentStepsInEpisode++; cumulativeTotalSteps++; totalStepsEl.textContent = cumulativeTotalSteps;
-
-            if (currentStepsInEpisode >= MAX_STEPS_PER_EPISODE) { 
-                const timeoutPenalty = -15; reward += timeoutPenalty; scorePunishments++; totalRewardCollectedThisEpisode += timeoutPenalty; 
-                return { reward: reward, done: true }; 
-            }
-            return { reward, done: false };
-        }
-
-        // --- Drawing ---
-        function drawGame() { 
-            gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-            obstacles.forEach(obs => { gameCtx.fillStyle = obs.color; gameCtx.fillRect(obs.x, obs.y, obs.width, obs.height); });
-            coins.forEach(c => { gameCtx.beginPath(); gameCtx.arc(c.x, c.y, c.radius, 0, Math.PI*2); gameCtx.fillStyle = c.color; gameCtx.fill(); });
-            gameCtx.fillStyle = player.currentSpeedMultiplier === FAST_SPEED_MULTIPLIER ? 'orange' : player.color;
-            gameCtx.fillRect(player.x, player.y, player.width, player.height);
-            gameCtx.fillStyle = hunter.color; gameCtx.fillRect(hunter.x, hunter.y, hunter.width, hunter.height);
-        }
-
-        function drawLossGraph() {
-            lossCtx.clearRect(0,0,lossCanvas.width, lossCanvas.height);
-            if (lossHistory.length === 0) return;
-
-            lossCtx.strokeStyle = '#888';
-            lossCtx.lineWidth = 1;
-
-            const maxLoss = Math.max(...lossHistory, 0.1); // Avoid division by zero if all losses are 0
-            const minLoss = Math.min(...lossHistory);
-            const range = maxLoss - minLoss < 0.01 ? 0.1 : maxLoss - minLoss;
-
-
-            lossCtx.beginPath();
-            for (let i = 0; i < lossHistory.length; i++) {
-                const x = (i / (MAX_LOSS_HISTORY -1)) * lossCanvas.width;
-                const y = lossCanvas.height - ((lossHistory[i] - minLoss) / range) * lossCanvas.height * 0.9 - lossCanvas.height * 0.05; // Scale and pad
-                if (i === 0) lossCtx.moveTo(x, y);
-                else lossCtx.lineTo(x, y);
-            }
-            lossCtx.stroke();
-
-            lossCtx.fillStyle = '#ccc';
-            lossCtx.font = '10px monospace';
-            lossCtx.fillText(`Max: ${maxLoss.toFixed(3)}`, 5, 12);
-            lossCtx.fillText(`Min: ${minLoss.toFixed(3)}`, 5, lossCanvas.height - 5);
-        }
-
-
-        // --- Main Loop ---
-        let lastStateVector = null; // Store the initial state
-
-        async function aiLoop() {
-            if (!dqnAgent || !STATE_SIZE) { // Agent not initialized or STATE_SIZE not determined
-                console.log("Agent or STATE_SIZE not ready.");
-                if (!lastStateVector) lastStateVector = get_state_vector(); // Initialize if first time
-                 if (!STATE_SIZE && lastStateVector) STATE_SIZE = lastStateVector.length; // Should be set by get_state_vector
-                if (STATE_SIZE && !dqnAgent) {
-                    dqnAgent = new DQNAgent(STATE_SIZE, NUM_ACTIONS);
-                    console.log("DQN Agent Initialized. State size:", STATE_SIZE);
-                }
-                drawGame(); // Keep drawing game
-                return;
-            }
-            
-            const state = lastStateVector ? lastStateVector : get_state_vector(); // Use previous next_state if available
-            const actionIdx = dqnAgent.act(state);
-            
-            const gameOut = updateGame(actionIdx); // {reward, done}
-            const nextState = get_state_vector();
-
-            dqnAgent.remember(state, actionIdx, gameOut.reward, nextState, gameOut.done);
-            lastStateVector = nextState; // Store for next iteration
-
-            for(let i=0; i < trainingIterationsPerStep; i++) {
-                const loss = await dqnAgent.train(BATCH_SIZE);
-                if (loss !== null) {
-                    lossHistory.push(loss);
-                    if (lossHistory.length > MAX_LOSS_HISTORY) lossHistory.shift();
-                    const avgLossVal = lossHistory.reduce((a,b) => a+b, 0) / lossHistory.length;
-                    avgLossEl.textContent = avgLossVal.toFixed(4);
-                }
-            }
-            
-            if (epsilon > MIN_EPSILON) {
-                epsilon *= EPSILON_DECAY;
-                epsilonEl.textContent = epsilon.toFixed(3);
-            }
-
-            if (cumulativeTotalSteps > 0 && cumulativeTotalSteps % TARGET_NETWORK_UPDATE_FREQUENCY === 0) {
-                dqnAgent.updateTargetNetwork();
-                console.log(`Target network updated at step ${cumulativeTotalSteps}`);
-            }
-
-            drawGame(); 
-            drawLossGraph();
-
-            if (gameOut.done) {
-                episodeRewardsHistory.push(totalRewardCollectedThisEpisode);
-                if(episodeRewardsHistory.length > AVG_REWARD_HISTORY_LENGTH) episodeRewardsHistory.shift();
-                resetGame();
-                lastStateVector = get_state_vector(); // Get new initial state after reset
-            }
-        }
-
-        // --- Init & Controls ---
-        function init() {
-            currentSimSpeed = parseInt(simSpeedControl.value); simSpeedValue.textContent = currentSimSpeed;
-            trainingIterationsPerStep = parseInt(trainingIterControl.value); trainingIterValue.textContent = trainingIterationsPerStep;
-            BATCH_SIZE = parseInt(batchSizeControl.value);
-            LEARNING_RATE = parseFloat(learningRateControl.value);
-            FAST_ACTION_COST = parseFloat(fastSpeedCostControl.value); fastSpeedCostValue.textContent = FAST_ACTION_COST.toFixed(2);
-
-            // Initialize state size by calling get_state_vector once.
-            // Agent will be created in the first aiLoop call if STATE_SIZE is ready.
-            tf.setBackend('webgl').then(() => { // Prefer WebGL backend
-                console.log("Using TFJS WebGL backend.");
-                lastStateVector = get_state_vector(); // Initialize state vector to get STATE_SIZE
-                if (lastStateVector && !STATE_SIZE) STATE_SIZE = lastStateVector.length;
-                if (STATE_SIZE && !dqnAgent) {
-                     dqnAgent = new DQNAgent(STATE_SIZE, NUM_ACTIONS);
-                     console.log("DQN Agent Initialized on load. State size:", STATE_SIZE);
-                }
-
-                simSpeedControl.addEventListener('input', e => { currentSimSpeed = parseInt(e.target.value); simSpeedValue.textContent = currentSimSpeed; clearInterval(simIntervalId); simIntervalId = setInterval(aiLoop, currentSimSpeed); });
-                trainingIterControl.addEventListener('input', e => { trainingIterationsPerStep = parseInt(e.target.value); trainingIterValue.textContent = trainingIterationsPerStep; });
-                batchSizeControl.addEventListener('change', e => { BATCH_SIZE = parseInt(e.target.value); }); // Use change for number input
-                learningRateControl.addEventListener('change', e => { 
-                    const newLr = parseFloat(e.target.value);
-                    if (dqnAgent) dqnAgent.updateLearningRate(newLr);
-                    else LEARNING_RATE = newLr; // Store if agent not yet created
                 });
-                fastSpeedCostControl.addEventListener('input', e => { FAST_ACTION_COST = parseFloat(e.target.value); fastSpeedCostValue.textContent = FAST_ACTION_COST.toFixed(2); });
-                
-                resetGame();
-                lastStateVector = get_state_vector(); // Ensure initial state is set after first reset
-                drawGame(); 
-                drawLossGraph();
-                simIntervalId = setInterval(aiLoop, currentSimSpeed);
-            }).catch(err => {
-                console.error("Error setting TFJS backend or initializing agent:", err);
-                // Fallback or error message
+                stagesDisplayDiv.appendChild(stageDiv);
             });
         }
-        window.onload = init;
+
+        function promptMovePartStage(instanceId, currentStageIdx) {
+            const newStage = prompt(`Move part ID ${instanceId} to stage (0-${rocket.stages.length - 1}):`, currentStageIdx);
+            if (newStage !== null) {
+                const targetStageIdx = parseInt(newStage);
+                if (!isNaN(targetStageIdx) && targetStageIdx >= 0 && targetStageIdx < rocket.stages.length) {
+                    // Remove from old stage
+                    rocket.stages[currentStageIdx] = rocket.stages[currentStageIdx].filter(id => id !== instanceId);
+                    // Add to new stage
+                    rocket.stages[targetStageIdx].push(instanceId);
+                    getPartById(instanceId).stageIndex = targetStageIdx; // Update part's stageIndex
+                    updateStagingUI();
+                    calculateRocketProperties(); // Recalculate if staging affects active engines etc. (not critical now)
+                } else {
+                    alert('Invalid stage number.');
+                }
+            }
+        }
+        
+        addStageBtn.onclick = () => {
+            if (gameState === 'BUILD') {
+                rocket.stages.push([]);
+                updateStagingUI();
+            }
+        };
+
+        // --- Flight Mode Logic ---
+        function switchToFlightMode() {
+            if (rocket.parts.length === 0) {
+                alert("Build a rocket first!");
+                return;
+            }
+            gameState = 'FLIGHT';
+            buildModeUI.classList.add('hidden');
+            flightModeUI.classList.remove('hidden');
+            
+            // Reset flight parameters
+            rocket.altitude = 0;
+            rocket.velocityY = 0;
+            rocket.currentStageIndex = findFirstStageWithEngines(); // Start with the first stage that can do something
+            rocket.currentFuel = rocket.totalFuel; // Reset fuel
+            throttleSlider.value = 0; // Reset throttle
+            rocket.throttle = 0;
+            updateThrottleDisplay();
+            calculateActiveThrust(); // Initial thrust calculation
+            updateStagingUI(); // To show "(Active)" on current stage
+            gameLoop(); // Start the physics and rendering loop for flight
+        }
+
+        function findFirstStageWithEngines() {
+            for(let i = rocket.stages.length -1; i >= 0; i--) {
+                const stageHasEngine = rocket.stages[i].some(id => {
+                    const part = getPartById(id);
+                    return part && getPartDefinition(part.def).type === 'engine';
+                });
+                if (stageHasEngine) return i;
+            }
+            return rocket.stages.length - 1; // Default to last stage if no engines (it won't fly)
+        }
+
+
+        function switchToBuildMode() {
+            gameState = 'BUILD';
+            flightModeUI.classList.add('hidden');
+            buildModeUI.classList.remove('hidden');
+            rocket.currentStageIndex = rocket.stages.length -1; // Reset to last stage for building
+            updateStagingUI(); // Remove "(Active)"
+            cameraY = 0; // Reset camera for build mode
+            draw(); // Redraw for build mode
+        }
+
+        function updatePhysics(dt) {
+            if (rocket.parts.length === 0 || rocket.totalMass <= 0) {
+                rocket.velocityY = 0; // Fall if no mass (shouldn't happen with parts)
+                if(rocket.altitude <=0) rocket.altitude = 0; else rocket.velocityY -= GRAVITY * dt;
+                return;
+            }
+
+            // Calculate forces
+            const thrustForce = rocket.thrust * rocket.throttle;
+            const gravityForce = rocket.totalMass * GRAVITY;
+            const netForce = thrustForce - gravityForce;
+
+            // Update acceleration, velocity, altitude
+            const acceleration = netForce / rocket.totalMass;
+            rocket.velocityY += acceleration * dt;
+            rocket.altitude += rocket.velocityY * dt;
+
+            // Fuel consumption
+            let fuelConsumedThisTick = 0;
+            rocket.parts.forEach(partInstance => {
+                const def = getPartDefinition(partInstance.def);
+                if (def.type === 'engine' && partInstance.stageIndex === rocket.currentStageIndex && rocket.currentFuel > 0) {
+                    // Simplified fuel consumption: proportional to thrust and throttle
+                    // Real SFS: F = mdot * Ve;  mdot = F / (Isp * g0)
+                    // Here, let's link it to baseThrust and isp more directly (but still simplified)
+                    const fuelRate = (def.baseThrust / (def.isp * GRAVITY)) * rocket.throttle; // kg/s if fuel was mass
+                    // Since fuel is "units", let's scale it: assume 1 fuel unit = 1kg for this calc
+                    fuelConsumedThisTick += fuelRate * dt;
+                }
+            });
+            
+            rocket.currentFuel -= fuelConsumedThisTick;
+            if (rocket.currentFuel < 0) rocket.currentFuel = 0;
+
+            // If out of fuel, engines in current stage stop producing thrust
+            if (rocket.currentFuel <= 0) {
+                calculateActiveThrust(); // This will set thrust to 0 if fuel is out for active engines
+            }
+            
+            // Ground collision
+            if (rocket.altitude < 0) {
+                rocket.altitude = 0;
+                rocket.velocityY = 0;
+                // Potentially end flight or destroy rocket here
+                // For now, just stop at ground
+            }
+        }
+        
+        function calculateActiveThrust() {
+            rocket.thrust = 0;
+            if (rocket.currentFuel <= 0) return; // No thrust if no fuel globally
+
+            rocket.stages[rocket.currentStageIndex]?.forEach(instanceId => {
+                const partInstance = getPartById(instanceId);
+                if (partInstance) {
+                    const def = getPartDefinition(partInstance.def);
+                    if (def.type === 'engine') {
+                        rocket.thrust += def.baseThrust;
+                    }
+                }
+            });
+        }
+
+        function activateNextStage() {
+            if (rocket.currentStageIndex <= 0) { // Already at the last (numerically smallest) stage
+                console.log("No more stages or already at stage 0.");
+                 // Deactivate engines in stage 0 if it's the only one left
+                if (rocket.currentStageIndex === 0) {
+                    rocket.thrust = 0; // Effectively turns off engines if staging at stage 0
+                }
+                return;
+            }
+
+            // "Jettison" parts from the current stage (and all stages above it numerically)
+            // In SFS, staging usually separates below. Here, higher index means "earlier" stage.
+            // So, when staging from stage K, parts in stage K are effectively jettisoned.
+            const partsToKeep = [];
+            let massJettisoned = 0;
+            let fuelJettisoned = 0;
+
+            rocket.parts.forEach(p => {
+                if (p.stageIndex < rocket.currentStageIndex) { // Keep parts in stages numerically smaller (later stages)
+                    partsToKeep.push(p);
+                } else {
+                    const def = getPartDefinition(p.def);
+                    massJettisoned += def.mass;
+                    if (def.fuel) { // Only count fuel from jettisoned tanks
+                        // This fuel is lost. We need to track which fuel belongs to which tank.
+                        // Simplification: assume fuel is drawn proportionally or from specific tanks.
+                        // For now, just reduce totalMass. Fuel logic is tricky with shared pools.
+                        // Let's assume for simplicity that fuel in jettisoned tanks is lost.
+                        // This requires a more complex fuel model, which is too much for this demo.
+                        // For now, global fuel pool remains, but mass reduces.
+                    }
+                }
+            });
+            rocket.parts = partsToKeep;
+            rocket.totalMass -= massJettisoned; // This is crucial
+            // rocket.currentFuel might need adjustment if we tracked fuel per tank.
+
+            rocket.currentStageIndex--; // Move to the next (numerically smaller) stage
+
+            // Recalculate properties based on remaining parts
+            calculateRocketProperties(); // This re-sums mass and fuel from *remaining* parts
+                                         // It implicitly handles "losing" fuel from detached tanks.
+
+            calculateActiveThrust();   // Update thrust from newly activated engines
+            updateStagingUI();         // Update visual display
+            console.log(`Staged! Now at stage ${rocket.currentStageIndex}. Mass: ${rocket.totalMass.toFixed(0)}kg`);
+        }
+
+
+        // --- Drawing ---
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background (simple gradient or color)
+            const groundLevelCanvas = canvas.height - 50 + cameraY; // Ground position in canvas space
+            
+            // Sky
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#334477'); // Darker blue higher up
+            skyGradient.addColorStop(0.7, '#6688CC'); // Lighter blue near horizon
+            skyGradient.addColorStop(1, '#55AA55'); // Ground hint
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ground
+            ctx.fillStyle = '#448844'; // Green
+            ctx.fillRect(0, groundLevelCanvas, canvas.width, canvas.height - groundLevelCanvas);
+
+            // Launchpad (only in build mode or at low altitude)
+            if (gameState === 'BUILD' || rocket.altitude < 100) {
+                const launchpadHeight = 10 * PX_PER_METER;
+                const launchpadY = groundLevelCanvas - launchpadHeight;
+                ctx.fillStyle = '#666666';
+                ctx.fillRect(canvas.width / 2 - 20 * PX_PER_METER, launchpadY, 40 * PX_PER_METER, launchpadHeight);
+            }
+
+            // Draw Rocket
+            ctx.save();
+            // Center rocket horizontally. Vertically, rocket bottom is at altitude, adjusted by camera.
+            const rocketBaseYCanvas = groundLevelCanvas - (rocket.altitude * PX_PER_METER);
+            ctx.translate(canvas.width / 2, rocketBaseYCanvas);
+
+            rocket.parts.forEach(partInstance => {
+                const def = getPartDefinition(partInstance.def);
+                const partX = (partInstance.x - def.width / 2) * PX_PER_METER; // Center part on its x
+                const partY = -(partInstance.y + def.height) * PX_PER_METER; // Y is up, canvas Y is down
+                
+                ctx.fillStyle = def.spriteColor;
+                ctx.fillRect(partX, partY, def.width * PX_PER_METER, def.height * PX_PER_METER);
+                
+                // Outline
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(partX, partY, def.width * PX_PER_METER, def.height * PX_PER_METER);
+
+                // Draw flame for active engines
+                if (gameState === 'FLIGHT' && def.type === 'engine' && 
+                    partInstance.stageIndex === rocket.currentStageIndex && 
+                    rocket.throttle > 0 && rocket.currentFuel > 0) {
+                    const flameLength = (def.height * 1.5 * rocket.throttle) * PX_PER_METER;
+                    const flameWidth = (def.width * 0.8) * PX_PER_METER;
+                    ctx.fillStyle = `rgba(255, ${Math.random()*150+100}, 0, ${0.5 + rocket.throttle * 0.5})`;
+                    // Flame starts at bottom of engine (partY + def.height * PX_PER_METER)
+                    ctx.beginPath();
+                    ctx.moveTo(partX + (def.width * PX_PER_METER - flameWidth) / 2, partY + def.height * PX_PER_METER);
+                    ctx.lineTo(partX + (def.width * PX_PER_METER + flameWidth) / 2, partY + def.height * PX_PER_METER);
+                    ctx.lineTo(partX + def.width * PX_PER_METER / 2, partY + def.height * PX_PER_METER + flameLength);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            });
+            ctx.restore();
+
+            // Draw selection preview in build mode
+            if (gameState === 'BUILD' && selectedPartKey && tempMousePosCanvas) {
+                const partDef = getPartDefinition(selectedPartKey);
+                ctx.save();
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = partDef.spriteColor;
+                
+                // Attempt to snap
+                let placeYCanvas = tempMousePosCanvas.y;
+                let attachToPart = null;
+                const snapThreshold = 20; // pixels
+
+                // Rocket drawn from groundLevelCanvas up. Mouse Y relative to canvas top.
+                // Rocket parts y are relative to rocket bottom.
+                // Convert canvas click Y to rocket-relative Y for snapping
+                const clickYRocketRelativeMeters = (groundLevelCanvas - tempMousePosCanvas.y) / PX_PER_METER;
+
+                let finalPlaceY_rocketMeters = 0; // Y coord for the bottom of the new part, in rocket space
+
+                if (rocket.parts.length > 0) {
+                    let bestSnap = null;
+                    let minDistance = Infinity;
+
+                    rocket.parts.forEach(p => {
+                        const pDef = getPartDefinition(p.def);
+                        // Snap to top of existing part
+                        const topOfExistingPartYRocketMeters = p.y + pDef.height;
+                        const dist = Math.abs(clickYRocketRelativeMeters - topOfExistingPartYRocketMeters);
+
+                        if (dist < (pDef.height/2 + partDef.height/2) * 1.5 && dist < minDistance ) { // Crude proximity and connection logic
+                            // Check if connection is valid (e.g., engine on tank bottom)
+                            // For simplicity, allow most connections
+                            if (pDef.connectionPoints.includes('top') && partDef.connectionPoints.includes('bottom')) {
+                                minDistance = dist;
+                                bestSnap = p;
+                            }
+                        }
+                    });
+                    
+                    if (bestSnap) {
+                        const bestSnapDef = getPartDefinition(bestSnap.def);
+                        finalPlaceY_rocketMeters = bestSnap.y + bestSnapDef.height;
+                        currentSnapTargetId = bestSnap.instanceId;
+                    } else {
+                        // No snap, place freely (or at base if first part)
+                        finalPlaceY_rocketMeters = Math.max(0, clickYRocketRelativeMeters - partDef.height / 2);
+                        currentSnapTargetId = null;
+                    }
+
+                } else { // First part
+                    finalPlaceY_rocketMeters = 0; // Place at rocket bottom
+                    currentSnapTargetId = null;
+                }
+
+                // Convert back to canvas Y for drawing preview
+                const previewBottomCanvasY = groundLevelCanvas - (finalPlaceY_rocketMeters * PX_PER_METER);
+                const previewTopCanvasY = previewBottomCanvasY - (partDef.height * PX_PER_METER);
+
+                ctx.fillRect(
+                    canvas.width / 2 - (partDef.width / 2 * PX_PER_METER),
+                    previewTopCanvasY,
+                    partDef.width * PX_PER_METER,
+                    partDef.height * PX_PER_METER
+                );
+                ctx.strokeStyle = '#FFF';
+                ctx.strokeRect(
+                    canvas.width / 2 - (partDef.width / 2 * PX_PER_METER),
+                    previewTopCanvasY,
+                    partDef.width * PX_PER_METER,
+                    partDef.height * PX_PER_METER
+                );
+                ctx.restore();
+            }
+        }
+        
+        let currentSnapTargetId = null; // Used by canvas click to know which part it snapped to
+
+        // --- Game Loop ---
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            if (gameState !== 'FLIGHT') return; // Only run loop in flight mode
+
+            const deltaTime = (timestamp - lastTime) / 1000 || TIME_STEP; // ms to s
+            lastTime = timestamp;
+
+            // Fixed time step for physics stability
+            let accumulatedTime = deltaTime;
+            while (accumulatedTime >= TIME_STEP) {
+                updatePhysics(TIME_STEP);
+                accumulatedTime -= TIME_STEP;
+            }
+            if (accumulatedTime > 0) { // Handle remaining time
+                 updatePhysics(accumulatedTime);
+            }
+
+            // Update camera to follow rocket's Center of Mass
+            // Rocket's CoM in meters from ground: rocket.altitude + rocket.centerOfMassY
+            // We want CoM to be roughly at, say, 1/3 from bottom of screen.
+            const targetCameraY = (rocket.altitude + rocket.centerOfMassY) * PX_PER_METER - canvas.height * 2/3;
+            cameraY += (targetCameraY - cameraY) * 0.1; // Smooth camera motion
+
+            updateTelemetry();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateTelemetry() {
+            const fuelPercent = rocket.totalFuel > 0 ? (rocket.currentFuel / rocket.totalFuel * 100).toFixed(0) : 0;
+            telemetryDisplay.textContent = 
+                `Alt: ${rocket.altitude.toFixed(0)}m | Vel: ${rocket.velocityY.toFixed(1)}m/s | Fuel: ${fuelPercent}% | Stage: ${rocket.currentStageIndex}`;
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('resize', resizeCanvas);
+
+        // Mouse/Touch on Canvas for Part Placement
+        let tempMousePosCanvas = null; // For drawing preview part
+
+        function handleCanvasInteraction(event) {
+            if (gameState !== 'BUILD' || !selectedPartKey) return;
+            event.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+            const clientY = event.clientY || (event.touches && event.touches[0].clientY);
+            
+            const canvasX = clientX - rect.left;
+            const canvasY = clientY - rect.top;
+
+            // In build mode, click adds the part. Snapping logic is in draw() for preview,
+            // and here we use the determined snap target.
+            if (event.type === 'mousedown' || event.type === 'touchstart') {
+                addPartToRocket(selectedPartKey, currentSnapTargetId, canvasY); // Pass currentSnapTargetId determined by draw preview
+                // Optionally, deselect part after placing:
+                // selectPart(null, null); 
+            }
+        }
+        
+        function handleCanvasMove(event) {
+            if (gameState !== 'BUILD' || !selectedPartKey) {
+                tempMousePosCanvas = null; // Clear if not relevant
+                return;
+            }
+            event.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+            const clientY = event.clientY || (event.touches && event.touches[0].clientY);
+            tempMousePosCanvas = { x: clientX - rect.left, y: clientY - rect.top };
+            draw(); // Redraw to show part preview at mouse
+        }
+
+        canvas.addEventListener('mousedown', handleCanvasInteraction);
+        canvas.addEventListener('mousemove', handleCanvasMove);
+        canvas.addEventListener('touchstart', handleCanvasInteraction, { passive: false });
+        canvas.addEventListener('touchmove', handleCanvasMove, { passive: false });
+
+
+        // UI Button Listeners
+        launchBtn.onclick = switchToFlightMode;
+        resetFlightBtn.onclick = switchToBuildMode;
+        clearRocketBtn.onclick = clearRocket;
+
+        throttleSlider.oninput = () => {
+            rocket.throttle = parseInt(throttleSlider.value) / 100;
+            updateThrottleDisplay();
+            if (gameState === 'FLIGHT') { // Only recalculate thrust if in flight
+                calculateActiveThrust(); // Recalculate based on new throttle potentially affecting fuel use logic
+            }
+        };
+        
+        function updateThrottleDisplay() {
+            throttleValueSpan.textContent = `${(rocket.throttle * 100).toFixed(0)}%`;
+        }
+
+        stageBtn.onclick = () => {
+            if (gameState === 'FLIGHT') {
+                activateNextStage();
+            }
+        };
+
+        // --- Initialization ---
+        function init() {
+            populatePartPalette();
+            selectPart('commandPod', partPaletteDiv.querySelector('[data-part-key="commandPod"]')); // Select pod by default
+            resizeCanvas(); // Initial sizing and draw
+            updateStagingUI();
+            calculateRocketProperties(); // For initial empty state
+            updateTelemetry(); // For initial empty state
+            draw(); // Initial draw for build mode
+        }
+
+        init();
     </script>
 </body>
 </html>
