@@ -3,208 +3,485 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fremd im Spiegel - Eine Geschichte</title>
+    <title>Fremd im Spiegel - Das Buch</title>
     <style>
-        /* Globale Stile */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f0f0;
+        /* Globale Stile & Reset */
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Verhindert Scrollen der gesamten Seite, nur Buchinhalt scrollt */
+        }
+
+        body {
+            font-family: 'Georgia', serif; /* Klassische Buch-Schriftart */
+            background-color: #e0d6c7; /* Pergament-ähnlicher Hintergrund */
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Oben ausrichten, damit man scrollen kann */
-            min-height: 100vh;
-            overflow-y: scroll; /* Ermöglicht Scrollen, falls der Inhalt länger ist */
+            align-items: center;
+            padding: 10px; /* Kleiner Rand um das Buch */
+            color: #3a2a1e; /* Dunkelbrauner Text */
         }
 
         /* Buch-Container */
-        .book-container {
-            width: 800px; /* Breite des Buches */
-            max-width: 90%;
-            background-color: #fff;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            border-radius: 5px;
-            overflow: hidden; /* Verhindert, dass Inhalte über den Rand gehen */
+        .book-wrapper {
+            width: 90vw; /* Responsive Breite */
+            height: 90vh; /* Responsive Höhe */
+            max-width: 500px; /* Maximale Breite für Desktop, um Buchform zu halten */
+            max-height: 700px; /* Maximale Höhe */
+            background-color: #5c4d41; /* Dunkelbrauner Einband */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4), 
+                        inset 0 0 10px rgba(0,0,0,0.2); /* Schatten für Tiefe */
+            border-radius: 8px 3px 3px 8px; /* Buchrücken-Optik */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden; /* Wichtig für Seiten-Handling */
         }
 
-        /* Buchdeckel */
-        .book-cover {
-            background-color: #4a3b31; /* Dunkles Braun für den Deckel */
-            color: #fff;
-            padding: 40px 30px;
+        /* Buch-Titel auf dem "Einband" */
+        .book-spine-title {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            background-color: #4a3b31;
+            color: #d4c8be;
+            padding: 15px 5px;
+            font-size: 1em;
             text-align: center;
-            border-bottom: 5px solid #30261e;
-        }
-
-        .book-cover h1 {
-            font-family: 'Georgia', serif;
-            font-size: 2.8em;
-            margin: 0 0 10px 0;
             letter-spacing: 1px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .book-cover h2 {
-            font-family: 'Georgia', serif;
-            font-size: 1.2em;
-            font-style: italic;
-            color: #e0d0c0;
-            margin: 0;
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 60%;
+            border-right: 2px solid #30261e;
+            display: none; /* Standardmäßig ausblenden, nur für breitere Screens */
         }
         
-        .book-cover .author {
-            font-size: 1em;
-            color: #c0b0a0;
-            margin-top: 20px;
+        .main-book-content {
+            flex-grow: 1;
+            background-color: #fdfaf3; /* Cremefarbene Seiten */
+            padding: 20px;
+            overflow-y: auto; /* Scrollen innerhalb der Seite */
+            position: relative;
         }
 
         /* Seiten-Styling */
-        .page {
-            padding: 30px 40px;
-            line-height: 1.7;
-            font-size: 1.1em;
-            color: #333;
-            border-bottom: 1px solid #eee; /* Leichte Trennung zwischen "Seiten" */
+        .page-content {
+            display: none; /* Alle Seiten standardmäßig ausblenden */
+            animation: fadeIn 0.8s ease-in-out;
+            min-height: 100%; /* Damit der Inhalt die Seite füllt */
         }
 
-        .page:last-child {
-            border-bottom: none;
+        .page-content.active {
+            display: block;
         }
 
-        .page h3 { /* Kapitelüberschriften */
-            font-family: 'Georgia', serif;
-            color: #5c4d41;
-            margin-top: 0;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-content h1 { /* Buchtitel auf der ersten Seite */
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4a3b31;
             padding-bottom: 10px;
-            border-bottom: 2px solid #d4c8be;
+            border-bottom: 1px solid #d4c8be;
+        }
+        
+        .page-content h2 { /* Untertitel / Kapitel */
+            font-size: 1.5em;
+            text-align: center;
             margin-bottom: 20px;
+            margin-top: 10px;
+            color: #5c4d41;
+            font-style: italic;
         }
 
-        .page p {
-            margin-bottom: 1em;
+        .page-content p {
+            margin-bottom: 1.2em;
+            line-height: 1.6;
+            font-size: 0.95em; /* Etwas kleiner für mehr Text pro "Seite" */
             text-align: justify;
         }
 
-        /* Hervorhebungen / Gedanken */
         .thought {
             font-style: italic;
-            color: #555;
-            margin-left: 20px;
+            color: #6d5f53;
+            margin: 0.8em 20px;
             padding-left: 10px;
-            border-left: 2px solid #ccc;
+            border-left: 2px solid #d4c8be;
         }
 
-        /* Spezifische Formatierung für Dialoge etc. könnte hier hinzugefügt werden */
         .dialogue {
             margin-left: 15px;
-            font-style: normal;
+            margin-bottom: 0.8em;
         }
-        .dialogue strong { /* Sprecher */
+        .dialogue strong {
             font-weight: bold;
+            color: #4a3b31;
+        }
+
+        /* Navigations-Buttons */
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px; /* Angepasst für bessere Klickbarkeit */
+            background-color: #fdfaf3; /* Seitenfarbe */
+            border-top: 1px solid #d4c8be; /* Trennlinie */
+            position: sticky; /* Bleibt am unteren Rand beim Scrollen der Seite sichtbar */
+            bottom: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        .nav-button {
+            background-color: #7a6a5d;
+            color: #fdfaf3;
+            border: none;
+            padding: 10px 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.9em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-button:hover {
+            background-color: #5c4d41;
+        }
+        .nav-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .nav-button:disabled {
+            background-color: #a09388;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .page-number {
+            font-size: 0.9em;
+            color: #7a6a5d;
+            align-self: center;
+        }
+
+        /* Responsive Anpassungen */
+        @media (min-width: 600px) { /* Für breitere Bildschirme / Tablets */
+            .book-wrapper {
+                flex-direction: row; /* Buchrücken links, Inhalt rechts */
+            }
+            .book-spine-title {
+                display: block; /* Buchrücken anzeigen */
+            }
+            .main-book-content {
+                padding: 30px 40px;
+            }
+            .page-content p {
+                font-size: 1em;
+            }
+            .navigation {
+                padding: 15px 40px;
+            }
+        }
+
+        @media (max-width: 400px) { /* Sehr kleine Handy-Bildschirme */
+            .page-content p {
+                font-size: 0.9em;
+            }
+            .nav-button {
+                padding: 8px 10px;
+                font-size: 0.8em;
+            }
+            .page-content h1 {
+                font-size: 1.8em;
+            }
+            .page-content h2 {
+                font-size: 1.3em;
+            }
         }
 
     </style>
 </head>
 <body>
 
-    <div class="book-container">
-        <div class="book-cover">
-            <h1>Fremd im Spiegel</h1>
-            <h2>Der Morgen, als Erik Sarah wurde</h2>
-            <p class="author">Eine Geschichte von KI & Mensch</p>
-        </div>
+    <div class="book-wrapper">
+        <div class="book-spine-title">Fremd im Spiegel</div>
+        <div class="main-book-content">
+            
+            <!-- Seite 1: Titelblatt -->
+            <div class="page-content active" id="page1">
+                <h1>Fremd im Spiegel</h1>
+                <h2>Der Morgen, als Erik Sarah wurde</h2>
+                <p style="text-align:center; margin-top: 50px; font-style:italic;">Eine Geschichte über Identität, Wahrnehmung<br>und einen sehr, sehr seltsamen Dienstag.</p>
+                <p style="text-align:center; margin-top: 100px; font-size: 0.8em;">(Blättere mit den Knöpfen unten)</p>
+            </div>
 
-        <div class="page" id="kapitel1">
-            <h3>Kapitel 1: Der Schock</h3>
-            <p>
-                Der Wecker riss Erik aus einem unruhigen Schlaf. 7:00 Uhr. Viel zu früh für einen Samstag, dachte er, bevor ihm einfiel, dass heute Dienstag war. Er schlug mit der Hand auf den Wecker, traf aber nur eine glatte, kühle Oberfläche. Verwirrt öffnete er die Augen. Das war nicht sein Zimmer. Rosa Wände. Ein Schminktisch, überladen mit Tiegeln und Fläschchen. Ein flauschiger Teppich. Panik kroch in ihm hoch.
-            </p>
-            <p>
-                Er setzte sich auf, und etwas fühlte sich… anders an. Schwerer. Weicher. Er blickte an sich herunter. Lange, schlanke Finger mit perfekt manikürten Nägeln. Ein zartes Nachthemd aus Seide. Darunter… Brüste. Echte, volle Brüste. Seine Hände zitterten, als er sie berührte. Das konnte nicht sein. Ein Albtraum.
-            </p>
-            <p>
-                Taumelnd stand er auf, seine Beine fühlten sich fremd und unkoordiniert an. Er stolperte zum großen Spiegel über dem Schminktisch. Der Schrei, der ihm entfuhr, war hoch und kehlig, nicht seine eigene Stimme. Im Spiegel starrte ihm Sarah entgegen. Sarah Wagner. Das schönste, beliebteste und, wie Erik heimlich fand, auch selbstsüchtigste Mädchen der Schule. Das Mädchen, in das er seit der siebten Klasse heimlich unsterblich verliebt war.
-            </p>
-            <p class="thought">
-                "Nein, nein, nein!", schoss es ihm durch den Kopf. "Das ist ein verdammter Albtraum! Wach auf, Erik, wach auf!"
-            </p>
-            <p>
-                Aber er wachte nicht auf. Er zwickte sich in den Arm – Sarahs Arm – und spürte den Schmerz. Real. Zu real.
-            </p>
-        </div>
+            <!-- Seite 2: Kapitel 1 - Der Schock -->
+            <div class="page-content" id="page2">
+                <h2>Kapitel 1: Das Erwachen</h2>
+                <p>
+                    Ein schriller Ton, penetrant und unnachgiebig, zerschnitt die Stille. Erik schlug blindlings nach dem Wecker, doch seine Hand traf nur eine kühle, glatte Oberfläche. Verwirrt blinzelte er. Das sanfte Morgenlicht fiel durch rosafarbene Vorhänge. Rosa? Sein Zimmer war dunkelblau, vollgestopft mit Postern von Indie-Bands und Raumschiffen. Eine Welle eisiger Panik begann in seiner Magengrube zu kribbeln.
+                </p>
+                <p>
+                    Er richtete sich auf. Ein seltsames Gewicht auf seiner Brust, lange, blonde Haarsträhnen, die ihm ins Gesicht fielen. Sein Blick wanderte an sich hinunter: schlanke Arme, zarte Hände mit perfekt lackierten Fingernägeln in einem dezenten Nude-Ton. Ein seidenes Nachthemd, das sich kühl auf einer Haut anfühlte, die nicht seine war. Darunter, unverkennbar: Brüste.
+                </p>
+                <p class="thought">
+                    "Nein. Nein, das ist nicht möglich. Das ist ein Traum. Ein absolut bescheuerter, verdammter Albtraum!"
+                </p>
+                <p>
+                    Mit zitternden Beinen, die sich unnatürlich lang und fremd anfühlten, stolperte er aus dem Bett. Der Boden war mit einem hochflorigen, weißen Teppich bedeckt. Sein Blick fiel auf den großen, ovalen Spiegel über einem eleganten Schminktisch, der mit unzähligen Tiegeln, Flakons und Pinseln übersät war. Was er sah, ließ ihm das Blut in den Adern gefrieren und einen kehligen Laut ausstoßen, der definitiv nicht seine Stimme war.
+                </p>
+            </div>
 
-        <div class="page" id="kapitel2">
-            <h3>Kapitel 2: Die erste Konfrontation</h3>
-            <p>
-                Ein Klopfen an der Tür. "Sarah, Schatz? Bist du wach? Frühstück ist fertig!", rief eine freundliche Frauenstimme. Sarahs Mutter. Erik, gefangen in Sarahs Körper, erstarrte. Was sollte er tun? Er konnte nicht als "Sarah" auftreten. Er wusste nichts über sie, außer dem, was man in den Schulfluren aufschnappte.
-            </p>
-            <p>
-                "Äh… ja, Mom! Komme gleich!", quäkte er mit einer Stimme, die er kaum als seine – oder vielmehr ihre – wiedererkannte. Er musste sich Kleidung suchen. Der Kleiderschrank war riesig, gefüllt mit modischen Tops, engen Jeans, kurzen Röcken. Nichts davon fühlte sich richtig an. Er griff nach der weitesten Jeans, die er finden konnte, und einem schlichten T-Shirt. Sich anzuziehen war eine Tortur. Jeder Handgriff fühlte sich falsch an, der BH war ein Mysterium, das er nur mit Mühe und Not bewältigte.
-            </p>
-            <p>
-                Unten in der Küche saßen Sarahs Eltern. Sie lächelten ihn – Sarah – an. "Guten Morgen, Liebling. Schlecht geschlafen? Du siehst etwas blass aus", sagte ihre Mutter besorgt. Erik murmelte etwas Unverständliches und stocherte in dem Müsli herum, das vor ihm stand. Sarahs Vater las Zeitung und warf ihm einen kurzen Blick zu. "Große Mathearbeit heute, nicht wahr? Hast du gelernt?"
-            </p>
-            <p class="thought">
-                Mathearbeit? Oh Gott. Sarah war gut in Mathe, oder? Er, Erik, war eine Niete. Das würde auffallen.
-            </p>
-        </div>
+            <!-- Seite 3: Kapitel 1 Fortsetzung -->
+            <div class="page-content" id="page3">
+                <h2>Kapitel 1: Das Erwachen (Forts.)</h2>
+                <p>
+                    Aus dem Spiegel starrte ihm Sarah Wagner entgegen. Sarah. Das Mädchen seiner Träume. Die Königin der Schule, bildschön, umschwärmt, unnahbar. Und, wenn Erik ehrlich zu sich war, oft auch unerträglich selbstverliebt. Das Mädchen, für das er seit drei Jahren heimlich schwärmte, ohne je ein Wort mit ihr gewechselt zu haben, das über ein flüchtiges "Hallo" hinausging, wenn sie ihn überhaupt wahrnahm.
+                </p>
+                <p>
+                    Er – oder besser gesagt, sie – hob eine Hand zum Gesicht. Die Spiegelgestalt tat es ihr gleich. Er berührte die Wange, die weiche Haut. Es war real. Er war in Sarahs Körper. In Sarahs Zimmer.
+                </p>
+                <p class="thought">
+                    "Okay, Erik, ruhig bleiben. Tief durchatmen. Das ist nur... eine sehr, sehr lebhafte Halluzination. Vielleicht hab ich was Falsches gegessen. Oder Drogen im Schlaf genommen? Unwahrscheinlich."
+                </p>
+                <p>
+                    Er zwickte sich in den Arm. Sarahs Arm. Der Schmerz war real, spitz und unmissverständlich. Er war wach. Und er war Sarah Wagner. Übelkeit stieg in ihm hoch. Was zum Teufel war hier los? Und – noch wichtiger – wo war der echte Erik? Und wo war die echte Sarah?
+                </p>
+            </div>
 
-        <div class="page" id="kapitel3">
-            <h3>Kapitel 3: Der Schul-Albtraum</h3>
-            <p>
-                Der Schulweg war die Hölle. Jeder schien ihn – Sarah – anzustarren. Jungs pfiffen ihm hinterher, Mädchen tuschelten. Normalerweise wäre Erik unsichtbar gewesen. Jetzt war er im Zentrum der Aufmerksamkeit, und es war unerträglich. Sarahs Freundinnen, eine Clique lauter, selbstbewusster Mädchen, kamen kichernd auf ihn zu. "Na, Süße? Wieder zu spät aufgestanden?", lachte eine von ihnen, Lisa.
-            </p>
-            <p>
-                Erik versuchte, Sarahs typisch arrogantes Lächeln aufzusetzen, aber es fühlte sich wie eine Grimasse an. "Sowas in der Art", presste er hervor. Die Gespräche drehten sich um Partys, Jungs und Lästereien über andere Mitschüler. Erik fühlte sich elend. Das war die Welt des Mädchens, das er so bewundert hatte? Oberflächlich und irgendwie grausam.
-            </p>
-            <p>
-                Im Unterricht versuchte er, unsichtbar zu bleiben. Bei der Mathearbeit starrte er hilflos auf das Blatt. Er konnte nichts davon lösen. Normalerweise hätte Sarah hier geglänzt. Später, im Flur, wurde er von Mark, dem Quarterback des Footballteams, angeflirtet. Mark, der Erik sonst keines Blickes würdigte. Erik (als Sarah) wich unbeholfen aus, was Mark sichtlich irritierte.
-            </p>
-            <p class="thought">
-                Das ist alles so falsch. Ich will einfach nur wieder Erik sein. Unsichtbar, aber ich selbst.
-            </p>
-        </div>
+            <!-- Seite 4: Kapitel 2 - Die erste Hürde: Das Bad -->
+            <div class="page-content" id="page4">
+                <h2>Kapitel 2: Physische Realitäten</h2>
+                <p>
+                    Ein dumpfes Klopfen an der Tür. "Sarah, Liebling? Alles in Ordnung? Du bist spät dran!" Die Stimme einer Frau, warm und leicht besorgt. Sarahs Mutter. Eriks Herz raste. "Äh... ja, Mom! Komme gleich!", krächzte er mit Sarahs heller Stimme, die sich in seinen Ohren wie ein schlechter Scherz anhörte.
+                </p>
+                <p>
+                    Er musste ins Bad. Die Tür gegenüber dem Bett führte dorthin. Ein luxuriöser Raum in Pastelltönen, alles blitzblank. Die erste Herausforderung: die Toilette. Es war... anders. Er setzte sich unbeholfen. Alles fühlte sich fremd an. Danach die Dusche. Er starrte auf die unzähligen Flaschen mit Shampoos, Conditionern, Duschgels. Vanille-Kirschblüte, Kokos-Limette, Seidenprotein-Repair. Er griff wahllos nach einer Flasche. Das Gefühl, diesen fremden, weiblichen Körper zu waschen, war bizarr und löste eine Mischung aus Scham und purer Verwirrung aus.
+                </p>
+                <p class="thought">
+                    "Wie macht man das mit den Haaren? So viele Haare! Und... oh Gott, bloß nicht darüber nachdenken, was hier alles anders ist."
+                </p>
+                <p>
+                    Das Abtrocknen war nicht weniger seltsam. Er vermied den Blick in den großen Badezimmerspiegel so gut es ging.
+                </p>
+            </div>
 
-        <div class="page" id="kapitel4">
-            <h3>Kapitel 4: Ein anderer Blickwinkel</h3>
-            <p>
-                Der Tag zog sich wie Kaugummi. Erik musste sich durch Gespräche quälen, deren Inhalt ihm fremd war, und auf eine Art agieren, die ihm widerstrebte. Er bemerkte aber auch andere Dinge. Wie Lehrer Sarah bevorzugten, ihr mehr Aufmerksamkeit schenkten. Wie selbstverständlich ihr Dinge zugeflogen schienen, für die er hart hätte kämpfen müssen.
-            </p>
-            <p>
-                In der Mittagspause sah er, wie Sarahs Clique eine jüngere, schüchterne Schülerin hänselte. Die "echte" Sarah hätte wahrscheinlich mitgemacht oder es zumindest ignoriert. Doch Erik, in Sarahs Körper, spürte einen Stich des Mitleids. Er erinnerte sich, wie oft er sich so gefühlt hatte. "Hey, lasst sie in Ruhe", sagte er plötzlich, seine Stimme fester als erwartet.
-            </p>
-            <p>
-                Sarahs Freundinnen starrten ihn ungläubig an. "Was ist denn mit dir los, Sarah?", fragte Lisa schnippisch. Erik zuckte nur mit den Schultern. "Keine Ahnung. Einfach… nicht okay." Die Mädchen zogen verwirrt ab. Die jüngere Schülerin warf ihm einen dankbaren, aber ebenso verwunderten Blick zu.
-            </p>
-            <p>
-                Am Nachmittag, allein in Sarahs Zimmer, durchstöberte er ihre Sachen. Er fand ein Tagebuch, versteckt unter ihrem Kopfkissen. Zögernd schlug er es auf. Die Einträge waren überraschend verletzlich. Sie schrieb über den Druck, immer perfekt sein zu müssen, über die Angst, nicht gemocht zu werden, wenn sie nicht die "schöne, beliebte Sarah" war. Über ihre eigene Unsicherheit.
-            </p>
-            <p class="thought">
-                Sie ist auch nur ein Mensch? Mit Ängsten? Das... das hatte ich nie so gesehen.
-            </p>
-        </div>
+            <!-- Seite 5: Kapitel 2 - Kleiderwahl und Frühstück -->
+            <div class="page-content" id="page5">
+                <h2>Kapitel 2: Physische Realitäten (Forts.)</h2>
+                <p>
+                    Zurück in Sarahs Zimmer stand er vor ihrem riesigen Kleiderschrank. Eine Explosion aus Farben, Stoffen und Marken, die er sich nie hätte leisten können. Enge Jeans, bauchfreie Tops, kurze Röcke, elegante Blusen. Nichts davon passte zu dem Jungen, der er im Inneren noch immer war. Er entschied sich für die unauffälligste Jeans und ein weites T-Shirt, das er finden konnte. Der BH, den er in einer Schublade fand, war ein Konstrukt aus Spitze und Bügeln, das ihn an eine mittelalterliche Rüstung erinnerte. Nach mehreren vergeblichen Versuchen, das Ding irgendwie anzulegen, ließ er es frustriert liegen. Das musste ohne gehen.
+                </p>
+                <p>
+                    Mit klopfendem Herzen schlich er die Treppe hinunter. Die Küche war hell und modern. Sarahs Eltern saßen am Frühstückstisch. Mrs. Wagner, eine elegante Frau mit freundlichen Augen, lächelte ihn an. "Guten Morgen, Schlafmütze. Alles okay? Du siehst etwas... anders aus."
+                </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Morgen. Ja, äh, nur schlecht geträumt." (Stammelnd, die Stimme viel zu hoch)
+                </p>
+                <p>
+                    Mr. Wagner, ein Mann mit strengen Zügen, blickte kurz von seiner Zeitung auf. "Vergiss die Mathearbeit nicht. Und sei pünktlich."
+                </p>
+                <p class="thought">
+                    Mathearbeit! Oh nein. Sarah war Klassenbeste in Mathe. Er, Erik, hatte gerade so eine Vier geschafft. Das konnte ja heiter werden.
+                </p>
+            </div>
+            
+            <!-- Seite 6: Kapitel 3 - Der Weg zur Schule -->
+            <div class="page-content" id="page6">
+                <h2>Kapitel 3: Im Feindesland</h2>
+                <p>
+                    Der Schulweg war ein Spießrutenlauf. Normalerweise war Erik einer der Unsichtbaren, die am Rand der Aufmerksamkeit existierten. Jetzt, als Sarah, war er ein Magnet für Blicke. Jungs pfiffen anerkennend, Mädchen musterten ihn von oben bis unten, manche neidisch, manche abschätzig. Jeder Blick brannte auf seiner Haut. Er versuchte, den Kopf gesenkt zu halten, was für die selbstbewusste Sarah Wagner völlig untypisch gewesen wäre.
+                </p>
+                <p>
+                    Vor dem Schultor wartete bereits Sarahs Clique: Jessica und Chloe, beide genauso modisch und perfekt gestylt wie Sarah sonst auch.
+                </p>
+                <p class="dialogue">
+                    <strong>Jessica:</strong> "Na endlich, Sarah! Wir dachten schon, du kommst gar nicht mehr. Was ist los? Neuer Look? Das Shirt ist... naja." Sie zog eine Augenbraue hoch.
+                </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Hatte... nichts anderes." (Er wusste, das klang lahm.)
+                </p>
+                <p class="dialogue">
+                    <strong>Chloe:</strong> "Und kein Make-up? Bist du krank? Du siehst so... blass aus."
+                </p>
+                <p class="thought">
+                    Make-up! Daran hatte er überhaupt nicht gedacht. Sarah war immer perfekt geschminkt. Er fühlte sich nackt und entlarvt.
+                </p>
+                <p>
+                    Die Mädchen begannen sofort über die Party vom Wochenende zu tratschen, über Jungs und über andere Mädchen, die nicht anwesend waren. Erik hörte mit halbem Ohr zu, angewidert von der Oberflächlichkeit und der unterschwelligen Bosheit in ihren Worten. Das war die Welt des Mädchens, das er so idealisiert hatte?
+                </p>
+            </div>
 
-        <div class="page" id="kapitel5">
-            <h3>Kapitel 5: Ungewisse Zukunft</h3>
-            <p>
-                Der Abend kam. Erik war erschöpft, emotional ausgelaugt. Er hatte einen Tag als jemand anderes gelebt, als das Mädchen seiner Träume – und die Realität war ernüchternd und komplexer als jede Fantasie. Er hatte einen flüchtigen Blick hinter eine Fassade geworfen, die er selbst mit aufgebaut hatte durch seine stille Anbetung.
-            </p>
-            <p>
-                Er legte sich in Sarahs Bett, das immer noch fremd roch, sich fremd anfühlte. Was würde morgen sein? Würde er wieder als Erik aufwachen? Oder war das jetzt sein Leben? Die Ungewissheit war quälend. Er wusste nicht, wie diese Verwandlung geschehen war, und er hatte keine Ahnung, wie er sie rückgängig machen konnte.
-            </p>
-            <p>
-                Er dachte an sein eigenes Zimmer, seine Bücher, seine Unbeholfenheit. Und er dachte an Sarah, an ihre Schönheit, ihren Egoismus, aber auch an die versteckte Verletzlichkeit, die er erahnt hatte. Er hatte sie angehimmelt, ohne sie wirklich zu kennen. Und nun, da er buchstäblich in ihrer Haut steckte, verstand er ein wenig mehr – und gleichzeitig gar nichts.
-            </p>
-            <p class="thought">
-                Wenn ich jemals wieder ich selbst bin... werde ich die Dinge anders sehen? Werde ich Sarah anders sehen? Und was ist mit ihr? Ist sie jetzt... ich?
-            </p>
-            <p>
-                Mit diesen beunruhigenden Fragen und ohne eine Antwort schlief Erik, der jetzt Sarah war, schließlich ein, den Duft von teurem Parfüm in der Nase und das Gewicht fremder Haare auf dem Kissen. Der nächste Morgen würde kommen. Und mit ihm vielleicht eine Antwort – oder nur ein weiterer Tag im Spiegelbild eines anderen.
-            </p>
-        </div>
+            <!-- Seite 7: Kapitel 3 - Die Mathearbeit -->
+            <div class="page-content" id="page7">
+                <h2>Kapitel 3: Im Feindesland (Forts.)</h2>
+                <p>
+                    Die erste Stunde: Mathematik bei Mr. Henderson. Die angekündigte Arbeit. Erik saß an Sarahs Platz in der ersten Reihe. Als Mr. Henderson die Aufgabenblätter austeilte, sank ihm das Herz. Differentialrechnung. Er verstand nur Bahnhof. Sarah hätte das mit links gelöst. Er starrte auf das Blatt, versuchte, irgendeinen Anhaltspunkt zu finden, aber sein Kopf war leer.
+                </p>
+                <p>
+                    Minuten verstrichen. Er schrieb seinen – Sarahs – Namen oben aufs Blatt. Das war's. Er spürte die Blicke seiner Mitschüler, die sich wunderten, warum die Überfliegerin Sarah Wagner nichts zu Papier brachte. Jessica, die neben ihm saß, warf ihm einen verwirrten Seitenblick zu.
+                </p>
+                <p class="thought">
+                    "Das ist eine Katastrophe. Ich werde Sarahs Notenschnitt ruinieren. Und alle werden denken, sie ist plötzlich total verblödet."
+                </p>
+                <p>
+                    Als Mr. Henderson nach einer halben Stunde die Blätter einsammelte, gab Erik ein fast leeres Blatt ab. Der Lehrer sah ihn stirnrunzelnd an. "Alles in Ordnung, Sarah?" Erik nickte nur stumm und wünschte, der Boden würde sich auftun und ihn verschlucken.
+                </p>
+            </div>
+            
+            <!-- Seite 8: Kapitel 4 - Mittagspause und eine unerwartete Reaktion -->
+            <div class="page-content" id="page8">
+                <h2>Kapitel 4: Kleine Verschiebungen</h2>
+                <p>
+                    Die Mittagspause in der Cafeteria war laut und chaotisch. Erik (als Sarah) saß mit Jessica und Chloe am "Stammtisch" der beliebten Kids. Er stocherte lustlos in seinem Salat. Die Gespräche drehten sich weiterhin um Belanglosigkeiten. Dann bemerkte er, wie am Nebentisch eine Gruppe von Jungs, angeführt von Mark, dem arroganten Quarterback, einen jüngeren, schüchternen Jungen namens Tim bedrängte. Tim, der oft Ziel von Spott war, genau wie Erik selbst es manchmal gewesen war.
+                </p>
+                <p>
+                    Die "echte" Sarah hätte das wahrscheinlich mit einem amüsierten Lächeln ignoriert oder vielleicht sogar einen bissigen Kommentar abgelassen. Doch Erik spürte einen Zorn in sich aufsteigen, der ihn überraschte.
+                </p>
+                <p class="dialogue">
+                    <strong>Mark:</strong> (zu Tim) "Na, Streber, wieder alleine am Tisch? Hat Mami dir dein Pausenbrot geschmiert?"
+                </p>
+                <p>
+                    Bevor er darüber nachdenken konnte, stand Erik auf. "Hey, Mark! Lass ihn in Ruhe!", sagte er, seine Stimme fester und lauter, als er es beabsichtigt hatte.
+                </p>
+                <p>
+                    Stille. Alle starrten ihn an. Mark drehte sich überrascht um. Jessica und Chloe sahen aus, als hätten sie einen Geist gesehen.
+                </p>
+            </div>
 
+            <!-- Seite 9: Kapitel 4 - Folgen -->
+            <div class="page-content" id="page9">
+                <h2>Kapitel 4: Kleine Verschiebungen (Forts.)</h2>
+                <p class="dialogue">
+                    <strong>Mark:</strong> "Was ist denn mit dir los, Prinzessin? Seit wann mischst du dich in sowas ein?" Er grinste überheblich.
+                </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Seit es mich nervt, wenn Idioten wie du sich an Schwächeren vergreifen."
+                </p>
+                <p>
+                    Marks Grinsen gefror. So hatte noch nie jemand mit ihm gesprochen, schon gar nicht Sarah Wagner. Die Cafeteria war totenstill. Tim starrte Erik mit offenem Mund an. Nach einer Sekunde, die sich wie eine Ewigkeit anfühlte, schnaubte Mark verächtlich und wandte sich mit seinen Kumpels ab.
+                </p>
+                <p>
+                    Erik setzte sich wieder. Jessica und Chloe bombardierten ihn mit Fragen. "Sarah, bist du verrückt? Mit Mark legt man sich nicht an!" - "Was war das denn eben?" Erik murmelte nur etwas von "schlechter Laune". Aber tief im Inneren fühlte er eine seltsame Genugtuung. Und er bemerkte den dankbaren, wenn auch völlig verwirrten Blick, den Tim ihm zuwarf.
+                </p>
+                <p class="thought">
+                    Vielleicht kann ich ja doch irgendwas... Gutes tun in dieser Situation? Auch wenn ich keine Ahnung habe, wie ich hier wieder rauskomme.
+                </p>
+            </div>
+
+            <!-- Seite 10: Kapitel 5 - Sarahs Geheimnisse -->
+            <div class="page-content" id="page10">
+                <h2>Kapitel 5: Hinter der Fassade</h2>
+                <p>
+                    Der Nachmittag zog sich quälend langsam. Erik fühlte sich wie ein Schauspieler in einer Rolle, für die er das Drehbuch nicht kannte. Jeder soziale Austausch war eine Anstrengung. Als er endlich wieder in "seinem" – Sarahs – Zimmer war, ließ er sich erschöpft aufs Bett fallen. Sein Blick fiel auf den Nachttisch. Dort lag, halb unter einem Modemagazin versteckt, ein kleines, ledergebundenes Notizbuch. Ein Tagebuch?
+                </p>
+                <p>
+                    Ein schlechtes Gewissen plagte ihn, aber die Neugier war stärker. Vorsichtig schlug er es auf. Die Handschrift war elegant und geschwungen, aber die Worte, die er las, überraschten ihn.
+                </p>
+                <p class="thought" style="font-style: normal; border-left: 2px solid #c8b09a; background-color: #f9f5f0; padding: 10px;">
+                    <em>"15. September: Wieder hat Dad nur über meine Noten geredet. Als ob nichts anderes zählt. Manchmal hasse ich diesen Druck, immer perfekt sein zu müssen. Was, wenn ich es mal nicht bin? Würde mich dann noch jemand mögen?"</em><br><br>
+                    <em>"23. September: Jessica und Chloe haben heute wieder über Lisa gelästert. Ich habe mitgemacht, aber es fühlte sich falsch an. Manchmal sind sie so oberflächlich. Aber wenn ich was sage, bin ich die Zicke. Es ist einsam an der Spitze."</em><br><br>
+                    <em>"02. Oktober: Mark hat mich schon wieder angebaggert. Alle Mädels sind neidisch. Aber er ist so ein Proll. Ich wünschte, jemand würde mich mal wirklich SEHEN, nicht nur die Hülle."</em>
+                </p>
+                <p>
+                    Erik klappte das Buch langsam zu. Sarah, die selbstsüchtige Eisprinzessin, hatte Ängste, Unsicherheiten, sehnte sich nach echter Verbindung? Das Bild, das er von ihr gehabt hatte, begann Risse zu bekommen.
+                </p>
+            </div>
+            
+            <!-- Seite 11: Kapitel 6 - Ein Funken Hoffnung? -->
+            <div class="page-content" id="page11">
+                <h2>Kapitel 6: Der Abend und die Ungewissheit</h2>
+                <p>
+                    Das Abendessen mit Sarahs Eltern verlief ähnlich angespannt wie das Frühstück. Erik (als Sarah) gab einsilbige Antworten, versuchte, nicht aufzufallen. Er war körperlich und seelisch erschöpft. Die Anstrengung, jemand anderes zu sein, die ständige Angst, entlarvt zu werden, die Flut neuer Eindrücke und Emotionen – es war überwältigend.
+                </p>
+                <p>
+                    Als er endlich wieder in Sarahs Zimmer war und die Tür hinter sich schloss, atmete er tief durch. Er zog das Nachthemd an, das sich immer noch fremd anfühlte, und legte sich ins Bett. Die Laken rochen nach Sarahs Parfüm, einem süßlichen, teuren Duft.
+                </p>
+                <p class="thought">
+                    "Was passiert, wenn ich einschlafe? Wache ich dann wieder als Erik auf? Oder ist das jetzt mein Leben? Und was ist mit der echten Sarah? Ist sie in meinem Körper? Gott, ich hoffe, sie kommt mit meinem Zimmer klar... und meiner Mutter..."
+                </p>
+                <p>
+                    Ein Gedanke schoss ihm durch den Kopf: Wenn Sarah in seinem Körper war, würde sie wahrscheinlich ausrasten. Sein Zimmer, seine Klamotten, sein schüchternes, unscheinbares Leben – das genaue Gegenteil von ihrem. Vielleicht war das der Schlüssel? Musste er etwas Bestimmtes tun, um zurückzukommen?
+                </p>
+                <p>
+                    Er dachte an den Vorfall in der Cafeteria. Er hatte sich anders verhalten als die "echte" Sarah. War das ein Hinweis? Oder bildete er sich das nur ein? Verzweifelt starrte er an die Decke. Es gab keine Antworten, nur eine erdrückende Ungewissheit und die Angst vor dem nächsten Morgen.
+                </p>
+            </div>
+
+            <!-- Seite 12: Kapitel 6 - Ende? -->
+            <div class="page-content" id="page12">
+                <h2>Kapitel 6: Der Abend und die Ungewissheit (Forts.)</h2>
+                <p>
+                    Er schloss die Augen. Vielleicht, nur vielleicht, war dieser ganze Spuk vorbei, wenn er wieder aufwachte. Er klammerte sich an diese winzige Hoffnung. Er dachte an sein eigenes Bett, seine alten Comics, die vertraute Unordnung seines Zimmers. Dinge, die er nie besonders geschätzt hatte, erschienen ihm nun wie ein verlorenes Paradies.
+                </p>
+                <p>
+                    Und er dachte an Sarah. Nicht mehr nur an das schöne, unnahbare Mädchen, sondern an die Person hinter der Fassade, die er durch ihr Tagebuch ein wenig kennengelernt hatte. Eine Person, die vielleicht gar nicht so selbstsüchtig war, wie er immer geglaubt hatte, sondern gefangen in den Erwartungen anderer und ihren eigenen Unsicherheiten.
+                </p>
+                <p class="thought">
+                    "Wenn ich jemals wieder ich selbst bin... werde ich alles anders sehen. Ich werde sie anders sehen."
+                </p>
+                <p>
+                    Mit diesem Gedanken, einer Mischung aus Resignation und einem winzigen Keim neuen Verständnisses, glitt Erik, der Junge im Körper des schönsten Mädchens der Schule, in einen unruhigen Schlaf, nicht wissend, was der nächste Tag bringen würde. Würde der Spiegel ihm sein altes Ich zurückgeben, oder eine weitere Runde im fremden Leben?
+                </p>
+                <p style="text-align:center; margin-top:50px; font-style:italic;">- Ende des ersten Tages -</p>
+            </div>
+
+
+            <!-- Navigation wird hier vom JS eingefügt -->
+        </div>
+        <div class="navigation">
+            <button class="nav-button" id="prevPage" onclick="changePage(-1)">‹ Vorherige</button>
+            <span class="page-number" id="pageIndicator">Seite 1 / X</span>
+            <button class="nav-button" id="nextPage" onclick="changePage(1)">Nächste ›</button>
+        </div>
     </div>
+
+    <script>
+        let currentPageIndex = 0;
+        const pages = document.querySelectorAll('.main-book-content .page-content');
+        const totalPages = pages.length;
+        const pageIndicator = document.getElementById('pageIndicator');
+        const prevButton = document.getElementById('prevPage');
+        const nextButton = document.getElementById('nextPage');
+
+        function showPage(index) {
+            pages.forEach((page, i) => {
+                page.classList.remove('active');
+                if (i === index) {
+                    page.classList.add('active');
+                }
+            });
+            // Scrollt den Inhalt der aktuellen Seite nach oben, falls gescrollt wurde
+            document.querySelector('.main-book-content').scrollTop = 0; 
+            updateNavigation();
+        }
+
+        function updateNavigation() {
+            pageIndicator.textContent = `Seite ${currentPageIndex + 1} / ${totalPages}`;
+            prevButton.disabled = currentPageIndex === 0;
+            nextButton.disabled = currentPageIndex === totalPages - 1;
+        }
+
+        function changePage(direction) {
+            const newIndex = currentPageIndex + direction;
+            if (newIndex >= 0 && newIndex < totalPages) {
+                currentPageIndex = newIndex;
+                showPage(currentPageIndex);
+            }
+        }
+
+        // Initialanzeige
+        showPage(currentPageIndex);
+    </script>
 
 </body>
 </html>
