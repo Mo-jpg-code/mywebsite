@@ -3,1261 +3,478 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Advanced Micro Flight Sim</title>
+    <title>Mobile 3D Car Driver</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #0c0c14;
-            color: #e0e0e0;
+            overflow: hidden;
+            background-color: #333;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
-            overflow: hidden;
-            touch-action: none;
+            font-family: Arial, sans-serif;
+            color: white;
         }
-
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            max-width: 500px;
-            height: 100%;
-            background-color: #1a1a2a;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7);
-        }
-
-        #canvas-container {
+        #gameContainer {
             position: relative;
-            width: 100%;
-            flex-grow: 1;
-            background-color: #000;
-            overflow: hidden;
-            cursor: crosshair; /* Indicate placement possibility */
+            /* Dimensions will be set by JS to maintain 9:16 */
         }
-
         canvas {
             display: block;
-            background-color: transparent; /* Sky will be drawn by JS */
+            background-color: #87CEEB; /* Sky blue */
         }
-        
-        #ui-panel {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            background-color: #282838;
-            padding: 5px 0;
-            box-sizing: border-box;
-            flex-shrink: 0; /* Prevent panel from shrinking too much */
-        }
-
-        .controls-row {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 4px 8px;
-        }
-
-        .controls-row button, .controls-row input[type="range"], .controls-row select {
-            padding: 6px 10px;
-            margin: 2px;
-            background-color: #4a4a5a;
-            color: white;
-            border: 1px solid #6a6a7a;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75em;
-            flex-shrink: 0;
-        }
-        .controls-row input[type="range"] {
-            flex-grow: 1;
-            max-width: 120px;
-            height: 10px; /* Make slider track smaller */
-            padding: 0; margin: 0 5px;
-        }
-         .controls-row button.active-tool {
-            background-color: #007bff;
-            border-color: #0056b3;
-        }
-
-        .controls-row label {
-            font-size: 0.75em;
-            margin-right: 3px;
-        }
-
-        #telemetry {
-            font-size: 0.7em;
-            text-align: center;
-            padding: 2px 5px;
-            background-color: #222230;
-            white-space: nowrap; /* Prevent wrapping */
-            overflow-x: auto; /* Allow scrolling if too long */
-        }
-        
-        #part-palette {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 3px;
-            background-color: #202030;
-            max-height: 90px; /* More compact palette */
-            overflow-y: auto;
-        }
-
-        .part-button {
-            border: 1px solid #555;
-            background-color: #383848;
-            color: white;
-            margin: 2px;
-            cursor: pointer;
-            width: 42px; /* Square-ish */
-            height: 42px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6em;
-            border-radius: 3px;
-            box-sizing: border-box;
-            padding: 1px;
-        }
-        .part-button canvas {
-            width: 28px;
-            height: 28px;
-            margin-bottom: 1px;
-            background-color: #4a4a5a; /* Background for mini-canvas */
-            border-radius: 2px;
-        }
-        .part-button.selected {
-            background-color: #007bff;
-            border-color: #0056b3;
-        }
-
-        #staging-ui {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 3px;
-            background-color: #242434;
-            max-height: 80px; /* Limit height */
-            overflow-y: auto;
-        }
-        #staging-ui h4 { margin: 2px 0 3px 0; font-size: 0.75em;}
-        .stage-container {
-            border: 1px dashed #454555;
-            padding: 2px;
-            margin-bottom: 2px;
-            width: 95%;
-            font-size: 0.65em;
-            background-color: #303040;
-        }
-        .stage-part {
-            background-color: #3f3f4f;
-            padding: 1px 3px;
-            margin: 1px;
-            border-radius: 2px;
-            cursor: grab;
-        }
-        .stage-part.dragging {
-            opacity: 0.5;
-        }
-
-        #build-mode-controls button, #flight-mode-controls button {
-            flex-grow: 0.3; /* Allow more buttons */
-        }
-
-        .hidden { display: none !important; }
-
-        /* CoM and CoT markers */
-        .indicator {
+        #controls {
             position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            transform: translate(-50%, -50%); /* Center on point */
-            pointer-events: none; /* Don't interfere with clicks */
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            user-select: none; /* Prevent text selection on touch */
+            z-index: 10;
         }
-        #com-indicator { background-color: rgba(255, 255, 0, 0.7); border: 1px solid yellow; }
-        #cot-indicator { background-color: rgba(255, 0, 0, 0.7); border: 1px solid red; }
-
+        #controls button {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            border: 2px solid white;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 10px;
+            touch-action: manipulation; /* Improve touch responsiveness */
+        }
+        #controls button:active {
+            background-color: rgba(255,255,255,0.3);
+        }
+        #leftRightControls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #gasBrakeControls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="canvas-container">
-            <canvas id="gameCanvas"></canvas>
-            <!-- Indicators for CoM/CoT will be positioned over the canvas by JS -->
-            <div id="com-indicator" class="indicator hidden"></div>
-            <div id="cot-indicator" class="indicator hidden"></div>
-        </div>
-        
-        <div id="ui-panel">
-            <div id="telemetry">Alt: 0m | Vel: 0m/s | Fuel: 100% | Stage: 0 | Drag: 0N</div>
-
-            <div id="build-mode-ui">
-                <div class="controls-row">
-                    <button id="toolSelectBtn" class="active-tool">Select</button>
-                    <button id="toolDeleteBtn">Delete</button>
-                    <button id="toolMoveBtn">Move</button> <!-- For later, if implemented -->
-                </div>
-                <div id="part-palette"></div>
-                <div id="staging-ui">
-                    <h4>Staging <button id="addStageBtn" style="font-size:0.8em; padding: 1px 3px; margin-left: 5px;">+</button></h4>
-                    <div id="stages-display"></div>
-                </div>
-                <div class="controls-row" id="build-mode-controls">
-                    <button id="clearRocketBtn">Clear</button>
-                    <button id="launchBtn">Launch!</button>
-                </div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="controls">
+            <div id="leftRightControls">
+                <button id="turnLeftBtn">⬅️</button>
+                <button id="turnRightBtn">➡️</button>
             </div>
-
-            <div id="flight-mode-ui" class="hidden">
-                 <div class="controls-row">
-                    <label for="throttleSlider">Thr:</label>
-                    <input type="range" id="throttleSlider" min="0" max="100" value="0">
-                    <span id="throttleValue" style="min-width: 25px; text-align: right;">0%</span>
-                </div>
-                <div class="controls-row" id="flight-mode-controls">
-                    <button id="stageBtn">Stage!</button>
-                    <button id="resetFlightBtn">Builder</button>
-                </div>
+            <div id="gasBrakeControls">
+                <button id="gasBtn">⬆️</button>
+                <button id="brakeBtn">⬇️</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // Game Constants
-        const PX_PER_METER = 8; // Increased for better visuals on small screens
-        const GRAVITY = 9.81;
-        const TIME_STEP = 1/60;
-        const AIR_DENSITY = 1.225; // kg/m^3 at sea level, for drag
+    <!-- Import Three.js via importmap -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
 
-        // Canvas & Context
-        const canvasContainer = document.getElementById('canvas-container');
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer;
+        let car, ground, obstacles = [];
+        let carSpeed = 0;
+        let carTurnSpeed = 0;
+
+        const CAR_ACCELERATION = 0.02;
+        const CAR_BRAKE_FORCE = 0.03;
+        const CAR_MAX_SPEED = 0.5;
+        const CAR_TURN_RATE = 0.05;
+        const CAR_FRICTION = 0.98; // 2% speed loss per frame
+        const GRAVITY = 0.03; // Simplified gravity for falling off ramps
+
+        let inputState = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false
+        };
+
+        // Game Container and Canvas Elements
+        const gameContainer = document.getElementById('gameContainer');
         const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const comIndicator = document.getElementById('com-indicator');
-        const cotIndicator = document.getElementById('cot-indicator');
 
-        // UI Elements (condensed query selectors)
-        const ui = {
-            telemetry: document.getElementById('telemetry'),
-            partPalette: document.getElementById('part-palette'),
-            stagesDisplay: document.getElementById('stages-display'),
-            addStageBtn: document.getElementById('addStageBtn'),
-            clearRocketBtn: document.getElementById('clearRocketBtn'),
-            launchBtn: document.getElementById('launchBtn'),
-            throttleSlider: document.getElementById('throttleSlider'),
-            throttleValue: document.getElementById('throttleValue'),
-            stageBtn: document.getElementById('stageBtn'),
-            resetFlightBtn: document.getElementById('resetFlightBtn'),
-            buildModeUI: document.getElementById('build-mode-ui'),
-            flightModeUI: document.getElementById('flight-mode-ui'),
-            toolSelectBtn: document.getElementById('toolSelectBtn'),
-            toolDeleteBtn: document.getElementById('toolDeleteBtn'),
-            toolMoveBtn: document.getElementById('toolMoveBtn'), // Placeholder
-        };
-        ui.toolMoveBtn.style.display = 'none'; // Hide move tool for now
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // Sky blue
+            scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
 
-        // Game State
-        let gameState = 'BUILD';
-        let currentBuildTool = 'SELECT'; // SELECT, DELETE, MOVE
-        let cameraY = 0;
-        let skyOffset = 0; // For parallax background
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
 
-        let rocket = {
-            parts: [], // { id, defKey, x, y (center), stageIndex, connections: {nodeName: connectedToPartId} }
-            stages: [[]], // Array of arrays of part IDs
-            currentStageIndex: 0,
-            width: 0, height: 0, // Overall dimensions
-            totalMass: 0, currentFuel: 0, totalFuelCapacity: 0,
-            thrust: 0, throttle: 0, altitude: 0, velocityY: 0,
-            centerOfMass: { x: 0, y: 0 }, // Relative to rocket's bottom-center origin
-            centerOfThrust: { x: 0, y: 0 }, // Relative to rocket's bottom-center origin
-            dragCoefficient: 0.8, // Base drag coefficient
-            frontalArea: 0, // m^2
-        };
-        let nextPartId = 0;
-        let selectedPartDefKey = null;
-        let snapPreview = null; // { partId, nodeId, previewX, previewY }
+            // Set initial canvas size (will be updated by resize handler)
+            updateCanvasSize();
 
-        // Part Definitions (with nodes)
-        // Node positions are relative to part's center. (0,0) is center.
-        // y positive is up, y negative is down.
-        const PART_DEFINITIONS = {
-            commandPod: { 
-                name: 'Pod', type: 'pod', width: 1.5, height: 1.2, mass: 300, 
-                sprite: { shape: 'trapezoid', color: '#ddeeff', topWidthFactor: 0.7 },
-                nodes: [{ id: 'bottom', x: 0, y: -0.6, type: 'stack', accepts: ['stack'] }]
-            },
-            noseCone: {
-                name: 'Cone', type: 'utility', width: 1, height: 1, mass: 50, dragReduction: 0.3,
-                sprite: { shape: 'cone', color: '#ccddcc' },
-                nodes: [{ id: 'bottom', x: 0, y: -0.5, type: 'stack', accepts: ['stack'] }]
-            },
-            smallTank: { 
-                name: 'S.Tank', type: 'tank', width: 1, height: 1.5, mass: 50, fuel: 400, 
-                sprite: { shape: 'rect', color: '#b0b0c0' },
-                nodes: [
-                    { id: 'top', x: 0, y: 0.75, type: 'stack', accepts: ['stack'] },
-                    { id: 'bottom', x: 0, y: -0.75, type: 'stack', accepts: ['stack'] }
-                ]
-            },
-            mediumTank: {
-                name: 'M.Tank', type: 'tank', width: 1.5, height: 2.5, mass: 100, fuel: 1200,
-                sprite: { shape: 'rect', color: '#c0c0d0' },
-                nodes: [
-                    { id: 'top', x: 0, y: 1.25, type: 'stack', accepts: ['stack'] },
-                    { id: 'bottom', x: 0, y: -1.25, type: 'stack', accepts: ['stack'] }
-                ]
-            },
-            smallEngine: { 
-                name: 'S.Engine', type: 'engine', width: 0.8, height: 0.8, mass: 100, baseThrust: 30000, isp: 280, 
-                sprite: { shape: 'engine', color: '#888899', nozzleWidthFactor: 0.7, nozzleHeightFactor: 0.5 },
-                nodes: [{ id: 'top', x: 0, y: 0.4, type: 'stack', accepts: ['stack'] }]
-            },
-            largeEngine: {
-                name: 'L.Engine', type: 'engine', width: 1.4, height: 1.8, mass: 500, baseThrust: 150000, isp: 310,
-                sprite: { shape: 'engine', color: '#777788', nozzleWidthFactor: 0.8, nozzleHeightFactor: 0.6 },
-                nodes: [{ id: 'top', x: 0, y: 0.9, type: 'stack', accepts: ['stack'] }]
-            },
-            decoupler: {
-                name: 'Decoupler', type: 'decoupler', width: 1, height: 0.3, mass: 50,
-                sprite: { shape: 'rect', color: '#ffcc00' },
-                nodes: [ // Decouples things attached to 'top'
-                    { id: 'top', x: 0, y: 0.15, type: 'stack', accepts: ['stack'], decouples: true },
-                    { id: 'bottom', x: 0, y: -0.15, type: 'stack', accepts: ['stack'] }
-                ]
-            }
-        };
+            // Camera (Perspective)
+            camera = new THREE.PerspectiveCamera(75, getAspectRatio(), 0.1, 1000);
+            camera.position.set(0, 5, -10); // Initial position behind car
+            camera.lookAt(0, 0, 0);
 
-        // --- Utility Functions ---
-        function resizeCanvas() {
-            canvas.width = canvasContainer.clientWidth;
-            canvas.height = canvasContainer.clientHeight;
-            draw();
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(20, 30, 10);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 100;
+            directionalLight.shadow.camera.left = -50;
+            directionalLight.shadow.camera.right = 50;
+            directionalLight.shadow.camera.top = 50;
+            directionalLight.shadow.camera.bottom = -50;
+            scene.add(directionalLight);
+            // const helper = new THREE.CameraHelper( directionalLight.shadow.camera );
+            // scene.add( helper );
+
+
+            // Create Ground
+            const groundGeometry = new THREE.PlaneGeometry(200, 200);
+            const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x556B2F, side: THREE.DoubleSide }); // Dark Olive Green
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2; // Rotate to be flat
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Create Car
+            createCar();
+
+            // Create Ramps and Obstacles
+            createEnvironment();
+
+            // Event Listeners
+            setupControls();
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Start animation loop
+            animate();
         }
 
-        function getPartInstance(id) { return rocket.parts.find(p => p.id === id); }
-        function getPartDef(key) { return PART_DEFINITIONS[key]; }
+        function getAspectRatio() {
+            return 9 / 16;
+        }
 
-        // --- Build Mode Logic ---
-        function populatePartPalette() {
-            ui.partPalette.innerHTML = '';
-            for (const key in PART_DEFINITIONS) {
-                const partDef = getPartDef(key);
-                const button = document.createElement('div'); // Use div for more styling freedom
-                button.classList.add('part-button');
-                
-                const prevCanvas = document.createElement('canvas');
-                prevCanvas.width = 28 * window.devicePixelRatio; // For sharper preview
-                prevCanvas.height = 28 * window.devicePixelRatio;
-                prevCanvas.style.width = "28px";
-                prevCanvas.style.height = "28px";
+        function updateCanvasSize() {
+            const aspectRatio = getAspectRatio();
+            let newWidth, newHeight;
 
-                button.appendChild(prevCanvas);
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = partDef.name;
-                button.appendChild(nameSpan);
-
-                button.dataset.partKey = key;
-                button.onclick = () => selectPartForPlacing(key, button);
-                ui.partPalette.appendChild(button);
-                
-                // Draw mini part preview
-                const prevCtx = prevCanvas.getContext('2d');
-                prevCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-                const scale = Math.min(28 / (partDef.width * 1.2), 28 / (partDef.height * 1.2));
-                prevCtx.save();
-                prevCtx.translate(14, 14); // Center in mini-canvas
-                drawPartSprite(prevCtx, { def: partDef }, scale, true); // isPreview = true
-                prevCtx.restore();
+            if (window.innerWidth / window.innerHeight > aspectRatio) {
+                // Window is wider than 9:16 (landscape-ish for a 9:16 target)
+                // Height is the limiting factor
+                newHeight = window.innerHeight * 0.95; // Use 95% to leave some margin
+                newWidth = newHeight * aspectRatio;
+            } else {
+                // Window is taller than 9:16 (portrait-ish or exact)
+                // Width is the limiting factor
+                newWidth = window.innerWidth * 0.95; // Use 95%
+                newHeight = newWidth / aspectRatio;
+            }
+            
+            gameContainer.style.width = `${newWidth}px`;
+            gameContainer.style.height = `${newHeight}px`;
+            renderer.setSize(newWidth, newHeight);
+            if (camera) {
+                camera.aspect = newWidth / newHeight; // Use actual canvas aspect
+                camera.updateProjectionMatrix();
             }
         }
 
-        function selectPartForPlacing(partKey, buttonElement) {
-            currentBuildTool = 'SELECT';
-            updateToolButtons();
-            selectedPartDefKey = partKey;
-            document.querySelectorAll('.part-button.selected').forEach(btn => btn.classList.remove('selected'));
-            if (buttonElement) buttonElement.classList.add('selected');
-            snapPreview = null; // Clear old preview
+
+        function createCar() {
+            car = new THREE.Group();
+
+            const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red
+            const carCabinMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc }); // Light grey
+            const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 }); // Dark grey
+
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
+            const bodyMesh = new THREE.Mesh(bodyGeometry, carBodyMaterial);
+            bodyMesh.castShadow = true;
+            bodyMesh.position.y = 0.4; // Lift body so wheels are on ground
+            car.add(bodyMesh);
+
+            // Cabin
+            const cabinGeometry = new THREE.BoxGeometry(1.6, 0.8, 2);
+            const cabinMesh = new THREE.Mesh(cabinGeometry, carCabinMaterial);
+            cabinMesh.castShadow = true;
+            cabinMesh.position.y = 0.8 + 0.4; // On top of body
+            cabinMesh.position.z = -0.5; // Slightly forward
+            car.add(cabinMesh);
+
+            // Wheels (simple cylinders)
+            const wheelRadius = 0.4;
+            const wheelWidth = 0.3;
+            const wheelGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelWidth, 16);
+            
+            const wheelPositions = [
+                { x: 1.1, y: 0.4, z: 1.3 },  // Front-right
+                { x: -1.1, y: 0.4, z: 1.3 }, // Front-left
+                { x: 1.1, y: 0.4, z: -1.3 }, // Rear-right
+                { x: -1.1, y: 0.4, z: -1.3 }  // Rear-left
+            ];
+
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                wheel.castShadow = true;
+                wheel.rotation.z = Math.PI / 2; // Lay cylinder on its side
+                wheel.position.set(pos.x, pos.y, pos.z);
+                car.add(wheel);
+            });
+            
+            car.position.y = 0; // Car starts on the ground (wheels touch, body is above)
+            scene.add(car);
         }
 
-        function addPartToRocket(partDefKey, targetPartId, targetNodeId, newPartNodeId) {
-            const newPartDef = getPartDef(partDefKey);
-            const newPart = {
-                id: nextPartId++,
-                defKey: partDefKey,
-                x: 0, y: 0, // Will be calculated based on attachment
-                stageIndex: rocket.stages.length - 1, // Default to newest stage
-                connections: {}, // { ownNodeId: targetPartId }
-                children: [] // List of part IDs directly attached to this part's nodes
+        function createEnvironment() {
+            const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 }); // Grey
+            
+            // Ramp 1
+            const ramp1Geo = new THREE.BoxGeometry(5, 1, 10); // width, height, depth
+            const ramp1 = new THREE.Mesh(ramp1Geo, obstacleMaterial);
+            ramp1.castShadow = true;
+            ramp1.receiveShadow = true;
+            ramp1.position.set(10, 0.5, 0); // Y is height/2
+            ramp1.rotation.y = Math.PI / 6;
+            scene.add(ramp1);
+            obstacles.push({mesh: ramp1, type: 'ramp', height: 1});
+
+            // Ramp 2 (steeper)
+            const ramp2Geo = new THREE.BoxGeometry(4, 2, 8);
+            const ramp2 = new THREE.Mesh(ramp2Geo, obstacleMaterial);
+            ramp2.castShadow = true;
+            ramp2.receiveShadow = true;
+            ramp2.position.set(-12, 1, 5); // Y is height/2
+            ramp2.rotation.y = -Math.PI / 4;
+            scene.add(ramp2);
+            obstacles.push({mesh: ramp2, type: 'ramp', height: 2});
+
+            // Some boxes
+            const box1Geo = new THREE.BoxGeometry(3, 3, 3);
+            const box1 = new THREE.Mesh(box1Geo, obstacleMaterial);
+            box1.castShadow = true;
+            box1.receiveShadow = true;
+            box1.position.set(0, 1.5, 15);
+            scene.add(box1);
+            obstacles.push({mesh: box1, type: 'box'});
+
+            const box2Geo = new THREE.BoxGeometry(2, 5, 2);
+            const box2 = new THREE.Mesh(box2Geo, obstacleMaterial);
+            box2.castShadow = true;
+            box2.receiveShadow = true;
+            box2.position.set(15, 2.5, -10);
+            scene.add(box2);
+            obstacles.push({mesh: box2, type: 'box'});
+        }
+
+        function setupControls() {
+            // Touch Controls
+            const gasBtn = document.getElementById('gasBtn');
+            const brakeBtn = document.getElementById('brakeBtn');
+            const leftBtn = document.getElementById('turnLeftBtn');
+            const rightBtn = document.getElementById('turnRightBtn');
+
+            const setTouchState = (key, value) => {
+                inputState[key] = value;
             };
 
-            if (rocket.parts.length === 0) { // First part
-                newPart.y = newPartDef.height / 2; // Position its bottom at rocket origin (0)
-            } else {
-                const parentPart = getPartInstance(targetPartId);
-                const parentDef = getPartDef(parentPart.defKey);
-                const parentTargetNode = parentDef.nodes.find(n => n.id === targetNodeId);
-                const newPartConnectingNode = newPartDef.nodes.find(n => n.id === newPartNodeId);
+            gasBtn.addEventListener('touchstart', () => setTouchState('forward', true), {passive: true});
+            gasBtn.addEventListener('touchend', () => setTouchState('forward', false));
+            brakeBtn.addEventListener('touchstart', () => setTouchState('backward', true), {passive: true});
+            brakeBtn.addEventListener('touchend', () => setTouchState('backward', false));
+            leftBtn.addEventListener('touchstart', () => setTouchState('left', true), {passive: true});
+            leftBtn.addEventListener('touchend', () => setTouchState('left', false));
+            rightBtn.addEventListener('touchstart', () => setTouchState('right', true), {passive: true});
+            rightBtn.addEventListener('touchend', () => setTouchState('right', false));
 
-                // Calculate position: parent's center + parent's node offset - new part's node offset (vector math)
-                // Example: new part's 'bottom' connects to parent's 'top'
-                // newY = parent.y + parentNode.y (abs pos of parent node) - newNode.y (offset from new part center to its node)
-                newPart.x = parentPart.x + parentTargetNode.x - newPartConnectingNode.x; // (Assumes no rotation for now)
-                newPart.y = parentPart.y + parentTargetNode.y - newPartConnectingNode.y;
+            // Keyboard Controls (for easier debugging on desktop)
+            document.addEventListener('keydown', (event) => {
+                switch(event.key) {
+                    case 'ArrowUp': case 'w': inputState.forward = true; break;
+                    case 'ArrowDown': case 's': inputState.backward = true; break;
+                    case 'ArrowLeft': case 'a': inputState.left = true; break;
+                    case 'ArrowRight': case 'd': inputState.right = true; break;
+                }
+            });
+            document.addEventListener('keyup', (event) => {
+                switch(event.key) {
+                    case 'ArrowUp': case 'w': inputState.forward = false; break;
+                    case 'ArrowDown': case 's': inputState.backward = false; break;
+                    case 'ArrowLeft': case 'a': inputState.left = false; break;
+                    case 'ArrowRight': case 'd': inputState.right = false; break;
+                }
+            });
+        }
+        
+        let onRamp = false;
+        let currentRampHeight = 0;
+
+        function updateCar() {
+            // Turning
+            if (inputState.left) carTurnSpeed = CAR_TURN_RATE;
+            else if (inputState.right) carTurnSpeed = -CAR_TURN_RATE;
+            else carTurnSpeed = 0;
+
+            // Only allow turning if moving (or very slowly)
+            if (Math.abs(carSpeed) > 0.01) {
+                car.rotation.y += carTurnSpeed * Math.sign(carSpeed); // Turn in direction of movement
+            }
+
+
+            // Acceleration / Braking
+            if (inputState.forward) carSpeed += CAR_ACCELERATION;
+            else if (inputState.backward) carSpeed -= CAR_BRAKE_FORCE; // Braking is stronger
+
+            // Friction
+            carSpeed *= CAR_FRICTION;
+
+            // Cap speed
+            carSpeed = Math.max(-CAR_MAX_SPEED / 2, Math.min(CAR_MAX_SPEED, carSpeed)); // Slower reverse
+
+            // Stop if speed is very low
+            if (Math.abs(carSpeed) < 0.001) carSpeed = 0;
+
+            // Calculate potential new position
+            const prevPosition = car.position.clone();
+            car.translateX(carSpeed); // Moves along car's local Z axis (forward/backward)
+                                      // For some reason Three.js BoxGeometry seems to have Z as forward/back
+                                      // If your car model is oriented differently, you might need car.translateZ()
+                                      // Let's ensure it's Z for this setup:
+            const moveDirection = new THREE.Vector3(0, 0, 1); // Forward in local Z
+            moveDirection.applyQuaternion(car.quaternion); // Rotate to world direction
+            moveDirection.multiplyScalar(carSpeed);
+            
+            const potentialPosition = car.position.clone().add(moveDirection);
+
+            // Collision Detection & Response
+            const carBox = new THREE.Box3().setFromObject(car);
+            // Adjust carBox for more accurate ground collision (e.g. just the wheels)
+            const carGroundBox = new THREE.Box3(
+                new THREE.Vector3(carBox.min.x, car.position.y, carBox.min.z),
+                new THREE.Vector3(carBox.max.x, car.position.y + 0.1, carBox.max.z) // Small height for ground check
+            );
+
+
+            let collision = false;
+            let onThisRamp = false;
+            let targetY = 0; // Target height from ground or ramp
+
+            for (let obsData of obstacles) {
+                const obstacle = obsData.mesh;
+                const obstacleBox = new THREE.Box3().setFromObject(obstacle);
                 
-                // Record connection
-                newPart.connections[newPartConnectingNode.id] = { connectedToPartId: parentPart.id, connectedToNodeId: parentTargetNode.id };
-                parentPart.children.push({ ownNodeId: parentTargetNode.id, childPartId: newPart.id, childNodeId: newPartConnectingNode.id });
-            }
-            
-            rocket.parts.push(newPart);
-            rocket.stages[newPart.stageIndex].push(newPart.id);
-            
-            calculateRocketProperties();
-            updateStagingUI();
-            draw();
-        }
-        
-        function removePartAndChildren(partIdToRemove) {
-            const removedPartIds = new Set();
-            const queue = [partIdToRemove];
-            
-            while (queue.length > 0) {
-                const currentId = queue.shift();
-                if (removedPartIds.has(currentId)) continue;
-                removedPartIds.add(currentId);
+                // Predict collision with potential position
+                const futureCarBox = carBox.clone().translate(moveDirection);
 
-                const part = getPartInstance(currentId);
-                if (!part) continue;
-
-                // Find parts attached to this part (its children) and add them to queue
-                part.children.forEach(childConnection => {
-                    queue.push(childConnection.childPartId);
-                });
-
-                // Remove from parent's children list
-                for (const connectionKey in part.connections) {
-                    const conn = part.connections[connectionKey];
-                    const parentPart = getPartInstance(conn.connectedToPartId);
-                    if (parentPart) {
-                        parentPart.children = parentPart.children.filter(
-                            childC => childC.childPartId !== currentId
-                        );
-                    }
-                }
-            }
-
-            // Filter out removed parts from rocket.parts and stages
-            rocket.parts = rocket.parts.filter(p => !removedPartIds.has(p.id));
-            rocket.stages = rocket.stages.map(stage => stage.filter(id => !removedPartIds.has(id)));
-            
-            calculateRocketProperties();
-            updateStagingUI();
-            draw();
-        }
-
-        function calculateRocketProperties() {
-            rocket.totalMass = 0;
-            rocket.totalFuelCapacity = 0;
-            let comXSum = 0;
-            let comYSum = 0;
-            let minY = Infinity, maxY = -Infinity, minX = Infinity, maxX = -Infinity;
-
-            rocket.parts.forEach(part => {
-                const def = getPartDef(part.defKey);
-                rocket.totalMass += def.mass;
-                if (def.fuel) rocket.totalFuelCapacity += def.fuel;
-                
-                comXSum += part.x * def.mass;
-                comYSum += part.y * def.mass;
-
-                minY = Math.min(minY, part.y - def.height / 2);
-                maxY = Math.max(maxY, part.y + def.height / 2);
-                minX = Math.min(minX, part.x - def.width / 2);
-                maxX = Math.max(maxX, part.x + def.width / 2);
-            });
-
-            rocket.currentFuel = rocket.totalFuelCapacity; // Full tank on recalculate (build mode)
-            rocket.height = rocket.parts.length > 0 ? maxY - minY : 0;
-            rocket.width = rocket.parts.length > 0 ? maxX - minX : 0;
-
-            if (rocket.totalMass > 0) {
-                rocket.centerOfMass = { 
-                    x: comXSum / rocket.totalMass, // Relative to rocket origin (0,0) which is base of first part
-                    y: comYSum / rocket.totalMass  // This y is also relative to rocket origin
-                };
-            } else {
-                rocket.centerOfMass = { x: 0, y: 0 };
-            }
-            calculateActiveThrustAndCoT(); // Also updates CoT and drag properties
-            updateTelemetry(); // Update telemetry immediately
-        }
-        
-        function calculateActiveThrustAndCoT() {
-            rocket.thrust = 0;
-            let thrustSumX = 0;
-            let thrustSumY = 0; // Should be mostly Y for vertical rockets
-            let totalThrustMag = 0;
-            rocket.dragCoefficient = 0.8; // Base
-            let narrowestTopWidth = Infinity;
-
-
-            if (rocket.currentFuel <= 0) {
-                rocket.centerOfThrust = {x: rocket.centerOfMass.x, y: rocket.centerOfMass.y - 1}; // Default if no thrust
-                updateCoTIndicator(); // Also hide it or show default position
-                return;
-            }
-
-            let minRocketX = Infinity, maxRocketX = -Infinity;
-            let hasNoseConeAtTop = false;
-            let topMostY = -Infinity;
-            let topMostPart = null;
-
-
-            rocket.parts.forEach(p => {
-                const def = getPartDef(p.defKey);
-                minRocketX = Math.min(minRocketX, p.x - def.width / 2);
-                maxRocketX = Math.max(maxRocketX, p.x + def.width / 2);
-                if (p.y + def.height/2 > topMostY) {
-                    topMostY = p.y + def.height/2;
-                    topMostPart = p;
-                }
-            });
-            
-            if (topMostPart && getPartDef(topMostPart.defKey).type === 'utility' && getPartDef(topMostPart.defKey).dragReduction) {
-                hasNoseConeAtTop = true;
-                rocket.dragCoefficient -= getPartDef(topMostPart.defKey).dragReduction;
-            }
-
-
-            rocket.frontalArea = (maxRocketX - minRocketX) * 0.5; // Crude estimation of frontal area, assuming cylindrical like
-            if(hasNoseConeAtTop && topMostPart) rocket.frontalArea = Math.PI * Math.pow(getPartDef(topMostPart.defKey).width / 2, 2);
-
-
-            rocket.stages[rocket.currentStageIndex]?.forEach(partId => {
-                const part = getPartInstance(partId);
-                if (part) {
-                    const def = getPartDef(part.defKey);
-                    if (def.type === 'engine') {
-                        rocket.thrust += def.baseThrust;
-                        // For CoT, engine thrust acts at its center.
-                        // If engines can gimbal, this x position would change.
-                        thrustSumX += part.x * def.baseThrust; // Relative to rocket origin
-                        thrustSumY += part.y * def.baseThrust; // Relative to rocket origin
-                        totalThrustMag += def.baseThrust;
-                    }
-                }
-            });
-
-            if (totalThrustMag > 0) {
-                rocket.centerOfThrust = {
-                    x: thrustSumX / totalThrustMag,
-                    y: thrustSumY / totalThrustMag
-                };
-            } else {
-                 // Position CoT below CoM if no thrust, to avoid division by zero and give a visual cue
-                rocket.centerOfThrust = {x: rocket.centerOfMass.x, y: rocket.centerOfMass.y - 1}; // Arbitrary offset
-            }
-            updateCoMIndicator();
-            updateCoTIndicator();
-        }
-
-
-        function clearRocket() {
-            rocket.parts = [];
-            rocket.stages = [[]];
-            rocket.currentStageIndex = 0;
-            nextPartId = 0;
-            cameraY = 0;
-            skyOffset = 0;
-            calculateRocketProperties(); // Resets mass, fuel, CoM, etc.
-            updateStagingUI();
-            draw();
-        }
-
-        // --- Staging UI Logic ---
-        let draggedPartIdStaging = null;
-        function updateStagingUI() {
-            ui.stagesDisplay.innerHTML = '';
-            rocket.stages.forEach((stagePartIds, stageIdx) => {
-                const stageDiv = document.createElement('div');
-                stageDiv.classList.add('stage-container');
-                stageDiv.dataset.stageIndex = stageIdx;
-                stageDiv.innerHTML = `<strong>S${stageIdx}</strong> ${stageIdx === rocket.currentStageIndex && gameState === 'FLIGHT' ? "(Act)" : ""}`;
-                
-                stagePartIds.forEach(partId => {
-                    const part = getPartInstance(partId);
-                    if (part) {
-                        const partDef = getPartDef(part.defKey);
-                        const partElement = document.createElement('div');
-                        partElement.classList.add('stage-part');
-                        partElement.textContent = `${partDef.name.substring(0,3)}.${partId}`; // Short name + ID
-                        partElement.dataset.partId = partId;
-                        partElement.draggable = true;
-                        partElement.ondragstart = (e) => { 
-                            draggedPartIdStaging = partId; 
-                            e.dataTransfer.setData('text/plain', partId); // Necessary for FF
-                            e.target.classList.add('dragging');
-                        };
-                        partElement.ondragend = (e) => {
-                            e.target.classList.remove('dragging');
-                            draggedPartIdStaging = null;
-                        };
-                        stageDiv.appendChild(partElement);
-                    }
-                });
-
-                stageDiv.ondragover = (e) => e.preventDefault(); // Allow drop
-                stageDiv.ondrop = (e) => {
-                    e.preventDefault();
-                    if (draggedPartIdStaging === null) return;
-                    const targetStageIdx = parseInt(e.currentTarget.dataset.stageIndex);
-                    const partToMove = getPartInstance(draggedPartIdStaging);
-                    if (partToMove && partToMove.stageIndex !== targetStageIdx) {
-                        // Remove from old stage
-                        rocket.stages[partToMove.stageIndex] = rocket.stages[partToMove.stageIndex].filter(id => id !== draggedPartIdStaging);
-                        // Add to new stage
-                        rocket.stages[targetStageIdx].push(draggedPartIdStaging);
-                        partToMove.stageIndex = targetStageIdx;
-                        draggedPartIdStaging = null; // Consumed
-                        updateStagingUI(); // Redraw
-                        calculateActiveThrustAndCoT(); // Staging change might affect active engines
-                    }
-                };
-                ui.stagesDisplay.appendChild(stageDiv);
-            });
-        }
-        
-        ui.addStageBtn.onclick = () => {
-            if (gameState === 'BUILD') {
-                rocket.stages.push([]);
-                updateStagingUI();
-            }
-        };
-
-        // --- Flight Mode Logic ---
-        function switchToFlightMode() {
-            if (rocket.parts.length === 0) { alert("Build a rocket first!"); return; }
-            gameState = 'FLIGHT';
-            ui.buildModeUI.classList.add('hidden');
-            ui.flightModeUI.classList.remove('hidden');
-            comIndicator.classList.add('hidden');
-            cotIndicator.classList.add('hidden');
-            
-            rocket.altitude = 0;
-            rocket.velocityY = 0;
-            rocket.currentFuel = rocket.totalFuelCapacity; // Refuel for launch
-            rocket.currentStageIndex = findFirstStageWithEnginesOrDecouplers();
-            ui.throttleSlider.value = 0;
-            rocket.throttle = 0;
-            updateThrottleDisplay();
-            calculateActiveThrustAndCoT();
-            updateStagingUI();
-            lastTime = performance.now(); // Set lastTime for first gameLoop call
-            gameLoop();
-        }
-
-        function findFirstStageWithEnginesOrDecouplers() {
-            for (let i = rocket.stages.length - 1; i >= 0; i--) {
-                const stageHasActionablePart = rocket.stages[i].some(id => {
-                    const part = getPartInstance(id);
-                    return part && (getPartDef(part.defKey).type === 'engine' || getPartDef(part.defKey).type === 'decoupler');
-                });
-                if (stageHasActionablePart) return i;
-            }
-            return rocket.stages.length - 1; // Default to last stage
-        }
-
-        function switchToBuildMode() {
-            gameState = 'BUILD';
-            ui.flightModeUI.classList.add('hidden');
-            ui.buildModeUI.classList.remove('hidden');
-            comIndicator.classList.remove('hidden');
-            cotIndicator.classList.remove('hidden');
-            rocket.currentStageIndex = rocket.stages.length - 1; // Reset for building
-            updateStagingUI();
-            cameraY = 0; skyOffset = 0;
-            calculateRocketProperties(); // Recalculate with full fuel etc.
-            draw();
-        }
-
-        function updatePhysics(dt) {
-            if (rocket.parts.length === 0 || rocket.totalMass <= 0) {
-                rocket.velocityY -= GRAVITY * dt; // Freefall if massless (e.g. after all parts jettisoned)
-                rocket.altitude += rocket.velocityY * dt;
-                if (rocket.altitude <= 0) { rocket.altitude = 0; rocket.velocityY = 0; }
-                return;
-            }
-
-            const thrustForce = rocket.thrust * rocket.throttle;
-            const gravityForce = rocket.totalMass * GRAVITY;
-            
-            // Aerodynamic Drag (simplified)
-            // F_drag = 0.5 * rho * v^2 * Cd * A
-            const dragForceMag = 0.5 * AIR_DENSITY * Math.pow(rocket.velocityY, 2) * rocket.dragCoefficient * rocket.frontalArea;
-            const dragForce = Math.sign(rocket.velocityY) * -dragForceMag; // Opposes velocity
-            
-            const netForce = thrustForce - gravityForce + dragForce;
-
-            const acceleration = netForce / rocket.totalMass;
-            rocket.velocityY += acceleration * dt;
-            rocket.altitude += rocket.velocityY * dt;
-
-            let fuelConsumedThisTick = 0;
-            if (rocket.throttle > 0) {
-                rocket.stages[rocket.currentStageIndex]?.forEach(partId => {
-                    const part = getPartInstance(partId);
-                    if (part) {
-                        const def = getPartDef(part.defKey);
-                        if (def.type === 'engine' && rocket.currentFuel > 0) {
-                            const fuelRate = (def.baseThrust / (def.isp * GRAVITY)); // kg/s or unit/s
-                            fuelConsumedThisTick += fuelRate * rocket.throttle * dt;
+                if (futureCarBox.intersectsBox(obstacleBox)) {
+                    if (obsData.type === 'ramp') {
+                        // Check if car is roughly "on top" of the ramp area
+                        // This is a very simplified ramp interaction
+                        if (futureCarBox.min.x < obstacleBox.max.x && futureCarBox.max.x > obstacleBox.min.x &&
+                            futureCarBox.min.z < obstacleBox.max.z && futureCarBox.max.z > obstacleBox.min.z) {
+                            targetY = obsData.height; // Set car Y to ramp height
+                            onThisRamp = true;
+                            currentRampHeight = obsData.height;
+                        } else { // Hit side of ramp
+                            collision = true;
+                            break;
                         }
-                    }
-                });
-            }
-            
-            rocket.currentFuel -= fuelConsumedThisTick;
-            if (rocket.currentFuel < 0) {
-                rocket.currentFuel = 0;
-                calculateActiveThrustAndCoT(); // Recalculate, thrust will be 0
-            }
-            
-            if (rocket.altitude < 0) {
-                rocket.altitude = 0;
-                rocket.velocityY = 0; // Crash / Land
-                // Consider flight ended or parts damaged here
-            }
-        }
-        
-        function activateNextStage() {
-            if (rocket.currentStageIndex < 0) return; // Should not happen
-
-            const stageToActivate = rocket.currentStageIndex;
-            let partsToDecouple = new Set();
-            let massJettisoned = 0;
-            let fuelInJettisonedTanks = 0; // Track fuel lost
-
-            // Check for decouplers in the current stage
-            rocket.stages[stageToActivate]?.forEach(partId => {
-                const part = getPartInstance(partId);
-                if (!part) return;
-                const def = getPartDef(part.defKey);
-                if (def.type === 'decoupler') {
-                    // Find all parts attached to this decoupler's "decoupling" nodes and their children
-                    const partsAboveDecoupler = getDecoupledBranch(part.id, def);
-                    partsAboveDecoupler.forEach(id => partsToDecouple.add(id));
-                }
-            });
-            
-            // If no decouplers fired in this stage, and it's not stage 0, assume entire stage is jettisoned
-            // (This is a common SFS behavior for engine stages without explicit decouplers below them)
-            if (partsToDecouple.size === 0 && stageToActivate > 0) {
-                 rocket.stages[stageToActivate]?.forEach(partId => partsToDecouple.add(partId));
-                 // Also need to jettison parts "above" this stage that were directly attached to it.
-                 // This gets complex. Simpler: if a stage without decouplers is activated (and not stage 0),
-                 // assume it separates from the stage below it.
-                 // For now, let's stick to explicit decouplers primarily.
-                 // A simpler model: if staging and not stage 0, and no decoupler fired, all parts in current stage are jettisoned.
-                 rocket.stages[stageToActivate]?.forEach(id => partsToDecouple.add(id));
-            }
-
-
-            if (partsToDecouple.size > 0) {
-                rocket.parts = rocket.parts.filter(p => {
-                    if (partsToDecouple.has(p.id)) {
-                        const def = getPartDef(p.defKey);
-                        massJettisoned += def.mass;
-                        if (def.fuel) fuelInJettisonedTanks += def.fuel; // This is capacity, not current fuel in it
-                        return false; // Remove part
-                    }
-                    return true;
-                });
-                // Simplification: Reduce global fuel by the capacity of jettisoned tanks.
-                // A more complex model would track fuel per tank.
-                rocket.totalFuelCapacity -= fuelInJettisonedTanks;
-                if (rocket.currentFuel > rocket.totalFuelCapacity) rocket.currentFuel = rocket.totalFuelCapacity;
-            }
-
-            if (rocket.currentStageIndex > 0) {
-                 rocket.currentStageIndex--;
-            } else if (rocket.currentStageIndex === 0 && partsToDecouple.size === 0) {
-                // If at stage 0 and no decouplers fired, staging again might turn off engines.
-                // This logic can be refined. For now, Stage 0 engines just run until fuel out or throttled down.
-                // No further stage change.
-                 console.log("At final stage or no decouplers fired.");
-            }
-
-
-            calculateRocketProperties(); // Recalculates mass, CoM, etc. from remaining parts
-            calculateActiveThrustAndCoT(); // Updates thrust for new stage
-            updateStagingUI();
-        }
-
-        function getDecoupledBranch(decouplerPartId, decouplerDef) {
-            const branch = new Set();
-            const queue = [];
-
-            const decouplerInstance = getPartInstance(decouplerPartId);
-            if (!decouplerInstance) return branch;
-
-            // Find nodes on the decoupler marked with 'decouples: true'
-            decouplerDef.nodes.forEach(nodeDef => {
-                if (nodeDef.decouples) {
-                    // Find children attached to this specific node
-                    decouplerInstance.children.forEach(childConn => {
-                        if (childConn.ownNodeId === nodeDef.id) {
-                            queue.push(childConn.childPartId);
-                        }
-                    });
-                }
-            });
-            
-            while (queue.length > 0) {
-                const currentId = queue.shift();
-                if (branch.has(currentId)) continue;
-                branch.add(currentId);
-                const part = getPartInstance(currentId);
-                if (part) {
-                    part.children.forEach(childConn => queue.push(childConn.childPartId));
-                }
-            }
-            return branch;
-        }
-
-
-        // --- Drawing ---
-        function drawPartSprite(pCtx, part, scale, isPreview = false) {
-            const def = isPreview ? part.def : getPartDef(part.defKey); // part.def is the definition itself in preview
-            const w = def.width * scale;
-            const h = def.height * scale;
-            
-            pCtx.fillStyle = def.sprite.color;
-            pCtx.strokeStyle = '#333';
-            pCtx.lineWidth = Math.max(1, 0.1 * scale);
-
-            switch (def.sprite.shape) {
-                case 'trapezoid':
-                    const topW = w * def.sprite.topWidthFactor;
-                    pCtx.beginPath();
-                    pCtx.moveTo(-topW / 2, -h / 2);
-                    pCtx.lineTo(topW / 2, -h / 2);
-                    pCtx.lineTo(w / 2, h / 2);
-                    pCtx.lineTo(-w / 2, h / 2);
-                    pCtx.closePath();
-                    pCtx.fill();
-                    pCtx.stroke();
-                    break;
-                case 'cone':
-                    pCtx.beginPath();
-                    pCtx.moveTo(0, -h / 2); // Tip of the cone
-                    pCtx.lineTo(w / 2, h / 2);
-                    pCtx.lineTo(-w / 2, h / 2);
-                    pCtx.closePath();
-                    pCtx.fill();
-                    pCtx.stroke();
-                    break;
-                case 'engine':
-                    // Main body
-                    pCtx.fillRect(-w / 2, -h / 2, w, h * (1 - (def.sprite.nozzleHeightFactor || 0.5)));
-                    pCtx.strokeRect(-w / 2, -h / 2, w, h * (1 - (def.sprite.nozzleHeightFactor || 0.5)));
-                    // Nozzle (trapezoid)
-                    const nozzleTopY = -h/2 + h * (1 - (def.sprite.nozzleHeightFactor || 0.5));
-                    const nozzleBottomY = h/2;
-                    const nozzleTopW = w;
-                    const nozzleBottomW = w * (def.sprite.nozzleWidthFactor || 0.7);
-                    pCtx.beginPath();
-                    pCtx.moveTo(-nozzleTopW / 2, nozzleTopY);
-                    pCtx.lineTo(nozzleTopW / 2, nozzleTopY);
-                    pCtx.lineTo(nozzleBottomW / 2, nozzleBottomY);
-                    pCtx.lineTo(-nozzleBottomW / 2, nozzleBottomY);
-                    pCtx.closePath();
-                    pCtx.fill();
-                    pCtx.stroke();
-                    break;
-                case 'rect':
-                default:
-                    pCtx.fillRect(-w / 2, -h / 2, w, h);
-                    pCtx.strokeRect(-w / 2, -h / 2, w, h);
-                    break;
-            }
-
-            // Draw nodes if in build mode preview or for clarity
-            if ((gameState === 'BUILD' && !isPreview) || (isPreview && scale > 10)) { // Only draw nodes on main canvas or large previews
-                 if (def.nodes) {
-                    def.nodes.forEach(node => {
-                        pCtx.fillStyle = node.type === 'stack' ? 'rgba(0,255,0,0.5)' : 'rgba(0,0,255,0.5)';
-                        pCtx.beginPath();
-                        pCtx.arc(node.x * scale, node.y * scale, 0.1 * scale, 0, Math.PI * 2);
-                        pCtx.fill();
-                    });
-                }
-            }
-        }
-        
-        const starField = [];
-        const numStars = 100;
-        for (let i = 0; i < numStars; i++) {
-            starField.push({
-                x: Math.random(), // 0 to 1 (fraction of canvas width)
-                y: Math.random(), // 0 to 1 (fraction of canvas height for initial spread)
-                z: Math.random() * 0.8 + 0.2 // Depth (0.2 to 1), closer stars move faster
-            });
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Background
-            const groundLevelCanvas = canvas.height * 0.85 + cameraY; // Ground relative to viewport
-            const horizonY = groundLevelCanvas - rocket.altitude * PX_PER_METER;
-
-            // Sky Gradient (dynamic based on altitude)
-            const atmTop = 50000; // meters, where space starts
-            const spaceColor = '#080810';
-            const skyColorMid = '#3366aa';
-            const skyColorLow = '#66aadd';
-            
-            let t = Math.min(1, rocket.altitude / atmTop); // Transition factor to space
-
-            const currentSkyTop = `rgb(${Math.floor(33 * (1-t) + 8 * t)}, ${Math.floor(66 * (1-t) + 8 * t)}, ${Math.floor(170 * (1-t) + 16 * t)})`;
-            const currentSkyBottom = `rgb(${Math.floor(66 * (1-t) + 8 * t)}, ${Math.floor(170 * (1-t) + 8 * t)}, ${Math.floor(221 * (1-t) + 16 * t)})`;
-
-            const skyGradient = ctx.createLinearGradient(0, 0, 0, horizonY > 0 ? horizonY : canvas.height);
-            skyGradient.addColorStop(0, currentSkyTop);
-            skyGradient.addColorStop(1, currentSkyBottom);
-            ctx.fillStyle = skyGradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Stars (parallax)
-            if (rocket.altitude > 1000 || gameState === 'FLIGHT') { // Show stars higher up or always in flight
-                const camFactor = (cameraY + skyOffset) * 0.00005; // How much camera influences star parallax
-                starField.forEach(star => {
-                    const x = (star.x * canvas.width) % canvas.width;
-                    // y moves with camera based on depth (z), wraps around
-                    let y = (star.y * canvas.height + (cameraY + skyOffset) * star.z * 0.1) % canvas.height;
-                    if (y < 0) y += canvas.height;
-
-                    const G = Math.floor(200 + Math.random() * 55); // Whiter stars
-                    ctx.fillStyle = `rgba(${G},${G},${G},${star.z * Math.min(1, rocket.altitude / (atmTop*0.5))})`; // Fade in with altitude
-                    ctx.fillRect(x, y, Math.ceil(star.z * 1.5), Math.ceil(star.z * 1.5));
-                });
-            }
-
-
-            // Ground
-            ctx.fillStyle = '#336633';
-            ctx.fillRect(0, horizonY, canvas.width, canvas.height - horizonY);
-
-            // Launchpad (visual only)
-            if (gameState === 'BUILD' || rocket.altitude < 50) {
-                const padHeight = 0.5 * PX_PER_METER;
-                const padWidth = 5 * PX_PER_METER;
-                ctx.fillStyle = '#555';
-                ctx.fillRect(canvas.width / 2 - padWidth/2, horizonY - padHeight, padWidth, padHeight);
-            }
-
-            // Rocket drawing origin: center of canvas horizontally, rocket bottom at calculated altitude
-            const rocketOriginXCanvas = canvas.width / 2;
-            // The rocket's (0,0) point (base of first part) is at rocket.altitude from ground.
-            // So, on canvas, it's horizonY - (0 * PX_PER_METER), if rocket.altitude is 0.
-            // More generally, it's horizonY - (part.y - minY) * PX_PER_METER where minY is the bottom-most extent of the rocket.
-            // Simpler: The rocket's internal (0,0) origin point.
-            const rocketOriginYCanvas = horizonY; 
-
-            ctx.save();
-            ctx.translate(rocketOriginXCanvas, rocketOriginYCanvas);
-
-            rocket.parts.forEach(part => {
-                const def = getPartDef(part.defKey);
-                ctx.save();
-                // Part's (x,y) is its center relative to rocketOrigin
-                ctx.translate(part.x * PX_PER_METER, -part.y * PX_PER_METER); // -y because canvas Y is down
-                // Add rotation here if implemented: ctx.rotate(part.rotation);
-                drawPartSprite(ctx, part, PX_PER_METER);
-
-                // Flame for active engines
-                if (gameState === 'FLIGHT' && def.type === 'engine' && 
-                    part.stageIndex === rocket.currentStageIndex && 
-                    rocket.throttle > 0 && rocket.currentFuel > 0) {
-                    
-                    const flameBaseY = (def.height / 2) * PX_PER_METER; // bottom of engine sprite
-                    const flameLength = (def.height * 1.8 * rocket.throttle * (0.8 + Math.random()*0.4)) * PX_PER_METER;
-                    const flameWidth = (def.width * (def.sprite.nozzleWidthFactor || 0.7) * (0.7 + Math.random()*0.3)) * PX_PER_METER;
-                    
-                    ctx.fillStyle = `rgba(255, ${100 + Math.random()*100}, 0, ${0.6 + rocket.throttle * 0.4})`;
-                    ctx.beginPath();
-                    ctx.moveTo(-flameWidth/2, flameBaseY);
-                    ctx.lineTo(flameWidth/2, flameBaseY);
-                    ctx.lineTo(0, flameBaseY + flameLength); // Pointed flame
-                    ctx.closePath();
-                    ctx.fill();
-                }
-                ctx.restore();
-            });
-            ctx.restore(); // Back to canvas origin
-
-            // Draw snap preview for selected part
-            if (gameState === 'BUILD' && selectedPartDefKey && snapPreview && currentBuildTool === 'SELECT') {
-                const def = getPartDef(selectedPartDefKey);
-                ctx.save();
-                ctx.globalAlpha = 0.6;
-                // snapPreview.previewX/Y are world coords of the center of the part to be placed
-                ctx.translate(
-                    rocketOriginXCanvas + snapPreview.previewX * PX_PER_METER, 
-                    rocketOriginYCanvas - snapPreview.previewY * PX_PER_METER
-                );
-                drawPartSprite(ctx, { def: def }, PX_PER_METER, true); // isPreview = true
-                ctx.restore();
-
-                // Highlight the target node
-                const targetPart = getPartInstance(snapPreview.targetPartId);
-                if (targetPart) {
-                    const targetDef = getPartDef(targetPart.defKey);
-                    const targetNodeDef = targetDef.nodes.find(n => n.id === snapPreview.targetNodeId);
-                    if (targetNodeDef) {
-                        ctx.save();
-                        ctx.translate(rocketOriginXCanvas, rocketOriginYCanvas); // To rocket origin
-                        ctx.translate(targetPart.x * PX_PER_METER, -targetPart.y * PX_PER_METER); // To target part center
-                        ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
-                        ctx.beginPath();
-                        ctx.arc(targetNodeDef.x * PX_PER_METER, -targetNodeDef.y * PX_PER_METER, 3, 0, Math.PI*2);
-                        ctx.fill();
-                        ctx.restore();
+                    } else { // It's a solid box
+                        collision = true;
+                        break;
                     }
                 }
             }
-            updateCoMIndicator(); // Position CoM/CoT indicators based on current drawing
-            updateCoTIndicator();
-        }
-        
-        // --- CoM / CoT Indicator Update ---
-        function updateCoMIndicator() {
-            if (gameState === 'BUILD' && rocket.parts.length > 0) {
-                const groundLevelCanvas = canvas.height * 0.85 + cameraY;
-                const rocketOriginYCanvas = groundLevelCanvas;
-                const comCanvasX = canvas.width / 2 + rocket.centerOfMass.x * PX_PER_METER;
-                const comCanvasY = rocketOriginYCanvas - rocket.centerOfMass.y * PX_PER_METER;
-                comIndicator.style.left = `${comCanvasX}px`;
-                comIndicator.style.top = `${comCanvasY}px`;
-                comIndicator.classList.remove('hidden');
+
+            if (collision) {
+                carSpeed = 0; // Stop on collision
+                car.position.copy(prevPosition); // Revert to previous position
             } else {
-                comIndicator.classList.add('hidden');
+                car.position.add(moveDirection);
             }
-        }
-        function updateCoTIndicator() {
-             if (gameState === 'BUILD' && rocket.parts.length > 0 && rocket.thrust > 0) { // Only show if there's potential thrust
-                const groundLevelCanvas = canvas.height * 0.85 + cameraY;
-                const rocketOriginYCanvas = groundLevelCanvas; // Base of rocket
-                const cotCanvasX = canvas.width / 2 + rocket.centerOfThrust.x * PX_PER_METER;
-                const cotCanvasY = rocketOriginYCanvas - rocket.centerOfThrust.y * PX_PER_METER;
-                cotIndicator.style.left = `${cotCanvasX}px`;
-                cotIndicator.style.top = `${cotCanvasY}px`;
-                cotIndicator.classList.remove('hidden');
+            
+            onRamp = onThisRamp;
+
+            // Apply Gravity / Ground Check
+            if (onRamp) {
+                // Smoothly adjust to ramp height if not already there
+                if (Math.abs(car.position.y - targetY) > 0.01) {
+                     car.position.y += (targetY - car.position.y) * 0.2; // Approach target Y smoothly
+                } else {
+                    car.position.y = targetY;
+                }
             } else {
-                cotIndicator.classList.add('hidden');
-            }
-        }
-
-
-        // --- Game Loop ---
-        let lastTime = 0;
-        function gameLoop(timestamp) {
-            if (gameState !== 'FLIGHT') return;
-
-            const deltaTime = (timestamp - (lastTime || timestamp)) / 1000; // Ensure first deltaTime is 0 or small
-            lastTime = timestamp;
-
-            let accumulatedTime = deltaTime;
-            while (accumulatedTime >= TIME_STEP) {
-                updatePhysics(TIME_STEP);
-                accumulatedTime -= TIME_STEP;
-            }
-            if (accumulatedTime > 0) { updatePhysics(accumulatedTime); }
-
-            // Camera follow logic (center rocket CoM around 1/3 from bottom of screen)
-            const targetCameraY = (rocket.altitude + rocket.centerOfMass.y) * PX_PER_METER - canvas.height * 2/3;
-            cameraY += (targetCameraY - cameraY) * 0.08; // Smoother camera
-            skyOffset += rocket.velocityY * 0.02 * PX_PER_METER; // Parallax shift for sky
-
-            updateTelemetry();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function updateTelemetry() {
-            const fuelPercent = rocket.totalFuelCapacity > 0 ? (rocket.currentFuel / rocket.totalFuelCapacity * 100).toFixed(0) : 0;
-            const drag = 0.5 * AIR_DENSITY * rocket.velocityY**2 * rocket.dragCoefficient * rocket.frontalArea;
-            ui.telemetry.textContent = 
-                `Alt: ${rocket.altitude.toFixed(0)}m | Vel: ${rocket.velocityY.toFixed(1)}m/s | Fuel: ${fuelPercent}% | Stage: ${rocket.currentStageIndex} | Drag: ${drag.toFixed(0)}N`;
-        }
-
-        // --- Event Listeners ---
-        window.addEventListener('resize', resizeCanvas);
-
-        let lastTouchTime = 0; // For double tap detection (optional)
-        function getCanvasRelativeCoords(event) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = event.clientX ?? event.touches?.[0]?.clientX;
-            const clientY = event.clientY ?? event.touches?.[0]?.clientY;
-            if (clientX === undefined || clientY === undefined) return null;
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-        
-        // Convert canvas click/touch coordinates to rocket's local coordinate system
-        function getRocketRelativeCoords(canvasCoords) {
-            const groundLevelCanvas = canvas.height * 0.85 + cameraY; // Ground relative to viewport
-            const rocketOriginYCanvas = groundLevelCanvas; 
-
-            const rocketX = (canvasCoords.x - canvas.width / 2) / PX_PER_METER;
-            const rocketY = (rocketOriginYCanvas - canvasCoords.y) / PX_PER_METER;
-            return { x: rocketX, y: rocketY };
-        }
-
-
-        canvas.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            const canvasCoords = getCanvasRelativeCoords(e);
-            if (!canvasCoords) return;
-            const rocketCoords = getRocketRelativeCoords(canvasCoords);
-
-            if (gameState === 'BUILD') {
-                if (currentBuildTool === 'SELECT' && selectedPartDefKey && snapPreview) {
-                    addPartToRocket(selectedPartDefKey, snapPreview.targetPartId, snapPreview.targetNodeId, snapPreview.newPartNodeId);
-                    snapPreview = null; // Clear after placing
-                    // Optionally keep selectedPartDefKey or clear it
-                } else if (currentBuildTool === 'DELETE') {
-                    // Find closest part to click and delete it
-                    let closestPart = null;
-                    let minDistSq = Infinity;
-                    rocket.parts.forEach(p => {
-                        const def = getPartDef(p.defKey);
-                        // Simple BBox check for now for distance
-                        const distSq = (rocketCoords.x - p.x)**2 + (rocketCoords.y - p.y)**2;
-                        if (distSq < (Math.max(def.width, def.height)/2)**2 && distSq < minDistSq) {
-                            minDistSq = distSq;
-                            closestPart = p;
-                        }
-                    });
-                    if (closestPart) {
-                        removePartAndChildren(closestPart.id);
-                    }
+                // If not on a ramp, fall towards ground (y=0)
+                if (car.position.y > 0) {
+                    car.position.y -= GRAVITY;
+                    if (car.position.y < 0) car.position.y = 0;
+                } else {
+                    car.position.y = 0; // Ensure it doesn't go below ground
                 }
             }
-        });
 
-        canvas.addEventListener('pointermove', (e) => {
-            if (gameState !== 'BUILD' || currentBuildTool !== 'SELECT' || !selectedPartDefKey) {
-                snapPreview = null; // Clear preview if not in correct mode/state
-                if (selectedPartDefKey) draw(); // Redraw to remove old preview if tool changed
-                return;
-            }
-            e.preventDefault();
-            const canvasCoords = getCanvasRelativeCoords(e);
-            if (!canvasCoords) return;
-            const rocketCoords = getRocketRelativeCoords(canvasCoords); // Mouse pos in rocket space
-
-            const newPartDef = getPartDef(selectedPartDefKey);
-            let bestSnap = null;
-            let minSnapDistSq = (0.5 * PX_PER_METER)**2; // Snap within 0.5 meters (in rocket space units)
-
-            if (rocket.parts.length === 0) { // Placing first part
-                const connectingNode = newPartDef.nodes[0]; // Assume first node of new part connects to "ground"
-                 snapPreview = {
-                    targetPartId: null, // No target part
-                    targetNodeId: null, // No target node
-                    newPartNodeId: connectingNode.id,
-                    // Preview position: center of new part such that its connectingNode.y is at rocketY=0
-                    previewX: rocketCoords.x, // Center horizontally on mouse
-                    previewY: -connectingNode.y + newPartDef.height/2 // Adjust so bottom node aligns with rocket origin
-                };
-            } else {
-                rocket.parts.forEach(existingPart => {
-                    const existingDef = getPartDef(existingPart.defKey);
-                    existingDef.nodes.forEach(existingNode => {
-                        newPartDef.nodes.forEach(newNode => {
-                            // Check compatibility (simplified: 'stack' connects to 'stack')
-                            if (existingNode.type === newNode.type) { // Basic type check
-                                // Calculate world position of existingNode
-                                const existingNodeWorldX = existingPart.x + existingNode.x;
-                                const existingNodeWorldY = existingPart.y + existingNode.y;
-                                
-                                // Calculate desired center of new part if this snap occurs
-                                const potentialNewPartCenterX = existingNodeWorldX - newNode.x;
-                                const potentialNewPartCenterY = existingNodeWorldY - newNode.y;
-
-                                const distSq = (rocketCoords.x - potentialNewPartCenterX)**2 + (rocketCoords.y - potentialNewPartCenterY)**2;
-                                
-                                if (distSq < minSnapDistSq) {
-                                    minSnapDistSq = distSq;
-                                    bestSnap = {
-                                        targetPartId: existingPart.id,
-                                        targetNodeId: existingNode.id,
-                                        newPartNodeId: newNode.id,
-                                        previewX: potentialNewPartCenterX,
-                                        previewY: potentialNewPartCenterY
-                                    };
-                                }
-                            }
-                        });
-                    });
-                });
-                snapPreview = bestSnap;
-            }
-            draw(); // Redraw to show snap preview
-        });
-        
-        function updateToolButtons() {
-            ui.toolSelectBtn.classList.toggle('active-tool', currentBuildTool === 'SELECT');
-            ui.toolDeleteBtn.classList.toggle('active-tool', currentBuildTool === 'DELETE');
-            // ui.toolMoveBtn.classList.toggle('active-tool', currentBuildTool === 'MOVE');
-            if (currentBuildTool !== 'SELECT') {
-                selectedPartDefKey = null; // Deselect part if not in select/place tool
-                document.querySelectorAll('.part-button.selected').forEach(btn => btn.classList.remove('selected'));
-                snapPreview = null;
-                draw(); // Redraw to clear previews
-            }
+            // Prevent car from going too far
+            const boundary = 95;
+            car.position.x = Math.max(-boundary, Math.min(boundary, car.position.x));
+            car.position.z = Math.max(-boundary, Math.min(boundary, car.position.z));
         }
-        ui.toolSelectBtn.onclick = () => { currentBuildTool = 'SELECT'; updateToolButtons(); };
-        ui.toolDeleteBtn.onclick = () => { currentBuildTool = 'DELETE'; updateToolButtons(); };
-        // ui.toolMoveBtn.onclick = () => { currentBuildTool = 'MOVE'; updateToolButtons(); };
 
 
-        // UI Button Listeners
-        ui.launchBtn.onclick = switchToFlightMode;
-        ui.resetFlightBtn.onclick = switchToBuildMode;
-        ui.clearRocketBtn.onclick = clearRocket;
+        function updateCamera() {
+            const offset = new THREE.Vector3(0, 4, -8); // Camera offset from car (behind and above)
+            offset.applyQuaternion(car.quaternion); // Rotate offset by car's rotation
+            
+            const cameraTargetPosition = car.position.clone().add(offset);
+            camera.position.lerp(cameraTargetPosition, 0.1); // Smoothly move camera
 
-        ui.throttleSlider.oninput = () => {
-            rocket.throttle = parseInt(ui.throttleSlider.value) / 100;
-            updateThrottleDisplay();
-            if (gameState === 'FLIGHT') calculateActiveThrustAndCoT();
-        };
-        
-        function updateThrottleDisplay() { ui.throttleValue.textContent = `${(rocket.throttle * 100).toFixed(0)}%`; }
-        ui.stageBtn.onclick = () => { if (gameState === 'FLIGHT') activateNextStage(); };
-
-        // --- Initialization ---
-        function init() {
-            populatePartPalette();
-            if (Object.keys(PART_DEFINITIONS).length > 0) {
-                 selectPartForPlacing(Object.keys(PART_DEFINITIONS)[0], ui.partPalette.children[0]);
-            }
-            resizeCanvas();
-            updateStagingUI();
-            calculateRocketProperties();
-            updateTelemetry();
-            updateToolButtons();
-            draw();
+            const lookAtTarget = car.position.clone().add(new THREE.Vector3(0, 1, 0)); // Look slightly above car center
+            camera.lookAt(lookAtTarget);
         }
+
+        function onWindowResize() {
+            updateCanvasSize();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            updateCar();
+            updateCamera();
+
+            renderer.render(scene, camera);
+        }
+
+        // Initialize and start
         init();
+        updateCanvasSize(); // Call again after init to ensure camera aspect is correct
+
     </script>
 </body>
 </html>
