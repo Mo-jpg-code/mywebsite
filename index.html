@@ -3,615 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Profil</title> <!-- TikTok typically shows "Profil" or username -->
+    <title>Profil</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
             --tt-bg-color: #000000;
             --tt-text-color: #ffffff;
-            --tt-text-secondary-color: #a7a7a7; /* Greyish text */
-            --tt-text-tertiary-color: #707070; /* Darker grey for inactive tabs */
-            --tt-accent-color: #FE2C55; /* TikTok Pink/Red */
-            --tt-accent-blue: #25F4EE; /* TikTok Blue for create button */
-            --tt-button-bg: #1f1f1f; /* Dark grey buttons from image */
-            --tt-button-bg-hover: #2a2a2a;
-            --tt-border-color: #2f2f2f; /* Subtle borders */
-            --tt-profile-pic-plus-bg: #0099ff; /* Blue for the plus on profile pic */
-
+            --tt-text-secondary-color: #a7a7a7;
+            --tt-text-tertiary-color: #707070;
+            --tt-accent-color: #FE2C55;
+            --tt-accent-blue: #25F4EE;
+            --tt-button-bg: #1f1f1f;
+            --tt-button-bg-hover: #2f2f2f;
+            --tt-button-bg-light-opaque: rgba(50, 50, 50, 0.8); /* For modals */
+            --tt-border-color: #2a2a2a; /* Slightly darker border from screenshot */
+            --tt-profile-pic-plus-bg: #0099ff;
             --safe-area-inset-top: env(safe-area-inset-top, 0px);
             --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-            --bottom-nav-height: 55px; /* Matches image closer */
+            --bottom-nav-height: 55px;
             --top-bar-height: 50px;
         }
+        /* Basic Reset & Font */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100dvh; overflow: hidden; background-color: var(--tt-bg-color); color: var(--tt-text-color); font-size: 15px; /* Base size from image looks a bit smaller */ }
+        .app-container { width: 100%; height: 100%; max-width: 450px; margin: 0 auto; position: relative; background-color: var(--tt-bg-color); display: flex; flex-direction: column; overflow: hidden; }
+        .profile-page-scroll-content { flex-grow: 1; overflow-y: auto; padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 25px); }
 
-        /* Basic Reset & Font - Proxima Nova is TikTok's primary font, but we'll use a common system stack */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100dvh;
-            overflow: hidden;
-            background-color: var(--tt-bg-color);
-            color: var(--tt-text-color);
-            font-size: 16px; /* Base font size */
-        }
-
-        .app-container {
-            width: 100%;
-            height: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-            position: relative;
-            background-color: var(--tt-bg-color);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .profile-page-scroll-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 20px);
-        }
+        /* Splash Screen */
+        .splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--tt-bg-color); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.3s ease-out 0.5s; /* Fade out after 0.5s delay */ }
+        .splash-screen.hidden { opacity: 0; pointer-events: none; }
+        .splash-screen svg { width: 80px; height: 80px; } /* TikTok Logo SVG */
 
         /* Top Bar */
-        .profile-top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            padding-top: var(--safe-area-inset-top);
-            height: calc(var(--top-bar-height) + var(--safe-area-inset-top));
-            background-color: var(--tt-bg-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            /* No border in the screenshot directly under top bar, it's part of scroll content */
-        }
-        .profile-top-bar .icon { font-size: 1.4em; color: var(--tt-text-color); cursor: pointer; padding: 8px; }
-        .profile-top-bar .username-dropdown { display: flex; align-items: center; cursor: pointer; font-weight: 700; font-size: 1.1em; }
-        .profile-top-bar .username-dropdown .fa-chevron-down { font-size: 0.7em; margin-left: 5px; }
-        .profile-top-bar .top-right-icons { display: flex; align-items: center; gap: 5px; }
-        .profile-top-bar .event-icon {
-            display: flex; align-items: center; gap: 3px;
-            background-color: var(--tt-border-color);
-            padding: 4px 8px; border-radius: 15px; font-size: 0.8em;
-        }
-        .profile-top-bar .event-icon img { width: 18px; height: 18px; border-radius: 50%; }
+        .profile-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 12px; padding-top: var(--safe-area-inset-top); height: calc(var(--top-bar-height) + var(--safe-area-inset-top)); background-color: var(--tt-bg-color); position: sticky; top: 0; z-index: 100; }
+        .profile-top-bar .icon { font-size: 1.5em; color: var(--tt-text-color); cursor: pointer; padding: 8px; } /* Slightly larger icons */
+        .username-dropdown-container { position: relative; }
+        .profile-top-bar .username-dropdown { display: flex; align-items: center; cursor: pointer; font-weight: bold; font-size: 1.05em; /* Slightly smaller from image */ }
+        .profile-top-bar .username-dropdown .fa-chevron-down { font-size: 0.6em; margin-left: 6px; }
+        .fake-dropdown-menu { position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%); background-color: var(--tt-button-bg-hover); border-radius: 8px; padding: 5px 0; width: 180px; z-index: 110; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display: none; }
+        .fake-dropdown-menu.active { display: block; }
+        .fake-dropdown-menu-item { padding: 10px 15px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
+        .fake-dropdown-menu-item .fa-check { color: var(--tt-accent-color); }
+        .profile-top-bar .top-right-icons { display: flex; align-items: center; gap: 0px; /* Reduced gap */ }
+        /* Custom Neurobotic Icon */
+        .neurobotic-event-icon { display: flex; align-items: center; gap: 4px; background-color: var(--tt-button-bg); padding: 3px 6px; border-radius: 15px; font-size: 0.75em; cursor: pointer; height: 26px; }
+        .neurobotic-logo-container { width: 20px; height: 20px; background-color: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 1px solid #444; }
+        .neurobotic-logo-container::before { content: ""; position: absolute; width: 60%; height: 30%; background: linear-gradient(to right, #555, #777); border-radius: 3px; top: 25%; }
+        .neurobotic-logo-container::after { content: ""; position: absolute; width: 30%; height: 20%; background-color: #444; border-radius: 2px; bottom: 20%; }
+        .neurobotic-event-icon strong { font-size: 0.9em; margin-left: 2px; }
 
-        /* Pronouns below top bar elements */
-        .profile-pronouns {
-            text-align: center;
-            font-size: 0.85em;
-            color: var(--tt-text-secondary-color);
-            margin-top: -8px; /* Pulls it slightly under the username area */
-            margin-bottom: 10px;
-        }
+        .profile-pronouns { text-align: center; font-size: 0.8em; color: var(--tt-text-secondary-color); margin-top: -10px; margin-bottom: 8px; }
+        .profile-header { padding: 0px 15px 12px 15px; text-align: center; }
+        .profile-pic-container { position: relative; width: 90px; height: 90px; margin: 0 auto 10px auto; } /* Slightly smaller */
+        .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .profile-pic-add-story { position: absolute; bottom: -2px; right: -2px; background-color: var(--tt-profile-pic-plus-bg); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em; border: 2.5px solid var(--tt-bg-color); cursor: pointer; }
+        .profile-event-bubble { position: absolute; top: -12px; right: -30px; background-color: rgba(55,55,55,0.95); color: white; padding: 5px 10px; border-radius: 10px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
+        .profile-event-bubble::after { content: ''; position: absolute; bottom: -4px; left: 15px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid rgba(55,55,55,0.95); }
+        .profile-username-main { font-size: 1.1em; font-weight: 600; margin-bottom: 12px; }
+        .profile-stats { display: flex; justify-content: center; gap: 18px; margin-bottom: 15px; }
+        .stat-item { text-align: center; cursor: pointer; min-width: 65px; }
+        .stat-item .count { font-size: 1.1em; font-weight: bold; display: block; }
+        .stat-item .label { font-size: 0.8em; color: var(--tt-text-secondary-color); }
+        .profile-actions-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 15px; }
+        .profile-action-button { background-color: var(--tt-button-bg); color: var(--tt-text-color); border: none; padding: 9px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 600; cursor: pointer; flex-grow: 1; transition: background-color 0.15s, transform 0.1s; }
+        .profile-action-button:active { transform: scale(0.97); background-color: var(--tt-button-bg-hover); }
+        .profile-action-button.icon-btn { flex-grow: 0; width: 38px; }
+        .profile-bio-main { font-size: 0.85em; line-height: 1.45; margin-bottom: 8px; white-space: pre-line; }
+        .profile-extra-links { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 15px; font-size: 0.85em; font-weight: 600;}
+        .profile-extra-links a { color: var(--tt-text-color); text-decoration: none; display: flex; align-items: center; gap: 4px;}
+        .profile-extra-links .separator { color: var(--tt-text-secondary-color); font-size: 0.9em; }
+        .profile-extra-links i { font-size: 1em; } .fa-star { color: #FFC107; } .fa-rocket { color: var(--tt-accent-color); }
 
-        /* Profile Header Section */
-        .profile-header {
-            padding: 0px 15px 15px 15px; /* Reduced top padding as pronouns handle some space */
-            text-align: center;
-        }
-        .profile-pic-container {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 12px auto;
-        }
-        .profile-pic {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .profile-pic-add-story {
-            position: absolute;
-            bottom: 0px;
-            right: 0px;
-            background-color: var(--tt-profile-pic-plus-bg);
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1em;
-            border: 2px solid var(--tt-bg-color);
-            cursor: pointer;
-        }
-        .profile-event-bubble {
-            position: absolute;
-            top: -15px; /* Position above */
-            right: -35px; /* To the side */
-            background-color: rgba(60,60,60,0.9);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .profile-event-bubble::after { /* Speech bubble tail */
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 20px;
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 6px solid rgba(60,60,60,0.9);
-        }
-
-        .profile-username-main { font-size: 1.2em; font-weight: 600; margin-bottom: 15px; }
-
-        .profile-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 18px; }
-        .stat-item { text-align: center; cursor: pointer; min-width: 70px; } /* Give some min-width */
-        .stat-item .count { font-size: 1.15em; font-weight: 700; display: block; }
-        .stat-item .label { font-size: 0.85em; color: var(--tt-text-secondary-color); }
-
-        .profile-actions-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 18px; }
-        .profile-action-button {
-            background-color: var(--tt-button-bg);
-            color: var(--tt-text-color);
-            border: none;
-            padding: 10px 12px; /* Slightly less padding than my prev example */
-            border-radius: 8px; /* More rounded like image */
-            font-size: 0.9em;
-            font-weight: 600;
-            cursor: pointer;
-            flex-grow: 1;
-            transition: background-color 0.2s;
-        }
-        .profile-action-button:hover { background-color: var(--tt-button-bg-hover); }
-        .profile-action-button.icon-btn { flex-grow: 0; width: 42px; /* Matches height if padding is right */ }
-
-        .profile-bio-main { font-size: 0.9em; line-height: 1.4; margin-bottom: 10px; white-space: pre-line; }
-        .profile-extra-links { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 18px; font-size: 0.9em; font-weight: 600;}
-        .profile-extra-links a { color: var(--tt-text-color); text-decoration: none; display: flex; align-items: center; gap: 5px;}
-        .profile-extra-links .separator { color: var(--tt-text-secondary-color); }
-        .profile-extra-links i { font-size: 1.1em; }
-        .fa-star { color: #FFC107; } /* Gold star for TikTok Studio */
-        .fa-rocket { color: var(--tt-accent-color); } /* Red for Abo */
-
-        /* Tabs Section */
-        .profile-tabs-container {
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid var(--tt-border-color);
-            border-bottom: 1px solid var(--tt-border-color);
-            background-color: var(--tt-bg-color);
-            position: sticky;
-            top: calc(var(--top-bar-height) + var(--safe-area-inset-top));
-            z-index: 99;
-        }
-        .tab-item { padding: 10px 0; flex: 1; text-align: center; cursor: pointer; color: var(--tt-text-tertiary-color); position: relative; }
-        .tab-item i { font-size: 1.6em; } /* Icons are larger in image */
-        .tab-item .fa-chevron-down { font-size: 0.5em; margin-left: 3px; vertical-align: middle; }
+        /* Tabs */
+        .profile-tabs-container { display: flex; justify-content: space-around; border-top: 1px solid var(--tt-border-color); border-bottom: 1px solid var(--tt-border-color); background-color: var(--tt-bg-color); position: sticky; top: calc(var(--top-bar-height) + var(--safe-area-inset-top)); z-index: 99; }
+        .tab-item { padding: 9px 0; flex: 1; text-align: center; cursor: pointer; color: var(--tt-text-tertiary-color); position: relative; transition: color 0.2s; }
+        .tab-item i { font-size: 1.5em; } .tab-item .fa-chevron-down { font-size: 0.45em; margin-left: 2px; vertical-align: middle; }
         .tab-item.active { color: var(--tt-text-color); }
-        .tab-item.active::after {
-            content: ''; position: absolute; bottom: 0; left: 25%; right: 25%; /* Underline is not full width */
-            height: 2px; background-color: var(--tt-text-color);
-        }
-
-        /* Stories Banner */
-        .stories-banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: var(--tt-button-bg);
-            padding: 10px 12px;
-            margin: 0px 0px 2px 0px; /* Small margin before grid */
-            font-size: 0.85em;
-        }
-        .stories-banner-text { display: flex; align-items: center; gap: 8px; }
-        .stories-banner-text i { font-size: 1.4em; color: var(--tt-text-secondary-color); }
-        .stories-banner .close-btn { font-size: 1.2em; color: var(--tt-text-secondary-color); cursor: pointer; }
-
-        /* Content Grid */
-        .profile-content-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; padding: 1.5px;}
-        .grid-video-item { position: relative; aspect-ratio: 9 / 13; /* Closer to image's ratio */ background-color: #111; cursor: pointer; overflow: hidden; }
-        .grid-video-item img { width: 100%; height: 100%; object-fit: cover; }
-        .grid-video-item .views {
-            position: absolute; bottom: 6px; left: 6px; color: var(--tt-text-color);
-            font-size: 0.8em; font-weight: 600; display: flex; align-items: center;
-            text-shadow: 0 0 3px rgba(0,0,0,0.8);
-        }
-        .grid-video-item .views i { font-size: 0.85em; margin-right: 4px; }
-        .grid-video-item .multi-image-icon {
-            position: absolute; top: 6px; right: 6px; font-size: 1.1em;
-            color: var(--tt-text-color); text-shadow: 0 0 3px rgba(0,0,0,0.7);
-        }
-
-        /* Bottom Navigation Bar */
-        .bottom-nav {
-            height: var(--bottom-nav-height); padding-bottom: var(--safe-area-inset-bottom);
-            background-color: var(--tt-bg-color); border-top: 1px solid var(--tt-border-color);
-            display: flex; justify-content: space-around; align-items: flex-start; /* Align to top */
-            padding-top: 6px; position: fixed; bottom: 0; left: 0; right: 0;
-            width: 100%; max-width: 450px; margin: 0 auto; z-index: 1000;
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--tt-text-secondary-color); font-size: 0.7em; font-weight: 500;
-            cursor: pointer; flex: 1; text-align: center;
-        }
-        .nav-item i { font-size: 1.7em; margin-bottom: 3px; } /* Larger icons, less margin */
-        .nav-item.active { color: var(--tt-text-color); font-weight: 600; } /* Active text is bolder */
+        .tab-item.active::after { content: ''; position: absolute; bottom: -0.5px; /* Overlap border slightly */ left: 30%; right: 30%; height: 1.5px; background-color: var(--tt-text-color); }
         
-        .nav-item-create .create-button-container { /* Container for positioning */
-            position: relative; top: -3px; /* Slight lift */
-        }
-        .nav-item-create .create-button-bg {
-            width: 48px; height: 30px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden; /* For pseudo elements */
-            background-color: var(--tt-text-color); /* White middle part */
-            border: 2px solid var(--tt-bg-color); /* Creates the black border around the plus */
-        }
-        .nav-item-create .create-button-bg::before { /* Blue part */
-            content: ""; position: absolute; width: 12px; height: 100%;
-            background-color: var(--tt-accent-blue); left: -2px; filter: brightness(1.1);
-            border-radius: 8px 0 0 8px;
-        }
-        .nav-item-create .create-button-bg::after { /* Pink part */
-            content: ""; position: absolute; width: 12px; height: 100%;
-            background-color: var(--tt-accent-color); right: -2px; filter: brightness(1.1);
-             border-radius: 0 8px 8px 0;
-        }
-        .nav-item-create i { font-size: 1.5em; color: var(--tt-bg-color); z-index: 1; font-weight: 900;}
-        .nav-item .nav-label { margin-top: 1px;} /* Add label explicitly */
+        /* Stories Banner */
+        .stories-banner { display: flex; align-items: center; justify-content: space-between; background-color: var(--tt-button-bg); padding: 9px 10px; margin: 0px 0px 1.5px 0px; font-size: 0.8em; transition: opacity 0.3s, height 0.3s, padding 0.3s, margin 0.3s; }
+        .stories-banner.hidden { opacity: 0; height: 0; padding: 0 10px; margin: 0; pointer-events: none; }
+        .stories-banner-text { display: flex; align-items: center; gap: 6px; }
+        .stories-banner-text i { font-size: 1.3em; color: var(--tt-text-secondary-color); }
+        .stories-banner .close-btn { font-size: 1.1em; color: var(--tt-text-secondary-color); cursor: pointer; padding: 5px; }
 
-        .nav-item .notification-badge {
-            position: absolute;
-            top: 2px; /* Adjust to be over the icon */
-            right: calc(50% - 20px); /* Center relative to icon */
-            background-color: var(--tt-accent-color);
-            color: white;
-            font-size: 0.75em;
-            font-weight: bold;
-            padding: 1px 5px;
-            border-radius: 10px;
-            min-width: 16px; /* Ensure circle for single digit */
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--tt-bg-color);
-        }
+        /* Content Grid & Tab Content Placeholders */
+        #tabContentContainer > div { display: none; } /* Hide all by default */
+        #tabContentContainer > div.active-tab-content { display: grid; /* Default for grid */ }
+        .profile-content-grid { grid-template-columns: repeat(3, 1fr); gap: 1.5px; padding: 1.5px;}
+        .grid-video-item { position: relative; aspect-ratio: 9 / 13.5; background-color: #101010; cursor: pointer; overflow: hidden; }
+        .grid-video-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+        .grid-video-item:active img { transform: scale(0.98); }
+        .grid-video-item .views { position: absolute; bottom: 5px; left: 5px; color: var(--tt-text-color); font-size: 0.75em; font-weight: 600; display: flex; align-items: center; text-shadow: 0 0 4px rgba(0,0,0,0.9); }
+        .grid-video-item .views i { font-size: 0.8em; margin-right: 3px; }
+        .grid-video-item .multi-image-icon { position: absolute; top: 5px; right: 5px; font-size: 1em; color: var(--tt-text-color); text-shadow: 0 0 3px rgba(0,0,0,0.7); }
+        .tab-placeholder-content { display: flex !important; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align:center; color: var(--tt-text-secondary-color); min-height: 200px; }
+        .tab-placeholder-content i { font-size: 2.5em; margin-bottom: 15px; color: var(--tt-text-tertiary-color); }
+        .tab-placeholder-content p { font-size: 0.9em; } .tab-placeholder-content strong {color: var(--tt-text-color); font-size: 1.1em; margin-bottom: 5px;}
 
+        /* Bottom Nav */
+        .bottom-nav { height: var(--bottom-nav-height); padding-bottom: var(--safe-area-inset-bottom); background-color: var(--tt-bg-color); border-top: 1px solid var(--tt-border-color); display: flex; justify-content: space-around; align-items: flex-start; padding-top: 5px; position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 450px; margin: 0 auto; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--tt-text-secondary-color); font-size: 0.65em; font-weight: 500; cursor: pointer; flex: 1; text-align: center; position: relative; /* For badge */ }
+        .nav-item i { font-size: 1.6em; margin-bottom: 2px; }
+        .nav-item.active { color: var(--tt-text-color); font-weight: 600; }
+        .nav-item-create .create-button-container { position: relative; top: -2px; }
+        .nav-item-create .create-button-bg { width: 46px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background-color: var(--tt-text-color); border: 2px solid var(--tt-bg-color); }
+        .nav-item-create .create-button-bg::before { content: ""; position: absolute; width: 11px; height: 100%; background-color: var(--tt-accent-blue); left: -1.5px; filter: brightness(1.05); border-radius: 7px 0 0 7px;}
+        .nav-item-create .create-button-bg::after { content: ""; position: absolute; width: 11px; height: 100%; background-color: var(--tt-accent-color); right: -1.5px; filter: brightness(1.05); border-radius: 0 7px 7px 0;}
+        .nav-item-create i { font-size: 1.4em; color: var(--tt-bg-color); z-index: 1; font-weight: bold;}
+        .nav-item .nav-label { margin-top: 1px; line-height: 1.2; }
+        .nav-item .notification-badge { position: absolute; top: 1px; right: calc(50% - 18px); background-color: var(--tt-accent-color); color: white; font-size: 0.7em; font-weight: bold; padding: 0px 4.5px; border-radius: 10px; min-width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--tt-bg-color); }
 
-        /* Prank Message Toast */
-        .prank-toast {
-            position: fixed;
-            bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 20px);
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(40,40,40,0.95);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.3s ease, bottom 0.3s ease;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-        .prank-toast.show {
-            opacity: 1;
-            bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 30px);
-        }
+        /* Modals & Overlays */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 1050; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; display: flex; align-items: center; justify-content: center; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--tt-button-bg); padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; transform: scale(0.95); transition: transform 0.3s; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--tt-border-color); }
+        .modal-header h3 { font-size: 1.1em; font-weight: bold; }
+        .modal-header .close-modal-btn { font-size: 1.4em; color: var(--tt-text-secondary-color); cursor: pointer; }
+        /* Edit Profile Modal Specifics */
+        .edit-profile-form .form-group { margin-bottom: 15px; }
+        .edit-profile-form label { display: block; font-size: 0.8em; color: var(--tt-text-secondary-color); margin-bottom: 5px; }
+        .edit-profile-form input, .edit-profile-form textarea { width: 100%; background-color: var(--tt-button-bg-hover); border: 1px solid var(--tt-border-color); border-radius: 5px; padding: 8px 10px; color: var(--tt-text-color); font-size: 0.9em; opacity: 0.7; cursor: not-allowed; }
+        .edit-profile-form textarea { min-height: 60px; resize: none; }
+        /* Share Modal Specifics */
+        .share-options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 15px; text-align: center; }
+        .share-option i { font-size: 2em; margin-bottom: 6px; padding: 12px; border-radius: 50%; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; color: white; }
+        .share-option span { font-size: 0.75em; color: var(--tt-text-secondary-color); }
+        /* Specific Share Icon Colors */
+        .share-option .fa-whatsapp { background-color: #25D366;} .share-option .fa-twitter { background-color: #1DA1F2;}
+        .share-option .fa-facebook { background-color: #1877F2;} .share-option .fa-link { background-color: #555;}
+        .share-option .fa-sms { background-color: #4CAF50;} .share-option .fa-ellipsis-h { background-color: #777;}
+
+        /* Fake Video Player */
+        .fake-video-player-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 1100; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; }
+        .fake-video-player-overlay.active { opacity: 1; visibility: visible; }
+        .fake-video-player-overlay .spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid #fff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fake-video-player-overlay p { font-size: 0.9em; color: var(--tt-text-secondary-color); }
+
+        /* Fake Camera Overlay */
+        .fake-camera-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #111; z-index: 1100; display: flex; flex-direction: column; align-items: center; justify-content: space-between; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; padding: calc(20px + var(--safe-area-inset-top)) 20px calc(20px + var(--safe-area-inset-bottom)) 20px; }
+        .fake-camera-overlay.active { opacity: 1; visibility: visible; }
+        .fake-camera-top-icons, .fake-camera-bottom-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .fake-camera-top-icons i, .fake-camera-bottom-controls i { font-size: 1.5em; color: #fff; padding: 10px; }
+        .fake-camera-record-btn { width: 70px; height: 70px; background-color: var(--tt-accent-color); border-radius: 50%; border: 4px solid rgba(255,255,255,0.5); }
+
+        /* Settings Slide-out Menu */
+        .settings-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.0); z-index: 1200; opacity: 0; visibility: hidden; transition: background-color 0.3s, opacity 0.3s, visibility 0.3s; }
+        .settings-menu-overlay.active { background-color: rgba(0,0,0,0.5); opacity: 1; visibility: visible; }
+        .settings-menu { position: fixed; top: 0; right: -300px; /* Start off-screen */ width: 80%; max-width: 300px; height: 100%; background-color: #0a0a0a; /* Darker than button bg */ z-index: 1201; padding-top: var(--safe-area-inset-top); box-shadow: -5px 0 15px rgba(0,0,0,0.2); transition: right 0.3s ease-out; overflow-y: auto; }
+        .settings-menu-overlay.active .settings-menu { right: 0; }
+        .settings-menu-header { padding: 15px; font-size: 1.2em; font-weight: bold; border-bottom: 1px solid var(--tt-border-color); }
+        .settings-menu-item { display: flex; align-items: center; padding: 15px; font-size: 0.95em; border-bottom: 1px solid var(--tt-border-color); cursor: pointer; }
+        .settings-menu-item:last-child { border-bottom: none; }
+        .settings-menu-item i { margin-right: 15px; font-size: 1.2em; width: 20px; text-align: center; color: var(--tt-text-secondary-color); }
+
+        /* Toast */
+        .prank-toast { position: fixed; bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 15px); left: 50%; transform: translateX(-50%); background-color: rgba(35,35,35,0.95); color: white; padding: 7px 14px; border-radius: 18px; font-size: 0.8em; z-index: 2000; opacity: 0; transition: opacity 0.25s ease, bottom 0.25s ease; pointer-events: none; white-space: nowrap; }
+        .prank-toast.show { opacity: 1; bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 25px); }
+
     </style>
 </head>
 <body>
+    <div class="splash-screen" id="splashScreen">
+        <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 0C229.2224 0 0 229.2224 0 512s229.2224 512 512 512 512-229.2224 512-512S794.7776 0 512 0z m219.0336 689.0496A230.4 230.4 0 0 1 502.8864 768a230.4 230.4 0 0 1-228.3008-158.1056A153.6 153.6 0 0 0 256 665.6V358.4c0-30.9248 9.216-59.7504 25.1392-84.8896A153.6 153.6 0 0 0 256 230.4h460.8c0.0512 0 0.0512 0 0.1024 0h51.2c44.8512 0 81.92 36.864 81.92 82.1248v327.2704c0 26.624-12.6976 50.688-32.9728 65.7408-20.2752 15.0528-46.2848 17.6128-68.9152 6.8096zM502.8864 307.2A230.4 230.4 0 0 0 274.5856 465.3056 153.6 153.6 0 0 1 299.52 550.4v-192c0-30.9248-9.216-59.7504-25.1392-84.8896A153.6 153.6 0 0 1 299.52 179.2h460.8c-0.0512 0-0.0512 0-0.1024 0h51.2c44.8512 0 81.92-36.864 81.92-82.1248V60.8256c0-26.624 12.6976-50.688 32.9728-65.7408C805.3248-20.0192 779.3152-22.5792 756.6848-11.776A230.4 230.4 0 0 0 502.8864 307.2z" fill="#FE2C55"></path><path d="M502.8864 307.2A230.4 230.4 0 0 0 274.5856 465.3056 153.6 153.6 0 0 1 299.52 550.4v-192c0-30.9248-9.216-59.7504-25.1392-84.8896A153.6 153.6 0 0 1 299.52 179.2h460.8c-0.0512 0-0.0512 0-0.1024 0h51.2c44.8512 0 81.92-36.864 81.92-82.1248V60.8256c0-26.624 12.6976-50.688 32.9728-65.7408C805.3248-20.0192 779.3152-22.5792 756.6848-11.776A230.4 230.4 0 0 0 502.8864 307.2z" fill="#25F4EE"></path><path d="M731.968 689.0496A230.4 230.4 0 0 1 502.8864 768a230.4 230.4 0 0 1-228.3008-158.1056A153.6 153.6 0 0 0 256 665.6V358.4c0-30.9248 9.216-59.7504 25.1392-84.8896A153.6 153.6 0 0 0 256 230.4h460.8c0.0512 0 0.0512 0 0.1024 0h51.2c44.8512 0 81.92 36.864 81.92 82.1248v327.2704c0 26.624-12.6976 50.688-32.9728 65.7408-20.2752 15.0528-46.2848 17.6128-68.9152 6.8096z" fill="#FFFFFF"></path></svg>
+    </div>
+
     <div class="app-container">
         <div class="profile-top-bar">
-            <div class="username-dropdown" onclick="showToast('Username options')">
-                <span id="usernameTop">@username</span>
-                <i class="fas fa-chevron-down"></i>
+            <div class="username-dropdown-container">
+                <div class="username-dropdown" onclick="toggleUsernameDropdown()">
+                    <span id="usernameTop">@username</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="fake-dropdown-menu" id="fakeUsernameDropdown">
+                    <div class="fake-dropdown-menu-item"><span>@username</span><i class="fas fa-check"></i></div>
+                    <div class="fake-dropdown-menu-item" onclick="showToast('Konto hinzufügen')"><span>Konto hinzufügen</span></div>
+                </div>
             </div>
             <div class="top-right-icons">
-                <div class="event-icon" id="eventIconContainer" onclick="showToast('Event/Streak Info')">
-                    <!-- Content injected by JS -->
+                <div class="neurobotic-event-icon" id="eventIconContainer" onclick="showToast('Event: Neurobotic')">
+                    <div class="neurobotic-logo-container"></div>
+                    <strong id="eventIconNumber">2</strong>
                 </div>
-                <i class="fas fa-bars icon" onclick="showToast('Einstellungen')"></i>
+                <i class="fas fa-bars icon" onclick="toggleSettingsMenu()"></i>
             </div>
         </div>
 
         <div class="profile-page-scroll-content">
+            <!-- All profile content from previous version goes here -->
+            <!-- Pronouns, Header, Stats, Actions, Bio, Extra Links, Tabs, Stories Banner, Tab Content -->
             <div class="profile-pronouns" id="profilePronouns">he/him/his</div>
-
             <div class="profile-header">
                 <div class="profile-pic-container">
                     <img src="" alt="Profilbild" class="profile-pic" id="profilePicMain">
                     <div class="profile-event-bubble" id="profileEventBubble">Mother's Day!</div>
-                    <div class="profile-pic-add-story" onclick="showToast('Story hinzufügen')">
+                    <div class="profile-pic-add-story" onclick="openFakeCamera()">
                         <i class="fas fa-plus"></i>
                     </div>
                 </div>
                 <div class="profile-username-main" id="profileUsernameMain">@username</div>
-
                 <div class="profile-stats">
                     <div class="stat-item" onclick="showToast('Liste: Gefolgt')">
-                        <span class="count" id="followingCountStat">0</span>
-                        <span class="label">Gefolgt</span>
+                        <span class="count" id="followingCountStat">0</span><span class="label">Gefolgt</span>
                     </div>
                     <div class="stat-item" onclick="showToast('Liste: Follower')">
-                        <span class="count" id="followerCountStat">0</span>
-                        <span class="label">Follower*innen</span>
+                        <span class="count" id="followerCountStat">0</span><span class="label">Follower*innen</span>
                     </div>
                     <div class="stat-item" onclick="showToast('Gesamte Likes')">
-                        <span class="count" id="likesCountStat">0</span>
-                        <span class="label">Likes</span>
+                        <span class="count" id="likesCountStat">0</span><span class="label">Likes</span>
                     </div>
                 </div>
-
                 <div class="profile-actions-row">
-                    <button class="profile-action-button" onclick="showToast('Profil bearbeiten')">Profil bearbeiten</button>
-                    <button class="profile-action-button" onclick="showToast('Profil teilen')">Profil teilen</button>
+                    <button class="profile-action-button" onclick="openEditProfileModal()">Profil bearbeiten</button>
+                    <button class="profile-action-button" onclick="openShareModal()">Profil teilen</button>
                     <button class="profile-action-button icon-btn" onclick="showToast('Freund hinzufügen')"><i class="fas fa-user-plus"></i></button>
                 </div>
-
                 <div class="profile-bio-main" id="profileBioMain">Bio text here.</div>
+                <div id="pdosTextContainer" style="font-size: 0.85em; color: var(--tt-text-secondary-color); text-align: center; margin-bottom: 8px;">Pdos sichten und vernichten</div>
                 <div class="profile-extra-links">
                     <a href="#" onclick="event.preventDefault(); showToast('TikTok Studio')"><i class="fas fa-star"></i> TikTok Studio</a>
                     <span class="separator">|</span>
                     <a href="#" onclick="event.preventDefault(); showToast('Abonnements')"><i class="fas fa-rocket"></i> Abo</a>
                 </div>
             </div>
-
             <div class="profile-tabs-container" id="profileTabsContainer">
-                <div class="tab-item active" data-tab="grid" onclick="switchTab(this)">
-                    <i class="fas fa-table-cells"></i><i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="tab-item" data-tab="mentions" onclick="switchTab(this)">
-                    <i class="fas fa-at"></i> <!-- Or fa-user-tag -->
-                </div>
-                <div class="tab-item" data-tab="private" onclick="switchTab(this)">
-                    <i class="fas fa-lock"></i>
-                </div>
-                <div class="tab-item" data-tab="reposts" onclick="switchTab(this)">
-                    <i class="fas fa-retweet"></i>
-                </div>
-                <div class="tab-item" data-tab="blocked" onclick="switchTab(this)">
-                    <i class="fas fa-heart-crack"></i> <!-- Slashed heart -->
-                </div>
-                <div class="tab-item" data-tab="liked" onclick="switchTab(this)">
-                    <i class="fas fa-heart"></i>
-                </div>
+                <div class="tab-item active" data-tab="grid" onclick="switchTab(this)"><i class="fas fa-table-cells"></i><i class="fas fa-chevron-down"></i></div>
+                <div class="tab-item" data-tab="mentions" onclick="switchTab(this)"><i class="fas fa-at"></i></div>
+                <div class="tab-item" data-tab="private" onclick="switchTab(this)"><i class="fas fa-lock"></i></div>
+                <div class="tab-item" data-tab="reposts" onclick="switchTab(this)"><i class="fas fa-retweet"></i></div>
+                <div class="tab-item" data-tab="blocked" onclick="switchTab(this)"><i class="fas fa-heart-crack"></i></div>
+                <div class="tab-item" data-tab="liked" onclick="switchTab(this)"><i class="fas fa-heart"></i></div>
             </div>
-
             <div class="stories-banner" id="storiesBanner">
-                <div class="stories-banner-text">
-                    <i class="fas fa-crosshairs"></i> <!-- Approximating the target-like icon -->
-                    <span>Schau dir abgelaufene Stories bei „Deine privaten Videos“ an</span>
-                </div>
+                <div class="stories-banner-text"><i class="fas fa-bullseye"></i><span>Schau dir abgelaufene Stories bei „Deine privaten Videos“ an</span></div>
                 <i class="fas fa-times close-btn" onclick="closeStoriesBanner()"></i>
             </div>
-
             <div id="tabContentContainer">
-                <div class="profile-content-grid active-tab-content" data-tab-content="grid">
-                    <!-- Grid videos injected here -->
-                </div>
-                <div class="profile-content-grid" data-tab-content="mentions" style="display:none; padding: 20px; text-align:center; color: var(--tt-text-secondary-color);">
-                    Videos, in denen du markiert wurdest (Nicht implementiert)
-                </div>
-                 <!-- Add more placeholder divs for other tab contents if needed -->
+                <div class="profile-content-grid active-tab-content" data-tab-content="grid"> <!-- Grid videos injected here --> </div>
+                <div class="tab-placeholder-content" data-tab-content="mentions"><i class="fas fa-at"></i><strong>Markierungen</strong><p>Videos, in denen du markiert wurdest, erscheinen hier.</p></div>
+                <div class="tab-placeholder-content" data-tab-content="private"><i class="fas fa-lock"></i><strong>Private Videos</strong><p>Hier siehst du deine privaten Videos.</p></div>
+                <div class="tab-placeholder-content" data-tab-content="reposts"><i class="fas fa-retweet"></i><strong>Reposts</strong><p>Videos, die du gerepostet hast.</p></div>
+                <div class="tab-placeholder-content" data-tab-content="blocked"><i class="fas fa-heart-crack"></i><strong>Nicht interessiert</strong><p>Inhalte, die du als "nicht interessiert" markiert hast.</p></div>
+                <div class="tab-placeholder-content" data-tab-content="liked"><i class="fas fa-heart"></i><strong> आवडलेले व्हिडिओ</strong><p>व्हिडिओ ज्या तुम्हाला आवडल्या आहेत त्या येथे दिसतील.</p></div>
             </div>
-
-
         </div>
 
         <div class="bottom-nav">
-            <div class="nav-item" onclick="showToast('Home')">
-                <i class="fas fa-home"></i>
-                <span class="nav-label">Home</span>
-            </div>
-            <div class="nav-item" onclick="showToast('Shop')">
-                <i class="fas fa-store"></i> <!-- Or fa-shopping-bag -->
-                <span class="nav-label">Shop</span>
-            </div>
-            <div class="nav-item nav-item-create" onclick="showToast('Video erstellen')">
-                <div class="create-button-container">
-                    <div class="create-button-bg">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                </div>
-                 <!-- No label for create usually -->
-            </div>
-            <div class="nav-item" onclick="showToast('Posteingang')">
-                <i class="far fa-paper-plane"></i> <!-- Image uses something like this, or fa-comment-dots -->
-                <span class="notification-badge" id="inboxNotificationBadge">0</span>
-                <span class="nav-label">Posteingang</span>
-            </div>
-            <div class="nav-item active" onclick="showToast('Profil')"> <!-- Active -->
-                <i class="fas fa-user"></i>
-                <span class="nav-label">Profil</span>
-            </div>
+            <div class="nav-item" onclick="showToast('Home')"><i class="fas fa-home"></i><span class="nav-label">Home</span></div>
+            <div class="nav-item" onclick="showToast('Shop')"><i class="fas fa-shopping-bag"></i><span class="nav-label">Shop</span></div>
+            <div class="nav-item nav-item-create" onclick="showToast('Video erstellen')"><div class="create-button-container"><div class="create-button-bg"><i class="fas fa-plus"></i></div></div></div>
+            <div class="nav-item" onclick="showToast('Posteingang')"><i class="far fa-paper-plane"></i><span class="notification-badge" id="inboxNotificationBadge">0</span><span class="nav-label">Posteingang</span></div>
+            <div class="nav-item active" onclick="showToast('Profil')"><i class="fas fa-user"></i><span class="nav-label">Profil</span></div>
         </div>
 
+        <!-- Modals & Overlays -->
+        <div class="modal-overlay" id="editProfileModal">
+            <div class="modal-content">
+                <div class="modal-header"><h3>Profil bearbeiten</h3><i class="fas fa-times close-modal-btn" onclick="closeModal('editProfileModal')"></i></div>
+                <div class="edit-profile-form">
+                    <div class="form-group"><label>Name</label><input type="text" id="editNameInput" readonly></div>
+                    <div class="form-group"><label>Benutzername</label><input type="text" id="editUsernameInput" readonly></div>
+                    <div class="form-group"><label>Pronomen</label><input type="text" id="editPronounsInput" readonly></div>
+                    <div class="form-group"><label>Steckbrief</label><textarea id="editBioInput" readonly></textarea></div>
+                     <button class="profile-action-button" style="width:100%; margin-top:10px; background-color: var(--tt-button-bg-hover); opacity:0.7; cursor:not-allowed;">Speichern</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="shareProfileModal">
+            <div class="modal-content">
+                <div class="modal-header"><h3>Profil teilen</h3><i class="fas fa-times close-modal-btn" onclick="closeModal('shareProfileModal')"></i></div>
+                <div class="share-options-grid">
+                    <div class="share-option" onclick="showToast('Geteilt via WhatsApp')"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></div>
+                    <div class="share-option" onclick="showToast('Geteilt via Twitter')"><i class="fab fa-twitter"></i><span>Twitter</span></div>
+                    <div class="share-option" onclick="showToast('Geteilt via Facebook')"><i class="fab fa-facebook"></i><span>Facebook</span></div>
+                    <div class="share-option" onclick="showToast('Link kopiert')"><i class="fas fa-link"></i><span>Link kopieren</span></div>
+                    <div class="share-option" onclick="showToast('Geteilt via SMS')"><i class="fas fa-sms"></i><span>SMS</span></div>
+                    <div class="share-option" onclick="showToast('Weitere Optionen')"><i class="fas fa-ellipsis-h"></i><span>Mehr</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="fake-video-player-overlay" id="fakeVideoPlayer">
+            <div class="spinner"></div> <p>Video wird geladen...</p>
+        </div>
+        <div class="fake-camera-overlay" id="fakeCamera">
+            <div class="fake-camera-top-icons"><i class="fas fa-bolt"></i> <i class="fas fa-sync-alt"></i> <i class="fas fa-times" onclick="closeFakeCamera()"></i></div>
+            <div class="fake-camera-record-btn" onclick="showToast('Aufnahme gestartet (Fake)')"></div>
+            <div class="fake-camera-bottom-controls"><i class="fas fa-photo-video"></i> <i class="fas fa-magic"></i></div>
+        </div>
+        <div class="settings-menu-overlay" id="settingsMenuOverlay" onclick="closeSettingsMenuOutside(event)">
+            <div class="settings-menu" id="settingsMenu">
+                <div class="settings-menu-header">Einstellungen</div>
+                <div class="settings-menu-item" onclick="showToast('Einstellungen und Datenschutz')"><i class="fas fa-user-shield"></i>Einstellungen und Datenschutz</div>
+                <div class="settings-menu-item" onclick="showToast('QR-Code')"><i class="fas fa-qrcode"></i>QR-Code</div>
+                <div class="settings-menu-item" onclick="showToast('Sprache')"><i class="fas fa-language"></i>Sprache</div>
+                <div class="settings-menu-item" onclick="showToast('Abmelden')"><i class="fas fa-sign-out-alt"></i>Abmelden</div>
+            </div>
+        </div>
         <div class="prank-toast" id="prankToastElement"></div>
     </div>
 
     <script>
         // --- 💣 CUSTOMIZE YOUR PRANK HERE! (German Labels for Screenshot Accuracy) 💣 ---
         const PRANK_DATA = {
-            username: "SuperstarDE", // Your desired username
-            pronouns: "sie/ihr", // Your pronouns, or "" to hide
-            profilePicUrl: "https://randomuser.me/api/portraits/women/45.jpg", // URL to your "profile picture"
-            eventBubbleText: "Vatertag!", // Text for the bubble by profile pic, or "" to hide
-            
-            followingCount: "789",
-            followerCount: "1.5Mio", // e.g., "1.2Mio", "500K", "10570"
-            likesCount: "25.3Mio",
-
+            nameField: "Superstar DE", // For the "Name" field in Edit Profile
+            username: "SuperstarDE",
+            pronouns: "sie/ihr",
+            profilePicUrl: "https://randomuser.me/api/portraits/women/45.jpg",
+            eventBubbleText: "Vatertag!",
+            followingCount: "789", followerCount: "1.523.456", likesCount: "25.378.910", // Use raw numbers for formatting
             bio: "🇩🇪 Living my best life!\n✨ Content Creator | Gamer 🎮\n👇 Links & Merch",
-            // Extra links below bio
-            showTikTokStudio: true,
-            showAboLink: true,
-
-            // Event icon in top right (like "Neurobotic 2" in example)
-            eventIcon: {
-                imageUrl: "https://picsum.photos/seed/eventicon/50/50", // Small icon image
-                text: "Event Name", // Text next to icon
-                number: "3" // Number like "2" in example
-            },
-            // Or set eventIcon to null to hide it: eventIcon: null,
-
-            // Stories Banner
+            pdosText: "Pdos sichten und vernichten", // Text above TikTok Studio/Abo
+            showTikTokStudio: true, showAboLink: true,
+            eventIconNumber: "2", // For Neurobotic icon
             showStoriesBanner: true,
-
-            // Video Grid
-            numFakeVideos: 18, // How many video thumbnails
-            minViews: 1000, // Min views for a fake video
-            maxViews: 3500000, // Max views for a fake video
-
-            // Bottom Nav Notifications
-            inboxNotifications: "7" // Number for Posteingang badge, or "0"
+            numFakeVideos: 21, minViews: 1000, maxViews: 3500000,
+            inboxNotifications: "7"
         };
         // --- END OF CUSTOMIZATION ---
 
-        // Populate dynamic content
+        function germanFormatNumber(num) {
+            if (num >= 10000000) return (num / 1000000).toFixed(1).replace('.', ',') + ' Mio'; // e.g. 25,3 Mio
+            if (num >= 1000000) return (num / 1000000).toFixed(2).replace('.', ',') + ' Mio'; // e.g. 1,52 Mio
+            if (num >= 10000) return (num / 1000).toFixed(1).replace('.', ',') + 'K'; // e.g. 28,0K
+            if (num >= 1000) return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); // e.g. 1.281
+            return num.toString();
+        }
+        function germanFormatViews(num) { // Simpler for views, often just K or Mio
+            if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0','').replace('.', ',') + ' Mio';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace('.0','').replace('.', ',') + 'K';
+            return num.toString();
+        }
+
         document.getElementById('usernameTop').textContent = `@${PRANK_DATA.username}`;
         document.getElementById('profileUsernameMain').textContent = `@${PRANK_DATA.username}`;
-        
-        if (PRANK_DATA.pronouns) {
-            document.getElementById('profilePronouns').textContent = PRANK_DATA.pronouns;
-        } else {
-            document.getElementById('profilePronouns').style.display = 'none';
-        }
-
+        if (PRANK_DATA.pronouns) document.getElementById('profilePronouns').textContent = PRANK_DATA.pronouns;
+        else document.getElementById('profilePronouns').style.display = 'none';
         document.getElementById('profilePicMain').src = PRANK_DATA.profilePicUrl;
-        if (PRANK_DATA.eventBubbleText) {
-            document.getElementById('profileEventBubble').textContent = PRANK_DATA.eventBubbleText;
-        } else {
-            document.getElementById('profileEventBubble').style.display = 'none';
-        }
+        if (PRANK_DATA.eventBubbleText) document.getElementById('profileEventBubble').textContent = PRANK_DATA.eventBubbleText;
+        else document.getElementById('profileEventBubble').style.display = 'none';
         
-        document.getElementById('followingCountStat').textContent = PRANK_DATA.followingCount;
-        document.getElementById('followerCountStat').textContent = PRANK_DATA.followerCount;
-        document.getElementById('likesCountStat').textContent = PRANK_DATA.likesCount;
+        document.getElementById('followingCountStat').textContent = germanFormatNumber(parseInt(PRANK_DATA.followingCount.replace(/\./g, '')));
+        document.getElementById('followerCountStat').textContent = germanFormatNumber(parseInt(PRANK_DATA.followerCount.replace(/\.|Mio|K/gi, '').replace(',', '.')));
+        document.getElementById('likesCountStat').textContent = germanFormatNumber(parseInt(PRANK_DATA.likesCount.replace(/\.|Mio|K/gi, '').replace(',', '.')));
 
         document.getElementById('profileBioMain').textContent = PRANK_DATA.bio;
+        if (PRANK_DATA.pdosText) document.getElementById('pdosTextContainer').textContent = PRANK_DATA.pdosText;
+        else document.getElementById('pdosTextContainer').style.display = 'none';
 
         const studioLink = document.querySelector('.profile-extra-links a[href*="TikTok Studio"]');
         const aboLink = document.querySelector('.profile-extra-links a[href*="Abonnements"]');
         const separator = document.querySelector('.profile-extra-links .separator');
-
         if (!PRANK_DATA.showTikTokStudio) studioLink.style.display = 'none';
         if (!PRANK_DATA.showAboLink) aboLink.style.display = 'none';
-        if (!PRANK_DATA.showTikTokStudio && !PRANK_DATA.showAboLink) {
-            if (separator) separator.style.display = 'none';
-             document.querySelector('.profile-extra-links').style.display = 'none';
-        } else if (!PRANK_DATA.showTikTokStudio || !PRANK_DATA.showAboLink) {
-             if (separator) separator.style.display = 'none';
-        }
+        if (!PRANK_DATA.showTikTokStudio && !PRANK_DATA.showAboLink) { if (separator) separator.style.display = 'none'; document.querySelector('.profile-extra-links').style.display = 'none'; }
+        else if (!PRANK_DATA.showTikTokStudio || !PRANK_DATA.showAboLink) { if (separator) separator.style.display = 'none'; }
 
-
-        const eventIconContainer = document.getElementById('eventIconContainer');
-        if (PRANK_DATA.eventIcon) {
-            eventIconContainer.innerHTML = `
-                <img src="${PRANK_DATA.eventIcon.imageUrl}" alt="Event">
-                <span>${PRANK_DATA.eventIcon.text}</span>
-                <strong>${PRANK_DATA.eventIcon.number}</strong>
-            `;
-        } else {
-            eventIconContainer.style.display = 'none';
-        }
-
-        if (!PRANK_DATA.showStoriesBanner) {
-            document.getElementById('storiesBanner').style.display = 'none';
-        }
-        
+        document.getElementById('eventIconNumber').textContent = PRANK_DATA.eventIconNumber;
+        if (!PRANK_DATA.showStoriesBanner) document.getElementById('storiesBanner').style.display = 'none';
         const inboxBadge = document.getElementById('inboxNotificationBadge');
-        if (PRANK_DATA.inboxNotifications && PRANK_DATA.inboxNotifications !== "0") {
-            inboxBadge.textContent = PRANK_DATA.inboxNotifications;
-            inboxBadge.style.display = 'flex';
-        } else {
-            inboxBadge.style.display = 'none';
-        }
+        if (PRANK_DATA.inboxNotifications && PRANK_DATA.inboxNotifications !== "0") { inboxBadge.textContent = PRANK_DATA.inboxNotifications; inboxBadge.style.display = 'flex'; }
+        else inboxBadge.style.display = 'none';
 
-
-        // Generate fake video thumbnails
         const gridContainer = document.querySelector('.profile-content-grid[data-tab-content="grid"]');
         for (let i = 0; i < PRANK_DATA.numFakeVideos; i++) {
-            const item = document.createElement('div');
-            item.classList.add('grid-video-item');
-            item.onclick = () => showToast(`Video ${i+1} ansehen (Fake)`);
-            
-            const img = document.createElement('img');
-            img.src = `https://picsum.photos/seed/${PRANK_DATA.username.toLowerCase()}${i}/270/420`; // 9:14 ratio
-            img.alt = `Fake Video ${i+1}`;
-
-            const viewsDiv = document.createElement('div');
-            viewsDiv.classList.add('views');
+            const item = document.createElement('div'); item.classList.add('grid-video-item');
+            item.onclick = () => openFakeVideoPlayer();
+            const img = document.createElement('img'); img.src = `https://picsum.photos/seed/${PRANK_DATA.username.toLowerCase()}${i}/270/405`; img.alt = `Fake Video ${i+1}`;
+            const viewsDiv = document.createElement('div'); viewsDiv.classList.add('views');
             const randomViews = Math.floor(Math.random() * (PRANK_DATA.maxViews - PRANK_DATA.minViews + 1)) + PRANK_DATA.minViews;
-            let viewsText;
-            if (randomViews >= 1000000) {
-                viewsText = (randomViews / 1000000).toFixed(1).replace('.',',') + 'Mio';
-            } else if (randomViews >= 1000) {
-                viewsText = (randomViews / 1000).toFixed(randomViews % 1000 === 0 ? 0 : 1).replace('.',',') + 'K';
-            } else {
-                viewsText = randomViews;
-            }
-            viewsDiv.innerHTML = `<i class="fas fa-play"></i> ${viewsText.replace(',0','')}`;
-            
-            item.appendChild(img);
-            item.appendChild(viewsDiv);
-
-            // Randomly add multi-image icon to some videos
-            if (Math.random() < 0.2) { // 20% chance
-                const multiIcon = document.createElement('i');
-                multiIcon.className = 'fas fa-clone multi-image-icon';
-                item.appendChild(multiIcon);
-            }
+            viewsDiv.innerHTML = `<i class="fas fa-play"></i> ${germanFormatViews(randomViews)}`;
+            item.appendChild(img); item.appendChild(viewsDiv);
+            if (Math.random() < 0.2) { const multiIcon = document.createElement('i'); multiIcon.className = 'fas fa-clone multi-image-icon'; item.appendChild(multiIcon); }
             gridContainer.appendChild(item);
         }
 
-        // Toast message function
         let toastTimeout;
         function showToast(message) {
             const toastElement = document.getElementById('prankToastElement');
-            toastElement.textContent = message;
-            toastElement.classList.add('show');
-
+            toastElement.textContent = message; toastElement.classList.add('show');
             clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toastElement.classList.remove('show');
-            }, 2000);
+            toastTimeout = setTimeout(() => { toastElement.classList.remove('show'); }, 1800);
         }
 
-        // Tab switching
         function switchTab(tabElement) {
-            const tabs = document.querySelectorAll('#profileTabsContainer .tab-item');
-            tabs.forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('#profileTabsContainer .tab-item').forEach(tab => tab.classList.remove('active'));
             tabElement.classList.add('active');
-
             const tabContents = document.querySelectorAll('#tabContentContainer > div');
-            tabContents.forEach(content => content.style.display = 'none');
-            
+            tabContents.forEach(content => content.classList.remove('active-tab-content'));
             const activeTabContentId = tabElement.dataset.tab;
             const activeContent = document.querySelector(`#tabContentContainer > div[data-tab-content="${activeTabContentId}"]`);
-            if(activeContent) {
-                activeContent.style.display = activeTabContentId === 'grid' ? 'grid' : 'block'; // Grid needs display:grid
-            }
-            showToast(`Tab: ${activeTabContentId} ausgewählt (Fake-Inhalt)`);
+            if(activeContent) activeContent.classList.add('active-tab-content');
+            // showToast(`Tab: ${activeTabContentId} ausgewählt`); // Optional toast on tab switch
         }
+        function closeStoriesBanner() { document.getElementById('storiesBanner').classList.add('hidden'); showToast('Banner geschlossen'); }
+        
+        // Modals & Overlays
+        function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+        function openEditProfileModal() {
+            document.getElementById('editNameInput').value = PRANK_DATA.nameField;
+            document.getElementById('editUsernameInput').value = `@${PRANK_DATA.username}`;
+            document.getElementById('editPronounsInput').value = PRANK_DATA.pronouns;
+            document.getElementById('editBioInput').value = PRANK_DATA.bio;
+            openModal('editProfileModal');
+        }
+        function openShareModal() { openModal('shareProfileModal'); }
+        function openFakeVideoPlayer() {
+            openModal('fakeVideoPlayer');
+            setTimeout(() => closeModal('fakeVideoPlayer'), 1500 + Math.random() * 1000); // Close after 1.5-2.5s
+        }
+        function openFakeCamera() {
+            openModal('fakeCamera');
+            // setTimeout(() => closeModal('fakeCamera'), 2000); // Optionally auto-close
+        }
+        function closeFakeCamera() { closeModal('fakeCamera'); }
 
-        // Close stories banner
-        function closeStoriesBanner() {
-            document.getElementById('storiesBanner').style.display = 'none';
-            showToast('Banner geschlossen');
+        const usernameDropdown = document.getElementById('fakeUsernameDropdown');
+        function toggleUsernameDropdown() { usernameDropdown.classList.toggle('active'); }
+        document.addEventListener('click', function(event) { // Close dropdown if clicked outside
+            const container = document.querySelector('.username-dropdown-container');
+            if (!container.contains(event.target) && usernameDropdown.classList.contains('active')) {
+                usernameDropdown.classList.remove('active');
+            }
+        });
+
+        const settingsMenuOverlay = document.getElementById('settingsMenuOverlay');
+        const settingsMenu = document.getElementById('settingsMenu');
+        function toggleSettingsMenu() { settingsMenuOverlay.classList.toggle('active'); }
+        function closeSettingsMenuOutside(event) {
+            if (event.target === settingsMenuOverlay) { settingsMenuOverlay.classList.remove('active'); }
         }
+        
+        // Splash Screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('splashScreen').classList.add('hidden');
+            }, 100); // Show splash for 100ms then start fade out (0.3s) + 0.5s delay from CSS = ~0.9s total
+        });
 
     </script>
 </body>
