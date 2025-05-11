@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Hide & Collect - Advanced Agent (Self-Speed Control)</title>
+    <title>AI Hide & Collect - DQN Agent</title>
+    <!-- Import TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #121212; color: #e0e0e0; margin: 0; padding: 5px; overscroll-behavior: none; }
         .controls { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 6px; background-color: #222; border-radius: 5px; width: calc(100% - 10px); max-width: 880px; box-sizing: border-box;}
         .controls div { display: flex; flex-direction: column; align-items: center; }
         .controls label { font-size: 0.75em; margin-bottom: 1px; color: #bbb;}
-        .controls input[type="range"] { width: 90px; }
+        .controls input[type="range"], .controls input[type="number"] { width: 90px; background-color: #333; color: #e0e0e0; border: 1px solid #555; border-radius: 3px;}
         .controls span { font-size: 0.75em; color: #ccc; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 450px; }
         canvas { border: 1px solid #333; background-color: #1c1c1c; max-width: 100%; height: auto; display: block; }
         #gameCanvas { background-color: #283848; }
-        #aiVisionCanvas { background-color: #252525; }
+        #lossCanvas { background-color: #252525; }
         .stats { border: 1px solid #333; padding: 7px; background-color: #222; width: calc(100% - 16px); max-width: 430px; box-sizing: border-box; }
         .stats p { margin: 3px 0; font-size: 0.75em; color: #ccc;}
         h1 {font-size: 1.4em; color: #fff;} h2 { font-size: 0.9em; color: #ddd;}
@@ -24,17 +26,19 @@
             .container { flex-direction: row; align-items: flex-start; max-width: 900px; }
             .game-area { flex: 3; }
             .ai-info { flex: 2; }
-            .controls input[type="range"] { width: 110px; }
+            .controls input[type="range"], .controls input[type="number"] { width: 110px; }
         }
     </style>
 </head>
 <body>
-    <h1>AI Hide & Collect - Advanced Agent (Self-Speed Control)</h1>
+    <h1>AI Hide & Collect - DQN Agent (TF.js)</h1>
 
     <div class="controls">
-        <div><label for="speedControl">Sim Speed (ms):</label><input type="range" id="speedControl" min="1" max="200" value="30"><span id="speedValue">30</span></div>
-        <div><label for="planningStepsControl">Planning Steps (k):</label><input type="range" id="planningStepsControl" min="0" max="200" value="50"><span id="planningStepsValue">50</span></div>
-        <div><label for="fastSpeedCostControl">Fast Speed Cost:</label><input type="range" id="fastSpeedCostControl" min="0" max="1" step="0.01" value="0.1"><span id="fastSpeedCostValue">0.1</span></div>
+        <div><label for="simSpeedControl">Sim Speed (ms):</label><input type="range" id="simSpeedControl" min="1" max="200" value="10"><span id="simSpeedValue">10</span></div>
+        <div><label for="trainingIterControl">Train Iter/Step:</label><input type="range" id="trainingIterControl" min="0" max="10" value="1"><span id="trainingIterValue">1</span></div>
+        <div><label for="batchSizeControl">Batch Size:</label><input type="number" id="batchSizeControl" min="8" max="256" step="8" value="32"></div>
+        <div><label for="learningRateControl">Learning Rate:</label><input type="number" id="learningRateControl" min="0.00001" max="0.01" step="0.00001" value="0.00025"></div>
+        <div><label for="fastSpeedCostControl">Fast Speed Cost:</label><input type="range" id="fastSpeedCostControl" min="0" max="1" step="0.01" value="0.05"><span id="fastSpeedCostValue">0.05</span></div>
     </div>
 
     <div class="container">
@@ -43,18 +47,18 @@
             <canvas id="gameCanvas" width="360" height="540"></canvas>
         </div>
         <div class="ai-info">
-            <h2>AI "Vision" & Model</h2>
-            <canvas id="aiVisionCanvas" width="180" height="180"></canvas>
+            <h2>AI Training Loss</h2>
+            <canvas id="lossCanvas" width="180" height="180"></canvas>
             <div class="stats">
                 <h2>Stats</h2>
                 <p>Episode: <span id="episode">0</span></p>
                 <p>Cookies: <span id="cookies">0</span> | Punishments: <span id="punishments">0</span></p>
-                <p>Epsilon: <span id="epsilon">1.0000</span></p>
+                <p>Epsilon: <span id="epsilon">1.000</span></p>
                 <p>Last Action: <span id="lastAction">-</span></p>
-                <p>Q-Table Size: <span id="qTableSize">0</span></p>
-                <p>Env. Model (S-A pairs): <span id="modelSize">0</span></p>
+                <p>Replay Buffer: <span id="replayBufferSize">0</span> / <span id="replayBufferCapacity">0</span></p>
                 <p>Total Steps: <span id="totalSteps">0</span></p>
                 <p>Avg. Reward / Ep: <span id="avgReward">N/A</span></p>
+                <p>Avg. Loss: <span id="avgLoss">N/A</span></p>
             </div>
         </div>
     </div>
@@ -63,22 +67,26 @@
         // --- DOM Elements ---
         const gameCanvas = document.getElementById('gameCanvas');
         const gameCtx = gameCanvas.getContext('2d');
-        const aiVisionCanvas = document.getElementById('aiVisionCanvas');
-        const aiVisionCtx = aiVisionCanvas.getContext('2d');
+        const lossCanvas = document.getElementById('lossCanvas');
+        const lossCtx = lossCanvas.getContext('2d');
         const playerSpeedIndicatorEl = document.getElementById('playerSpeedIndicator');
         const episodeEl = document.getElementById('episode');
         const cookiesEl = document.getElementById('cookies');
         const punishmentsEl = document.getElementById('punishments');
         const epsilonEl = document.getElementById('epsilon');
         const lastActionEl = document.getElementById('lastAction');
-        const qTableSizeEl = document.getElementById('qTableSize');
-        const modelSizeEl = document.getElementById('modelSize');
+        const replayBufferSizeEl = document.getElementById('replayBufferSize');
+        const replayBufferCapacityEl = document.getElementById('replayBufferCapacity');
         const totalStepsEl = document.getElementById('totalSteps');
         const avgRewardEl = document.getElementById('avgReward');
-        const speedControl = document.getElementById('speedControl');
-        const speedValue = document.getElementById('speedValue');
-        const planningStepsControl = document.getElementById('planningStepsControl');
-        const planningStepsValue = document.getElementById('planningStepsValue');
+        const avgLossEl = document.getElementById('avgLoss');
+
+        const simSpeedControl = document.getElementById('simSpeedControl');
+        const simSpeedValue = document.getElementById('simSpeedValue');
+        const trainingIterControl = document.getElementById('trainingIterControl');
+        const trainingIterValue = document.getElementById('trainingIterValue');
+        const batchSizeControl = document.getElementById('batchSizeControl');
+        const learningRateControl = document.getElementById('learningRateControl');
         const fastSpeedCostControl = document.getElementById('fastSpeedCostControl');
         const fastSpeedCostValue = document.getElementById('fastSpeedCostValue');
 
@@ -91,7 +99,10 @@
         const BASE_MOVE_SPEED = PLAYER_SIZE; 
         const HUNTER_BASE_SPEED = PLAYER_SIZE * 0.9; 
         let MAX_STEPS_PER_EPISODE = 400;
-        let FAST_ACTION_COST = 0.1; 
+        let FAST_ACTION_COST = 0.05; 
+        const MAX_DIST_NORM = Math.hypot(gameCanvas.width, gameCanvas.height);
+        const MAX_PROBE_STEPS_NORM = 2; // probeClearSteps returns 0, 1, or 2
+        const MAX_COVER_DIST_CATEGORIES_NORM = 2; // distToCover returns 0, 1, or 2 for 3 categories
 
         // --- Game Objects & State ---
         let player = { x: 50, y: 50, width: PLAYER_SIZE, height: PLAYER_SIZE, color: 'deepskyblue', currentSpeedMultiplier: NORMAL_SPEED_MULTIPLIER };
@@ -109,23 +120,6 @@
             { x: gameCanvas.width/2 - 50, y: gameCanvas.height/2 - 10, width: 100, height: 20, color: '#4a4a4a' }
         ];
 
-        // --- AI Q-Learning & Dyna-Q Parameters ---
-        let qTable = {};
-        let envModel = {}; 
-        let observedStateActions = []; 
-        let prioritizedSweepingQueue = []; 
-
-        const LEARNING_RATE = 0.15; 
-        const PLANNING_LEARNING_RATE_PRIO = LEARNING_RATE * 0.75;
-        const PLANNING_LEARNING_RATE_RANDOM = LEARNING_RATE * 0.5;
-        const DISCOUNT_FACTOR = 0.95; 
-        let epsilon = 1.0;
-        const EPSILON_DECAY = 0.99995; 
-        const MIN_EPSILON = 0.02;    
-        let numPlanningSteps = 50;    
-        const PRIORITY_QUEUE_MAX_SIZE = 500; 
-        const KAPPA_EXPLORATION_BONUS = 0.05; // For Dyna-Q+ style model exploration
-
         const baseActions = [
             { dx: 0, dy: -1, name: "Up" }, { dx: 0, dy: 1, name: "Down" },
             { dx: -1, dy: 0, name: "Left" }, { dx: 1, dy: 0, name: "Right" },
@@ -134,23 +128,37 @@
         const ACTIONS = [];
         baseActions.forEach(ba => {
             ACTIONS.push({ ...ba, speedMultiplier: NORMAL_SPEED_MULTIPLIER, name: ba.name + " (N)" });
-            if (ba.name !== "Stay") { 
-                ACTIONS.push({ ...ba, speedMultiplier: FAST_SPEED_MULTIPLIER, name: ba.name + " (F)" });
-            }
+            if (ba.name !== "Stay") { ACTIONS.push({ ...ba, speedMultiplier: FAST_SPEED_MULTIPLIER, name: ba.name + " (F)" }); }
         });
+        const NUM_ACTIONS = ACTIONS.length; // Should be 9
+
+        // --- DQN Agent Parameters ---
+        let STATE_SIZE; // Determined after first call to get_state_vector
+        const REPLAY_BUFFER_CAPACITY = 10000;
+        let BATCH_SIZE = 32;
+        const DISCOUNT_FACTOR = 0.99; // Higher discount for more foresight
+        let LEARNING_RATE = 0.00025;
+        let epsilon = 1.0;
+        const EPSILON_DECAY = 0.9998; // Slower decay needed for DQN
+        const MIN_EPSILON = 0.01;
+        const TARGET_NETWORK_UPDATE_FREQUENCY = 200; // In game steps
+        let trainingIterationsPerStep = 1;
+
+        let dqnAgent;
+        let lossHistory = [];
+        const MAX_LOSS_HISTORY = 100;
 
         let scoreCookies = 0, scorePunishments = 0, episodeCount = 0;
         let currentStepsInEpisode = 0, cumulativeTotalSteps = 0;
         let totalRewardCollectedThisEpisode = 0;
         let episodeRewardsHistory = [];
         const AVG_REWARD_HISTORY_LENGTH = 50;
-        let simIntervalId = null, currentSimSpeed = 30;
+        let simIntervalId = null, currentSimSpeed = 10;
         
-        // --- Helper & State Discretization ---
+        // --- Helper Functions (Collision, Spawning, Pathfinding - largely same) ---
         function rectCollision(r1, r2) { return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x && r1.y < r2.y + r2.height && r1.y + r1.height > r2.y; }
-        
         function spawnCoin() { 
-            let coinX, coinY, validPosition;
+             let coinX, coinY, validPosition;
             const maxAttempts = 100; let attempts = 0;
             do {
                 validPosition = true; attempts++;
@@ -161,39 +169,11 @@
                 if (Math.hypot(coinX - (player.x+player.width/2), coinY - (player.y+player.height/2)) < PLAYER_SIZE * 5 + COIN_RADIUS) validPosition = false;
                 if (Math.hypot(coinX - (hunter.x+hunter.width/2), coinY - (hunter.y+hunter.height/2)) < HUNTER_SIZE * 5 + COIN_RADIUS) validPosition = false;
             } while (!validPosition && attempts < maxAttempts);
-            if (!validPosition) { // Fallback, try to avoid obstacles at least
-                attempts = 0;
-                do {
-                    coinX = COIN_RADIUS + Math.random() * (gameCanvas.width - 2 * COIN_RADIUS);
-                    coinY = COIN_RADIUS + Math.random() * (gameCanvas.height - 2 * COIN_RADIUS);
-                    validPosition = true;
-                    for (const obs of obstacles) { if (coinX > obs.x && coinX < obs.x + obs.width && coinY > obs.y && coinY < obs.y + obs.height) { validPosition = false; break; } }
-                    attempts++;
-                } while(!validPosition && attempts < maxAttempts);
-                if (!validPosition) {coinX = gameCanvas.width/2; coinY = gameCanvas.height/2;} // Absolute fallback
-            }
+            if (!validPosition) { coinX = gameCanvas.width * Math.random(); coinY = gameCanvas.height * Math.random(); }
             coins = [{ x: coinX, y: coinY, radius: COIN_RADIUS, color: 'gold' }];
         }
-
-        function getAngleCategory(dx, dy, numCategories = 8) { const angle = Math.atan2(dy, dx) + Math.PI; return Math.floor(angle / (2 * Math.PI / numCategories)) % numCategories; }
+        function getAngleCategory(dx, dy, numCategories = 8) { const angle = Math.atan2(dy, dx) + Math.PI; return Math.floor(angle / (2 * Math.PI / numCategories)) % numCategories; } // Not directly used by NN, but could be for hunter or helpers
         
-        function getDistanceCategory(dist, refSize, numCategories = 4) {
-            if (numCategories === 4) { // VeryClose, Close, Medium, Far
-                if (dist < refSize * 1.5) return 0; if (dist < refSize * 4) return 1; 
-                if (dist < refSize * 8) return 2; return 3;
-            } else if (numCategories === 3) { // For cover: Close, Medium, Far/None
-                if (dist < refSize * 2.5) return 0; // Tuned for cover
-                if (dist < refSize * 6) return 1; 
-                return 2; 
-            }
-            // Fallback generic categorization
-            const step = (refSize * 10) / numCategories; // Max relevant distance considered as refSize * 10
-            for (let i = 0; i < numCategories; i++) {
-                if (dist < (i + 1) * step) return i;
-            }
-            return numCategories - 1;
-        }
-
         function probeClearSteps(entity, unitDirX, unitDirY, moveSpeed, maxProbeSteps = 2) {
             let clearSteps = 0;
             for (let i = 1; i <= maxProbeSteps; i++) {
@@ -204,15 +184,14 @@
                 if (collision) break;
                 clearSteps++;
             }
-            if (clearSteps === 0) return 0; if (clearSteps === 1) return 1; return 2; // 0, 1, 2+
+            return clearSteps; // Returns 0, 1, or 2
         }
-
         function isPathClear(e1, e2, obsArr, e1ProbeSize) { 
             const e1cx = e1.x + e1.width/2, e1cy = e1.y + e1.height/2;
             const e2cx = e2.x + (e2.radius ? e2.radius : e2.width/2), e2cy = e2.y + (e2.radius ? e2.radius : e2.height/2);
             const dx = e2cx-e1cx, dy = e2cy-e1cy, dist = Math.hypot(dx,dy);
-            if(dist < e1ProbeSize/2) return true; // Already overlapping or very close
-            const samples = Math.max(3, Math.ceil(dist / (e1ProbeSize/1.5))); // Increased samples slightly
+            if(dist < e1ProbeSize/2) return true;
+            const samples = Math.max(3, Math.ceil(dist / (e1ProbeSize/1.5)));
             for(let i=0; i<=samples; ++i){
                 const t = i/samples;
                 const pr = {x: e1cx + t*dx - e1ProbeSize/4, y: e1cy + t*dy - e1ProbeSize/4, width: e1ProbeSize/2, height: e1ProbeSize/2};
@@ -220,143 +199,216 @@
             }
             return true;
         }
-        
-        function distToCover(playerEntity, hunterEntity, obstaclesArr) {
-            const playerIsVisibleToHunter = isPathClear(hunterEntity, playerEntity, obstaclesArr, hunterEntity.width/2); // Use smaller probe for hunter vision
-            if (!playerIsVisibleToHunter) return 0; // Player is already effectively in cover
+        function distToCoverValue(playerEntity, hunterEntity, obstaclesArr) { // Renamed from distToCover
+            const playerIsVisibleToHunter = isPathClear(hunterEntity, playerEntity, obstaclesArr, hunterEntity.width/2);
+            if (!playerIsVisibleToHunter) return 0; // Already covered
 
             let minDist = Infinity;
             const pCx = playerEntity.x + playerEntity.width / 2;
             const pCy = playerEntity.y + playerEntity.height / 2;
             
             for (const obs of obstaclesArr) {
-                // Consider multiple points on the obstacle's perimeter facing the player as potential cover spots
-                // For simplicity, we'll stick to checking if moving to the obstacle's "shadow" is feasible
-                // Midpoint of obstacle:
                 const obsMidX = obs.x + obs.width / 2;
                 const obsMidY = obs.y + obs.height / 2;
-
-                // Create a temporary player at the obstacle's midpoint to check if it provides cover
                 const tempPlayerAtObsMid = { ...playerEntity, x: obsMidX - playerEntity.width/2, y: obsMidY - playerEntity.height/2 };
-                
-                // Check 1: Does this obstacle point actually block LOS from hunter?
                 if (!isPathClear(hunterEntity, tempPlayerAtObsMid, obstaclesArr, hunterEntity.width/2)) {
-                    // Check 2: Can player reach this point (e.g., obstacle midpoint)?
-                    // Use a small radius for the target point to avoid issues with exact coordinates
                     if (isPathClear(playerEntity, { x: obsMidX, y: obsMidY, radius: 1 }, obstaclesArr, playerEntity.width/2)) {
                          minDist = Math.min(minDist, Math.hypot(obsMidX - pCx, obsMidY - pCy));
                     }
                 }
             }
-            if (minDist === Infinity) return getDistanceCategory(gameCanvas.width, PLAYER_SIZE, 3); 
-            return getDistanceCategory(minDist, PLAYER_SIZE, 3); 
+            if (minDist === Infinity) return 2; // Furthest category
+            if (minDist < PLAYER_SIZE * 2.5) return 0; // Close cover
+            if (minDist < PLAYER_SIZE * 6) return 1;   // Medium cover
+            return 2; // Far cover
         }
 
-        function getDiscretizedState() {
+        // --- State Vector for DQN ---
+        function get_state_vector() {
             const pCx = player.x + player.width/2, pCy = player.y + player.height/2;
             const hCx = hunter.x + hunter.width/2, hCy = hunter.y + hunter.height/2;
 
-            const relHx = hCx - pCx, relHy = hCy - pCy;
-            const hAngle = getAngleCategory(relHx, relHy, 8); // 8 angle categories for hunter
-            const hDist = getDistanceCategory(Math.hypot(relHx, relHy), PLAYER_SIZE, 4); // 4 dist categories
+            const state = [];
+            // Player pos (normalized)
+            state.push(pCx / gameCanvas.width);
+            state.push(pCy / gameCanvas.height);
 
-            let cAngle = 0, cDist = 3; // Default if no coin (e.g. far away)
+            // Hunter relative pos & dist & angle (normalized)
+            const relHx = hCx - pCx;
+            const relHy = hCy - pCy;
+            const hDist = Math.hypot(relHx, relHy);
+            state.push(relHx / gameCanvas.width); // Can be negative
+            state.push(relHy / gameCanvas.height); // Can be negative
+            state.push(hDist / MAX_DIST_NORM);
+            state.push(Math.atan2(relHy, relHx) / Math.PI); // -1 to 1
+
+            // Coin relative pos & dist & angle (normalized, or zeros if no coin)
             if (coins.length > 0) {
                 const coin = coins[0];
-                const relCx = coin.x - pCx, relCy = coin.y - pCy;
-                cAngle = getAngleCategory(relCx, relCy, 8); // 8 angle categories for coin
-                cDist = getDistanceCategory(Math.hypot(relCx, relCy), PLAYER_SIZE, 4);
+                const relCx = coin.x - pCx;
+                const relCy = coin.y - pCy;
+                const cDist = Math.hypot(relCx, relCy);
+                state.push(relCx / gameCanvas.width);
+                state.push(relCy / gameCanvas.height);
+                state.push(cDist / MAX_DIST_NORM);
+                state.push(Math.atan2(relCy, relCx) / Math.PI);
+                state.push(isPathClear(player, coin, obstacles, PLAYER_SIZE/2) ? 1.0 : 0.0); // coinLOS
+            } else {
+                state.push(0, 0, 0, 0, 0); // Placeholder for no coin
             }
             
-            const currentMoveSpeedUnit = BASE_MOVE_SPEED; // Probing based on normal speed unit
-            const clearN = probeClearSteps(player, 0, -1, currentMoveSpeedUnit);
-            const clearS = probeClearSteps(player, 0, 1, currentMoveSpeedUnit);
-            const clearE = probeClearSteps(player, 1, 0, currentMoveSpeedUnit);
-            const clearW = probeClearSteps(player, -1, 0, currentMoveSpeedUnit);
+            // Hunter LOS & Cover
+            state.push(isPathClear(hunter, player, obstacles, HUNTER_SIZE/2) ? 1.0 : 0.0); // hunterLOS
+            state.push(distToCoverValue(player, hunter, obstacles) / MAX_COVER_DIST_CATEGORIES_NORM);
 
-            const coinLOS = (coins.length > 0) ? (isPathClear(player, coins[0], obstacles, PLAYER_SIZE/2) ? 0:1) : 1; // 0=LOS, 1=No LOS
-            const hunterLOS = isPathClear(hunter, player, obstacles, HUNTER_SIZE/2) ? 0:1; // 0=Hunter sees Player, 1=Not
+            // Hunter's last move (normalized)
+            state.push(hunter.lastDx / (HUNTER_BASE_SPEED * 1.5)); // Normalize by potential max speed
+            state.push(hunter.lastDy / (HUNTER_BASE_SPEED * 1.5));
+
+            // Clearance around player (normalized)
+            const moveUnit = BASE_MOVE_SPEED;
+            state.push(probeClearSteps(player, 0, -1, moveUnit) / MAX_PROBE_STEPS_NORM); // N
+            state.push(probeClearSteps(player, 0, 1, moveUnit) / MAX_PROBE_STEPS_NORM);  // S
+            state.push(probeClearSteps(player, 1, 0, moveUnit) / MAX_PROBE_STEPS_NORM);  // E
+            state.push(probeClearSteps(player, -1, 0, moveUnit) / MAX_PROBE_STEPS_NORM); // W
             
-            let hunterLastMoveCat = 4; // N,E,S,W,Stay (0-3, 4)
-            if (Math.abs(hunter.lastDx) > 0.01 || Math.abs(hunter.lastDy) > 0.01) { // If hunter moved significantly
-                hunterLastMoveCat = getAngleCategory(hunter.lastDx, hunter.lastDy, 4); 
+            if (!STATE_SIZE) STATE_SIZE = state.length; // Set STATE_SIZE once
+            return state;
+        }
+
+        // --- Replay Buffer Class ---
+        class ReplayBuffer {
+            constructor(capacity) {
+                this.capacity = capacity;
+                this.buffer = [];
+                this.position = 0;
+                replayBufferCapacityEl.textContent = capacity;
+            }
+            push(state, action, reward, next_state, done) {
+                if (this.buffer.length < this.capacity) {
+                    this.buffer.push(null);
+                }
+                this.buffer[this.position] = {state, action, reward, next_state, done};
+                this.position = (this.position + 1) % this.capacity;
+                replayBufferSizeEl.textContent = this.buffer.length;
+            }
+            sample(batchSize) {
+                const batch = [];
+                const max = this.buffer.length;
+                if (max < batchSize) return null; // Not enough samples yet
+
+                for (let i = 0; i < batchSize; i++) {
+                    batch.push(this.buffer[Math.floor(Math.random() * max)]);
+                }
+                return batch;
+            }
+            size() { return this.buffer.length; }
+        }
+
+        // --- DQN Agent Class ---
+        class DQNAgent {
+            constructor(stateSize, actionSize) {
+                this.stateSize = stateSize;
+                this.actionSize = actionSize;
+                this.replayBuffer = new ReplayBuffer(REPLAY_BUFFER_CAPACITY);
+                this.optimizer = tf.train.adam(LEARNING_RATE);
+
+                this.onlineNetwork = this._buildModel();
+                this.targetNetwork = this._buildModel();
+                this.updateTargetNetwork(); // Initialize target network
             }
 
-            const coverDistCat = distToCover(player, hunter, obstacles); // 0,1,2 for cover distance
+            _buildModel() {
+                const model = tf.sequential();
+                model.add(tf.layers.dense({inputShape: [this.stateSize], units: 64, activation: 'relu'}));
+                model.add(tf.layers.dense({units: 64, activation: 'relu'}));
+                model.add(tf.layers.dense({units: this.actionSize, activation: 'linear'})); // Q-values
+                model.compile({optimizer: this.optimizer, loss: 'meanSquaredError'});
+                return model;
+            }
 
-            return `${hAngle}_${hDist}_${cAngle}_${cDist}_${clearN}_${clearS}_${clearE}_${clearW}_${coinLOS}_${hunterLOS}_${hunterLastMoveCat}_${coverDistCat}`;
-        }
+            updateTargetNetwork() {
+                this.targetNetwork.setWeights(this.onlineNetwork.getWeights());
+            }
 
-        // --- Q-Learning, Model, Planning (Dyna-Q with Prioritized Sweeping) ---
-        function ensureQValue(state) { if (!qTable[state]) { qTable[state] = Array(ACTIONS.length).fill(0); qTableSizeEl.textContent = Object.keys(qTable).length; } }
-        
-        function chooseAction(state) {
-            ensureQValue(state);
-            if (Math.random() < epsilon) return Math.floor(Math.random() * ACTIONS.length);
-            const qV = qTable[state]; const mQ = Math.max(...qV);
-            const bA = qV.reduce((acc, q, i) => (q === mQ ? acc.concat(i) : acc), []);
-            return bA[Math.floor(Math.random() * bA.length)];
-        }
+            act(state) {
+                if (Math.random() <= epsilon) {
+                    return Math.floor(Math.random() * this.actionSize);
+                }
+                const qValues = tf.tidy(() => this.onlineNetwork.predict(tf.tensor2d([state])));
+                const action = tf.tidy(() => qValues.argMax(1).dataSync()[0]);
+                qValues.dispose();
+                return action;
+            }
 
-        function updateQTable(state, actionIdx, reward, nextState, done, learningRateToUse = LEARNING_RATE) {
-            ensureQValue(state); 
-            if (!done) ensureQValue(nextState); 
+            remember(state, action, reward, nextState, done) {
+                this.replayBuffer.push(state, action, reward, nextState, done);
+            }
+
+            async train(batchSize) {
+                if (this.replayBuffer.size() < batchSize) return null;
+
+                const batch = this.replayBuffer.sample(batchSize);
+                if (!batch) return null;
+
+                const states = tf.tensor2d(batch.map(e => e.state));
+                const nextStates = tf.tensor2d(batch.map(e => e.next_state));
+                
+                let loss = null;
+                await tf.tidy(async () => { // Ensure tf.tidy handles async operations properly
+                    // Predict Q-values for current states from online network
+                    const currentQValues = this.onlineNetwork.predict(states);
+
+                    // Predict Q-values for next states using target network for values, online for actions (Double DQN)
+                    const nextOnlineQValues = this.onlineNetwork.predict(nextStates); // For selecting best action in next state
+                    const nextTargetQValues = this.targetNetwork.predict(nextStates); // For getting Q value of that action
+
+                    const targetQValuesData = currentQValues.arraySync(); // Get a mutable copy
+
+                    for (let i = 0; i < batch.length; i++) {
+                        const { action, reward, done } = batch[i];
+                        if (done) {
+                            targetQValuesData[i][action] = reward;
+                        } else {
+                            // Double DQN: Q_target = r + gamma * Q_target_net(s', argmax_a' Q_online_net(s', a'))
+                            const bestNextAction = nextOnlineQValues.slice([i, 0], [1, this.actionSize]).argMax(1).dataSync()[0];
+                            const nextQ = nextTargetQValues.slice([i, bestNextAction], [1, 1]).dataSync()[0];
+                            targetQValuesData[i][action] = reward + DISCOUNT_FACTOR * nextQ;
+                        }
+                    }
+                    
+                    const targetQValues = tf.tensor2d(targetQValuesData);
+                    const history = await this.onlineNetwork.fit(states, targetQValues, {
+                        epochs: 1, verbose: 0
+                    });
+                    loss = history.history.loss[0];
+                    
+                    targetQValues.dispose();
+                    
+                }); // End tf.tidy
+
+                states.dispose();
+                nextStates.dispose();
+                // nextOnlineQValues and nextTargetQValues should be disposed by their tf.tidy scopes or need manual disposal if used outside
+                // currentQValues is used to create targetQValuesData and should be disposed after that
+
+                return loss;
+            }
             
-            const oldQ = qTable[state][actionIdx];
-            const futureQ = done ? 0 : (qTable[nextState] ? Math.max(...qTable[nextState]) : 0);
-            const newQ = oldQ + learningRateToUse * (reward + DISCOUNT_FACTOR * futureQ - oldQ);
-            qTable[state][actionIdx] = newQ;
-            return Math.abs(newQ - oldQ); 
+            updateLearningRate(newLr) {
+                LEARNING_RATE = newLr;
+                // Recreate optimizer with new learning rate if TFJS doesn't allow dynamic LR update on existing optimizer easily
+                // For Adam, TFJS typically caches learning rate on creation.
+                // A common approach is to dispose old optimizer and create new.
+                if (this.optimizer) this.optimizer.dispose();
+                this.optimizer = tf.train.adam(LEARNING_RATE);
+                this.onlineNetwork.compile({optimizer: this.optimizer, loss: 'meanSquaredError'});
+
+            }
         }
 
-        function updateModel(state, actionIdx, reward, nextState) {
-            if (!envModel[state]) { 
-                envModel[state] = {}; 
-            }
-            if (!envModel[state][actionIdx]) {
-                envModel[state][actionIdx] = { nsc: {}, tr: 0, ec: 0 }; 
-                observedStateActions.push({s: state, a: actionIdx});
-                 modelSizeEl.textContent = observedStateActions.length; // Count S-A pairs
-            }
-            const mE = envModel[state][actionIdx];
-            mE.tr += reward; mE.ec++;
-            mE.nsc[nextState] = (mE.nsc[nextState] || 0) + 1;
-        }
-        
-        function prioritizedPlanningStep() {
-            if (prioritizedSweepingQueue.length === 0) return;
-            prioritizedSweepingQueue.sort((a, b) => b.priority - a.priority); 
-            const { s, a, r, s_prime, done } = prioritizedSweepingQueue.shift(); 
 
-            const model_entry = envModel[s]?.[a];
-            let exploration_bonus = 0;
-            if (KAPPA_EXPLORATION_BONUS > 0 && model_entry && model_entry.ec > 0) {
-                exploration_bonus = KAPPA_EXPLORATION_BONUS / Math.sqrt(model_entry.ec);
-            }
-            updateQTable(s, a, r + exploration_bonus, s_prime, done, PLANNING_LEARNING_RATE_PRIO);
-        }
-        
-        function randomPlanningStep() { 
-            if(observedStateActions.length === 0) return;
-            const randIdx = Math.floor(Math.random() * observedStateActions.length);
-            const {s, a} = observedStateActions[randIdx];
-            const mE = envModel[s]?.[a]; 
-            if(!mE || mE.ec === 0) return;
-
-            const r_m = mE.tr / mE.ec; 
-            
-            let s_prime_m = null, maxCount = 0;
-            for(const [next_s, count] of Object.entries(mE.nsc)){ if(count > maxCount){ maxCount = count; s_prime_m = next_s; }}
-            if(s_prime_m === null) return; 
-            
-            let exploration_bonus = 0;
-            if (KAPPA_EXPLORATION_BONUS > 0 && mE.ec > 0) { 
-                exploration_bonus = KAPPA_EXPLORATION_BONUS / Math.sqrt(mE.ec);
-            }
-            updateQTable(s, a, r_m + exploration_bonus, s_prime_m, false, PLANNING_LEARNING_RATE_RANDOM);
-        }
-
-        // --- Game Logic ---
+        // --- Game Logic (largely same, but integrates DQN) ---
         function resetGame() {
             totalRewardCollectedThisEpisode = 0;
             player.currentSpeedMultiplier = NORMAL_SPEED_MULTIPLIER;
@@ -365,17 +417,19 @@
 
             let attempts = 0; const maxSpawnAttempts = 50;
             do { player.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - PLAYER_SIZE*3); player.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - PLAYER_SIZE*3); attempts++; } while (obstacles.some(obs => rectCollision(player, obs)) && attempts < maxSpawnAttempts);
-            if (attempts >= maxSpawnAttempts) { player.x = PLAYER_SIZE; player.y = PLAYER_SIZE; } // Fallback
+             if (attempts >= maxSpawnAttempts) { player.x = PLAYER_SIZE; player.y = PLAYER_SIZE; }
             
             attempts = 0;
             do { hunter.x = PLAYER_SIZE + Math.random() * (gameCanvas.width - HUNTER_SIZE*3); hunter.y = PLAYER_SIZE + Math.random() * (gameCanvas.height - HUNTER_SIZE*3); attempts++; } 
-            while ((obstacles.some(obs => rectCollision(hunter, obs)) || Math.hypot(player.x-hunter.x, player.y-hunter.y) < gameCanvas.width/3) && attempts < maxSpawnAttempts); // Hunter further away
-            if (attempts >= maxSpawnAttempts) { hunter.x = gameCanvas.width - HUNTER_SIZE*2; hunter.y = gameCanvas.height - HUNTER_SIZE*2; } // Fallback
+            while ((obstacles.some(obs => rectCollision(hunter, obs)) || Math.hypot(player.x-hunter.x, player.y-hunter.y) < gameCanvas.width/3) && attempts < maxSpawnAttempts);
+            if (attempts >= maxSpawnAttempts) { hunter.x = gameCanvas.width - HUNTER_SIZE*2; hunter.y = gameCanvas.height - HUNTER_SIZE*2; }
+
 
             spawnCoin(); currentStepsInEpisode = 0; episodeCount++;
             episodeEl.textContent = episodeCount; cookiesEl.textContent = scoreCookies; punishmentsEl.textContent = scorePunishments;
-            if (epsilon > MIN_EPSILON) epsilon *= EPSILON_DECAY;
-            epsilonEl.textContent = epsilon.toFixed(4);
+            
+            // Epsilon decay is now handled in main loop or agent if needed
+            epsilonEl.textContent = epsilon.toFixed(3);
 
             if (episodeRewardsHistory.length > 0) {
                 const sum = episodeRewardsHistory.reduce((a, b) => a + b, 0);
@@ -385,7 +439,7 @@
             }
         }
 
-        function moveEntity(entity, dxNorm, dyNorm, speedMultiplierVal) {
+        function moveEntity(entity, dxNorm, dyNorm, speedMultiplierVal) { // Same as previous enhanced version
             const moveDist = speedMultiplierVal * (entity === player ? BASE_MOVE_SPEED : HUNTER_BASE_SPEED);
             const moveX = dxNorm * moveDist;
             const moveY = dyNorm * moveDist;
@@ -398,54 +452,53 @@
             
             let finalX = oldX, finalY = oldY;
             
-            // Try moving X then Y to allow sliding
             let tempRectX = {...entity, x: newX};
-            let collisionX = false;
-            for(const obs of obstacles) { if(rectCollision(tempRectX, obs)) { collisionX = true; break;}}
+            let collisionX = obstacles.some(o=>rectCollision(tempRectX,o));
             if(!collisionX) finalX = newX;
 
-            let tempRectY = {...entity, y: newY};
-            let collisionY = false;
-            for(const obs of obstacles) { if(rectCollision(tempRectY, obs)) { collisionY = true; break;}}
+            let tempRectY = {...entity, x: (collisionX ? oldX : newX), y: newY}; // Test Y move from potentially new X
+            let collisionY = obstacles.some(o=>rectCollision(tempRectY,o));
             if(!collisionY) finalY = newY;
+            else if (!collisionX) finalY = oldY; // If X moved but Y can't, keep new X and old Y
 
-            // If full diagonal move was intended but one axis was blocked, use the unblocked one.
-            // If both were intended to move and both were blocked individually, try to see if moving only one allows progress.
-            // If intended move was diagonal (both dxNorm, dyNorm non-zero)
+
+            // If both X and Y were intended moves and direct combined move is blocked, re-evaluate
             if (dxNorm !== 0 && dyNorm !== 0) {
-                // If full diagonal move (finalX=newX, finalY=newY after individual checks) is blocked by a corner:
                 let tempRectXY = {...entity, x:newX, y:newY};
-                let collisionXY = false;
-                 for(const obs of obstacles) { if(rectCollision(tempRectXY, obs)) { collisionXY = true; break;}}
-
-                if(collisionXY){ // Diagonal is blocked
-                    // Prefer moving along the axis that was individually clear, if one was
-                    if(!collisionX && collisionY) { // X was clear, Y was not
-                        finalY = oldY; // Don't move Y
-                    } else if (collisionX && !collisionY) { // Y was clear, X was not
-                        finalX = oldX; // Don't move X
-                    } else { // Both individually blocked or diagonal created new block
-                        finalX = oldX; finalY = oldY; // No move if cannot slide cleanly
+                if(obstacles.some(o=>rectCollision(tempRectXY,o))) { // Full diagonal blocked
+                     // Try X only
+                    tempRectX = {...entity, x:newX, y:oldY};
+                    if(!obstacles.some(o=>rectCollision(tempRectX,o))){
+                        finalX = newX; finalY = oldY;
+                    } else { // Try Y only
+                        tempRectY = {...entity, x:oldX, y:newY};
+                         if(!obstacles.some(o=>rectCollision(tempRectY,o))){
+                            finalX = oldX; finalY = newY;
+                         } else { // Both components blocked
+                            finalX = oldX; finalY = oldY;
+                         }
                     }
-                } else { // Diagonal is clear
+                } else { // Full diagonal clear
                     finalX = newX; finalY = newY;
                 }
-            } else { // Single axis move
-                 if(collisionX && dxNorm !==0) finalX = oldX;
-                 if(collisionY && dyNorm !==0) finalY = oldY;
+            } else if (dxNorm !== 0) { // Only X move intended
+                if (collisionX) finalX = oldX;
+            } else if (dyNorm !== 0) { // Only Y move intended
+                 tempRectY = {...entity, x: oldX, y: newY}; // Re-check Y from original X if X was not intended
+                 if(obstacles.some(o=>rectCollision(tempRectY,o))) finalY = oldY;
             }
 
 
             entity.x = finalX; entity.y = finalY;
             if(entity === hunter){ hunter.lastDx = finalX - oldX; hunter.lastDy = finalY - oldY;}
-            return (finalX === oldX && finalY === oldY && (dxNorm !==0 || dyNorm !==0) ); // Stuck
+            return (finalX === oldX && finalY === oldY && (dxNorm !==0 || dyNorm !==0) );
         }
-
+        
         function updateGame(actionIndex) {
             const action = ACTIONS[actionIndex];
             lastActionEl.textContent = action.name;
             player.currentSpeedMultiplier = action.speedMultiplier; 
-            playerSpeedIndicatorEl.textContent = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "FAST" : "orangered";
+            playerSpeedIndicatorEl.textContent = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "FAST" : "NORMAL";
             playerSpeedIndicatorEl.style.color = action.speedMultiplier === FAST_SPEED_MULTIPLIER ? "orangered" : "lime";
 
             let reward = -0.01; 
@@ -454,59 +507,42 @@
             const playerStuck = moveEntity(player, action.dx, action.dy, player.currentSpeedMultiplier);
             if (playerStuck) reward -= 0.1; 
 
-            // Hunter movement
             const hTargetX = player.x + player.width/2, hTargetY = player.y + player.height/2;
             const hCurrX = hunter.x + hunter.width/2, hCurrY = hunter.y + hunter.height/2;
             let hdxNorm=0, hdyNorm=0;
             const diffX = hTargetX - hCurrX; const diffY = hTargetY - hCurrY;
             const distToPlayer = Math.hypot(diffX, diffY);
 
-            if (distToPlayer > HUNTER_BASE_SPEED / 2) { // Only move if not extremely close
+            if (distToPlayer > HUNTER_BASE_SPEED / 2) { 
                 hdxNorm = diffX / distToPlayer; 
                 hdyNorm = diffY / distToPlayer; 
             }
-            moveEntity(hunter, hdxNorm, hdyNorm, NORMAL_SPEED_MULTIPLIER); // Hunter speed is fixed
+            moveEntity(hunter, hdxNorm, hdyNorm, NORMAL_SPEED_MULTIPLIER); 
 
-            // --- Reward Shaping for Hunter Proximity (after moves) ---
-            const currentPerceptionParts = getDiscretizedState().split('_');
-            if (currentPerceptionParts.length >= 12) {
-                const hDist_val = parseInt(currentPerceptionParts[1]);       
-                const hunterLOS_val = parseInt(currentPerceptionParts[9]);   
-                if (hunterLOS_val === 0 && hDist_val <= 1) { 
-                    reward -= 0.25; 
-                }
+            const currentStateVector = get_state_vector(); // For reward shaping based on perception
+            const hunterLOS_val = currentStateVector[10]; // Index for hunterLOS
+            const hDist_norm = currentStateVector[4]; // Index for hDist_norm
+            if (hunterLOS_val === 1.0 && hDist_norm < (PLAYER_SIZE * 4) / MAX_DIST_NORM) { // Visible and close-medium
+                reward -= 0.25; 
             }
-            // --- End Reward Shaping ---
 
-            // Collisions & game end conditions
             if (rectCollision(player, hunter)) { 
-                const finalReward = -25; 
-                scorePunishments++; 
-                totalRewardCollectedThisEpisode += finalReward; 
+                const finalReward = -25; scorePunishments++; totalRewardCollectedThisEpisode += finalReward; 
                 return { reward: finalReward, done: true }; 
             }
             if (coins.length > 0) { 
                 const c = coins[0]; 
                 if (Math.hypot((player.x+player.width/2)-c.x, (player.y+player.height/2)-c.y) < player.width/2+c.radius) { 
-                    const finalReward = 30; 
-                    scoreCookies++; 
-                    coins.splice(0,1); 
-                    totalRewardCollectedThisEpisode += finalReward; 
+                    const finalReward = 30; scoreCookies++; coins.splice(0,1); totalRewardCollectedThisEpisode += finalReward; 
                     return { reward: finalReward, done: true };
                 }
             }
             
-            totalRewardCollectedThisEpisode += reward; // Accumulate step reward if not terminal by catch/cookie
-
-            currentStepsInEpisode++; 
-            cumulativeTotalSteps++; 
-            totalStepsEl.textContent = cumulativeTotalSteps;
+            totalRewardCollectedThisEpisode += reward;
+            currentStepsInEpisode++; cumulativeTotalSteps++; totalStepsEl.textContent = cumulativeTotalSteps;
 
             if (currentStepsInEpisode >= MAX_STEPS_PER_EPISODE) { 
-                const timeoutPenalty = -15;
-                reward += timeoutPenalty; // Add to current step's reward
-                scorePunishments++; 
-                totalRewardCollectedThisEpisode += timeoutPenalty; // Adjust total episode reward
+                const timeoutPenalty = -15; reward += timeoutPenalty; scorePunishments++; totalRewardCollectedThisEpisode += timeoutPenalty; 
                 return { reward: reward, done: true }; 
             }
             return { reward, done: false };
@@ -521,78 +557,129 @@
             gameCtx.fillRect(player.x, player.y, player.width, player.height);
             gameCtx.fillStyle = hunter.color; gameCtx.fillRect(hunter.x, hunter.y, hunter.width, hunter.height);
         }
-        function drawAiVision() { 
-            aiVisionCtx.clearRect(0,0,aiVisionCanvas.width, aiVisionCanvas.height);
-            const stateStr = getDiscretizedState();
-            const parts = stateStr.split('_'); // HAng,HDis,CAng,CDis,ClrN,S,E,W,CLOS,HLOS,HLM,CovD
-            aiVisionCtx.fillStyle = '#ccc'; aiVisionCtx.font = '9px monospace';
-            let y=10, lh=10;
-            if(parts.length >= 12){
-                aiVisionCtx.fillText(`H:${parts[0]}A ${parts[1]}D | C:${parts[2]}A ${parts[3]}D`, 3, y); y+=lh;
-                aiVisionCtx.fillText(`ClrNESW:${parts[4]}${parts[5]}${parts[6]}${parts[7]}`, 3, y); y+=lh;
-                aiVisionCtx.fillText(`LOS C:${parts[8]=='0'?'Y':'N'} H:${parts[9]=='0'?'Y':'N'}`, 3, y); y+=lh;
-                aiVisionCtx.fillText(`HLM:${parts[10]} CovD:${parts[11]}`, 3, y); y+=lh;
-            } else { aiVisionCtx.fillText(stateStr.substring(0,30),3,y); y+=lh; if(stateStr.length>30)aiVisionCtx.fillText(stateStr.substring(30),3,y);y+=lh;}
-            
-            const mapScale = Math.min( (aiVisionCanvas.width - 10) / gameCanvas.width, (aiVisionCanvas.height - y - 5) / gameCanvas.height );
-            const mapOffX = 5; const mapOffY = y + 5;
-            aiVisionCtx.save(); aiVisionCtx.translate(mapOffX, mapOffY); aiVisionCtx.scale(mapScale,mapScale);
-            aiVisionCtx.globalAlpha = 0.6; aiVisionCtx.fillStyle = '#555'; obstacles.forEach(o=>aiVisionCtx.fillRect(o.x,o.y,o.width,o.height));
-            if(coins.length>0){aiVisionCtx.beginPath();aiVisionCtx.arc(coins[0].x,coins[0].y,coins[0].radius/(mapScale || 1)*0.8,0,Math.PI*2);aiVisionCtx.fillStyle=coins[0].color;aiVisionCtx.fill();} // Safe mapScale
-            aiVisionCtx.fillStyle=hunter.color; aiVisionCtx.fillRect(hunter.x,hunter.y,hunter.width,hunter.height);
-            aiVisionCtx.fillStyle=player.currentSpeedMultiplier === FAST_SPEED_MULTIPLIER ? 'orange' : player.color; aiVisionCtx.fillRect(player.x,player.y,player.width,player.height);
-            aiVisionCtx.restore();
+
+        function drawLossGraph() {
+            lossCtx.clearRect(0,0,lossCanvas.width, lossCanvas.height);
+            if (lossHistory.length === 0) return;
+
+            lossCtx.strokeStyle = '#888';
+            lossCtx.lineWidth = 1;
+
+            const maxLoss = Math.max(...lossHistory, 0.1); // Avoid division by zero if all losses are 0
+            const minLoss = Math.min(...lossHistory);
+            const range = maxLoss - minLoss < 0.01 ? 0.1 : maxLoss - minLoss;
+
+
+            lossCtx.beginPath();
+            for (let i = 0; i < lossHistory.length; i++) {
+                const x = (i / (MAX_LOSS_HISTORY -1)) * lossCanvas.width;
+                const y = lossCanvas.height - ((lossHistory[i] - minLoss) / range) * lossCanvas.height * 0.9 - lossCanvas.height * 0.05; // Scale and pad
+                if (i === 0) lossCtx.moveTo(x, y);
+                else lossCtx.lineTo(x, y);
+            }
+            lossCtx.stroke();
+
+            lossCtx.fillStyle = '#ccc';
+            lossCtx.font = '10px monospace';
+            lossCtx.fillText(`Max: ${maxLoss.toFixed(3)}`, 5, 12);
+            lossCtx.fillText(`Min: ${minLoss.toFixed(3)}`, 5, lossCanvas.height - 5);
         }
 
+
         // --- Main Loop ---
-        function aiLoop() {
-            const s = getDiscretizedState();
-            const aIdx = chooseAction(s);
-            const gameOut = updateGame(aIdx); 
-            const s_prime = getDiscretizedState(); 
+        let lastStateVector = null; // Store the initial state
 
-            const tdError = updateQTable(s, aIdx, gameOut.reward, s_prime, gameOut.done, LEARNING_RATE);
-            updateModel(s, aIdx, gameOut.reward, s_prime); 
+        async function aiLoop() {
+            if (!dqnAgent || !STATE_SIZE) { // Agent not initialized or STATE_SIZE not determined
+                console.log("Agent or STATE_SIZE not ready.");
+                if (!lastStateVector) lastStateVector = get_state_vector(); // Initialize if first time
+                 if (!STATE_SIZE && lastStateVector) STATE_SIZE = lastStateVector.length; // Should be set by get_state_vector
+                if (STATE_SIZE && !dqnAgent) {
+                    dqnAgent = new DQNAgent(STATE_SIZE, NUM_ACTIONS);
+                    console.log("DQN Agent Initialized. State size:", STATE_SIZE);
+                }
+                drawGame(); // Keep drawing game
+                return;
+            }
+            
+            const state = lastStateVector ? lastStateVector : get_state_vector(); // Use previous next_state if available
+            const actionIdx = dqnAgent.act(state);
+            
+            const gameOut = updateGame(actionIdx); // {reward, done}
+            const nextState = get_state_vector();
 
-            if (tdError > 0.001) { 
-                prioritizedSweepingQueue.push({ priority: tdError, s, a: aIdx, r: gameOut.reward, s_prime, done: gameOut.done });
-                if (prioritizedSweepingQueue.length > PRIORITY_QUEUE_MAX_SIZE) {
-                    prioritizedSweepingQueue.sort((x, y) => x.priority - y.priority); 
-                    prioritizedSweepingQueue.splice(0, prioritizedSweepingQueue.length - PRIORITY_QUEUE_MAX_SIZE);
+            dqnAgent.remember(state, actionIdx, gameOut.reward, nextState, gameOut.done);
+            lastStateVector = nextState; // Store for next iteration
+
+            for(let i=0; i < trainingIterationsPerStep; i++) {
+                const loss = await dqnAgent.train(BATCH_SIZE);
+                if (loss !== null) {
+                    lossHistory.push(loss);
+                    if (lossHistory.length > MAX_LOSS_HISTORY) lossHistory.shift();
+                    const avgLossVal = lossHistory.reduce((a,b) => a+b, 0) / lossHistory.length;
+                    avgLossEl.textContent = avgLossVal.toFixed(4);
                 }
             }
             
-            for (let i = 0; i < numPlanningSteps; i++) {
-                if (prioritizedSweepingQueue.length === 0 && observedStateActions.length === 0) break; 
-                if (Math.random() < 0.85 && prioritizedSweepingQueue.length > 0) { 
-                     prioritizedPlanningStep();
-                } else if (observedStateActions.length > 0) { 
-                    randomPlanningStep(); 
-                } else if (prioritizedSweepingQueue.length > 0) {
-                    prioritizedPlanningStep();
-                }
+            if (epsilon > MIN_EPSILON) {
+                epsilon *= EPSILON_DECAY;
+                epsilonEl.textContent = epsilon.toFixed(3);
             }
 
-            drawGame(); drawAiVision();
+            if (cumulativeTotalSteps > 0 && cumulativeTotalSteps % TARGET_NETWORK_UPDATE_FREQUENCY === 0) {
+                dqnAgent.updateTargetNetwork();
+                console.log(`Target network updated at step ${cumulativeTotalSteps}`);
+            }
+
+            drawGame(); 
+            drawLossGraph();
+
             if (gameOut.done) {
                 episodeRewardsHistory.push(totalRewardCollectedThisEpisode);
                 if(episodeRewardsHistory.length > AVG_REWARD_HISTORY_LENGTH) episodeRewardsHistory.shift();
                 resetGame();
+                lastStateVector = get_state_vector(); // Get new initial state after reset
             }
         }
 
         // --- Init & Controls ---
         function init() {
-            currentSimSpeed = parseInt(speedControl.value); speedValue.textContent = currentSimSpeed;
-            numPlanningSteps = parseInt(planningStepsControl.value); planningStepsValue.textContent = numPlanningSteps;
+            currentSimSpeed = parseInt(simSpeedControl.value); simSpeedValue.textContent = currentSimSpeed;
+            trainingIterationsPerStep = parseInt(trainingIterControl.value); trainingIterValue.textContent = trainingIterationsPerStep;
+            BATCH_SIZE = parseInt(batchSizeControl.value);
+            LEARNING_RATE = parseFloat(learningRateControl.value);
             FAST_ACTION_COST = parseFloat(fastSpeedCostControl.value); fastSpeedCostValue.textContent = FAST_ACTION_COST.toFixed(2);
 
-            speedControl.addEventListener('input', e => { currentSimSpeed = parseInt(e.target.value); speedValue.textContent = currentSimSpeed; clearInterval(simIntervalId); simIntervalId = setInterval(aiLoop, currentSimSpeed); });
-            planningStepsControl.addEventListener('input', e => { numPlanningSteps = parseInt(e.target.value); planningStepsValue.textContent = numPlanningSteps; });
-            fastSpeedCostControl.addEventListener('input', e => { FAST_ACTION_COST = parseFloat(e.target.value); fastSpeedCostValue.textContent = FAST_ACTION_COST.toFixed(2); });
-            
-            resetGame(); drawGame(); drawAiVision();
-            simIntervalId = setInterval(aiLoop, currentSimSpeed);
+            // Initialize state size by calling get_state_vector once.
+            // Agent will be created in the first aiLoop call if STATE_SIZE is ready.
+            tf.setBackend('webgl').then(() => { // Prefer WebGL backend
+                console.log("Using TFJS WebGL backend.");
+                lastStateVector = get_state_vector(); // Initialize state vector to get STATE_SIZE
+                if (lastStateVector && !STATE_SIZE) STATE_SIZE = lastStateVector.length;
+                if (STATE_SIZE && !dqnAgent) {
+                     dqnAgent = new DQNAgent(STATE_SIZE, NUM_ACTIONS);
+                     console.log("DQN Agent Initialized on load. State size:", STATE_SIZE);
+                }
+
+                simSpeedControl.addEventListener('input', e => { currentSimSpeed = parseInt(e.target.value); simSpeedValue.textContent = currentSimSpeed; clearInterval(simIntervalId); simIntervalId = setInterval(aiLoop, currentSimSpeed); });
+                trainingIterControl.addEventListener('input', e => { trainingIterationsPerStep = parseInt(e.target.value); trainingIterValue.textContent = trainingIterationsPerStep; });
+                batchSizeControl.addEventListener('change', e => { BATCH_SIZE = parseInt(e.target.value); }); // Use change for number input
+                learningRateControl.addEventListener('change', e => { 
+                    const newLr = parseFloat(e.target.value);
+                    if (dqnAgent) dqnAgent.updateLearningRate(newLr);
+                    else LEARNING_RATE = newLr; // Store if agent not yet created
+                });
+                fastSpeedCostControl.addEventListener('input', e => { FAST_ACTION_COST = parseFloat(e.target.value); fastSpeedCostValue.textContent = FAST_ACTION_COST.toFixed(2); });
+                
+                resetGame();
+                lastStateVector = get_state_vector(); // Ensure initial state is set after first reset
+                drawGame(); 
+                drawLossGraph();
+                simIntervalId = setInterval(aiLoop, currentSimSpeed);
+            }).catch(err => {
+                console.error("Error setting TFJS backend or initializing agent:", err);
+                // Fallback or error message
+            });
         }
         window.onload = init;
     </script>
