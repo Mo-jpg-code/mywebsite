@@ -3,1310 +3,486 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TingTong</title>
+    <title>TingTong Profile</title> <!-- You can change this title -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --tt-bg-color: #010101;
-            --tt-text-color: #fff;
-            --tt-text-secondary-color: #b0b0b0;
-            --tt-accent-color: #fe2c55; /* TikTok Pink/Red */
-            --tt-accent-blue: #25f4ee;
+            --tt-bg-color: #000000; /* TikTok is pure black */
+            --tt-text-color: #ffffff;
+            --tt-text-secondary-color: #a7a7a7;
+            --tt-text-tertiary-color: #707070;
+            --tt-accent-color: #FE2C55; /* TikTok Pink/Red */
+            --tt-button-bg-light: #161616; /* Dark grey buttons */
+            --tt-button-bg-darker: #2f2f2f;
             --tt-border-color: #2f2f2f;
-            --bottom-nav-height: 60px;
-            --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px); /* For notch iPhones */
+            --safe-area-inset-top: env(safe-area-inset-top, 0px);
+            --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+            --bottom-nav-height: 50px; /* Slightly shorter than video feed nav */
         }
 
-        /* Reset and Basic Setup */
+        /* Basic Reset & Font */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            -webkit-tap-highlight-color: transparent;
         }
 
         html, body {
             width: 100%;
-            height: 100dvh; /* Dynamic viewport height */
+            height: 100dvh;
             overflow: hidden;
             background-color: var(--tt-bg-color);
             color: var(--tt-text-color);
         }
 
-        /* App Container */
+        /* App Container for 9:16 view */
         .app-container {
             width: 100%;
             height: 100%;
-            max-width: 480px; /* Max width for tablet/desktop viewing */
+            max-width: 450px; /* For desktop viewing */
             margin: 0 auto;
             position: relative;
             background-color: var(--tt-bg-color);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Important */
         }
 
-        /* Page System */
-        .page {
-            width: 100%;
-            height: calc(100% - var(--bottom-nav-height) - var(--safe-area-inset-bottom));
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-            overflow-y: auto; /* For pages that might scroll */
-            background-color: var(--tt-bg-color);
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .page.active {
-            opacity: 1;
-            visibility: visible;
-            z-index: 10;
-        }
-        .page-feed { /* Video feed page specific styling */
-            padding: 0;
-            overflow: hidden; /* Crucial for video feed */
-            justify-content: flex-start;
-        }
-
-        /* Video Feed Area (within page-feed) */
-        .video-feed {
+        /* Profile Page Specific Structure */
+        .profile-page-content {
             flex-grow: 1;
-            width:100%;
-            height:100%;
-            position: relative;
-            overflow: hidden;
+            overflow-y: auto; /* Allows content to scroll */
+            padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 20px); /* Space for nav and some buffer */
         }
 
-        .video-slide {
-            width: 100%;
-            height: 100%;
-            position: absolute;
+        /* Top Bar */
+        .profile-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            padding-top: calc(10px + var(--safe-area-inset-top));
+            height: calc(56px + var(--safe-area-inset-top)); /* Standard app bar height */
+            background-color: var(--tt-bg-color); /* Can be slightly different if sticky */
+            position: sticky;
             top: 0;
-            left: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
-            background-color: #000;
+            z-index: 100;
+            border-bottom: 1px solid var(--tt-border-color);
         }
-
-        .video-slide video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Video Overlay UI */
-        .video-overlay {
-            position: absolute;
-            bottom: 0; /* Adjusted dynamically for safe area */
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 15px;
-            padding-bottom: calc(15px + var(--safe-area-inset-bottom)); /* Space for bottom nav + safe area */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0) 50%);
-            pointer-events: none;
-        }
-        .video-overlay > * { pointer-events: auto; }
-
-        .video-info-column {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            margin-right: 70px; /* Space for action buttons */
-            max-width: calc(100% - 70px);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-        .user-info .profile-pic-small {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 1.5px solid var(--tt-text-color);
-            margin-right: 10px;
-            object-fit: cover;
-        }
-        .user-info .username {
-            font-weight: 700;
-            font-size: 1.1em;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        }
-
-        .video-description {
-            font-size: 0.95em;
-            line-height: 1.4;
-            margin-bottom: 10px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            max-height: 4.2em; /* Approx 3 lines */
-            overflow: hidden;
-            /* text-overflow: ellipsis; */ /* Can look odd with hashtags */
-        }
-        .video-description .hashtag, .video-description .mention {
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .video-description .hashtag:hover, .video-description .mention:hover {
-            text-decoration: underline;
-        }
-
-        .music-info {
-            display: flex;
-            align-items: center;
-            font-size: 0.9em;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            cursor: pointer;
-        }
-        .music-info .icon {
-            margin-right: 6px;
-            font-size: 1.1em;
-        }
-        .music-info-text {
-            white-space: nowrap;
-            overflow: hidden;
-            position: relative;
-            width: 70%; /* Adjust as needed */
-        }
-        .music-info-text .music-name {
-            display: inline-block; /* For marquee */
-            padding-right: 20px; /* Space for text to scroll out of view */
-            animation: marquee 8s linear infinite paused;
-        }
-        .video-slide.active .music-name { animation-play-state: running; }
-
-        @keyframes marquee {
-            0%   { transform: translateX(0%); }
-            100% { transform: translateX(-100%); } /* Needs to be adjusted if text varies a lot */
-        }
-        
-        .video-actions-column {
-            position: absolute;
-            right: 10px;
-            bottom: calc(15px + var(--safe-area-inset-bottom)); /* Match overlay padding */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 5;
-        }
-
-        .action-button {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-            cursor: pointer;
+        .profile-top-bar .icon {
+            font-size: 1.4em;
             color: var(--tt-text-color);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-            transition: transform 0.1s ease-out;
+            cursor: pointer;
+            padding: 5px;
         }
-        .action-button:active { transform: scale(0.9); }
-
-        .action-button i { font-size: 2.1em; }
-        .action-button span { font-size: 0.85em; margin-top: 5px; font-weight: 500; }
-        .action-button.liked i { color: var(--tt-accent-color); }
-
-        .action-user-profile { position: relative; margin-bottom: 25px; }
-        .action-user-profile .profile-action-pic {
-             width: 50px;
-             height: 50px;
-             border-radius: 50%;
-             border: 2px solid var(--tt-text-color);
-             object-fit: cover;
-        }
-        .action-user-profile .follow-icon {
-            width: 22px;
-            height: 22px;
-            background-color: var(--tt-accent-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9em;
-            font-weight: bold;
+        .profile-top-bar .username-top {
+            font-size: 1.1em;
+            font-weight: 700;
             position: absolute;
-            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
-            border: 1.5px solid var(--tt-bg-color); /* To make it pop */
         }
-        .action-user-profile .follow-icon.followed {
-            background-color: var(--tt-text-secondary-color); /* Grey or green when followed */
+
+        /* Profile Header Section */
+        .profile-header {
+            padding: 20px 15px;
+            text-align: center;
         }
-        .action-user-profile .follow-icon.followed i { font-size: 0.8em; }
 
-
-        .action-sound-disc { margin-top: 5px; } /* Give it a bit more space */
-        .sound-disc {
-            width: 50px;
-            height: 50px;
-            background: radial-gradient(circle, #444 25%, #222 26%, #222 40%, #1a1a1a 41%, #1a1a1a 65%, #333 66%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .profile-pic-container {
             position: relative;
-            animation: spin 4s linear infinite paused;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            border: 2px solid #555;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px auto;
         }
-        .video-slide.active .sound-disc { animation-play-state: running; }
-        .sound-disc img { /* For album art in center */
-            width: 60%;
-            height: 60%;
+        .profile-pic {
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             object-fit: cover;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            border: 1px solid var(--tt-border-color); /* Subtle border */
         }
 
-        /* Bottom Navigation */
+        .profile-username {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 0 10%; /* Bring stats slightly inwards */
+        }
+        .stat-item {
+            text-align: center;
+            cursor: pointer;
+        }
+        .stat-item .count {
+            font-size: 1.1em;
+            font-weight: 700;
+            display: block;
+        }
+        .stat-item .label {
+            font-size: 0.9em;
+            color: var(--tt-text-secondary-color);
+        }
+
+        .profile-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .profile-button {
+            background-color: var(--tt-button-bg-light);
+            color: var(--tt-text-color);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            flex-grow: 1; /* Make buttons take available space */
+            max-width: 150px; /* Max width for each button */
+            transition: background-color 0.2s;
+        }
+        .profile-button:hover { background-color: var(--tt-button-bg-darker); }
+        .profile-button.icon-only {
+            flex-grow: 0;
+            padding: 10px;
+            width: 40px; /* Square button for icon */
+        }
+
+        .profile-bio {
+            font-size: 0.95em;
+            line-height: 1.4;
+            color: var(--tt-text-color); /* Bio text is usually white */
+            margin-bottom: 8px;
+            white-space: pre-line; /* Respect newlines in bio */
+        }
+        .profile-link {
+            font-size: 0.9em;
+            color: var(--tt-text-color); /* Links are often white or slightly blueish */
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block; /* To prevent full width */
+        }
+        .profile-link i { margin-right: 5px; }
+
+        /* Tabs Section */
+        .profile-tabs {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid var(--tt-border-color);
+            border-bottom: 1px solid var(--tt-border-color);
+            background-color: var(--tt-bg-color); /* Sticky tabs */
+            position: sticky; /* Make tabs sticky under top bar */
+            top: calc(56px + var(--safe-area-inset-top)); /* Height of top bar */
+            z-index: 99;
+        }
+        .tab-item {
+            padding: 12px 0;
+            flex-grow: 1;
+            text-align: center;
+            cursor: pointer;
+            color: var(--tt-text-tertiary-color);
+            position: relative;
+        }
+        .tab-item i { font-size: 1.5em; }
+        .tab-item.active { color: var(--tt-text-color); }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--tt-text-color);
+        }
+
+        /* Content Grid (Videos) */
+        .profile-content-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px; /* TikTok has very thin gaps */
+            padding: 2px; /* Overall padding to match gap */
+        }
+        .grid-video-item {
+            position: relative;
+            aspect-ratio: 9 / 14; /* TikTok thumbnail aspect ratio */
+            background-color: var(--tt-button-bg-light); /* Placeholder bg */
+            cursor: pointer;
+            overflow: hidden; /* Ensure image fits */
+        }
+        .grid-video-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .grid-video-item .views {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            color: var(--tt-text-color);
+            font-size: 0.8em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 3px rgba(0,0,0,0.7);
+        }
+        .grid-video-item .views i {
+            font-size: 0.8em; /* Smaller play icon */
+            margin-right: 3px;
+        }
+
+        /* Bottom Navigation Bar (Simplified for Profile View) */
         .bottom-nav {
             height: var(--bottom-nav-height);
-            padding-bottom: var(--safe-area-inset-bottom); /* For notch iPhones */
+            padding-bottom: var(--safe-area-inset-bottom);
             background-color: var(--tt-bg-color);
             border-top: 1px solid var(--tt-border-color);
             display: flex;
             justify-content: space-around;
-            align-items: flex-start; /* Align items to top for padding-bottom to work */
-            padding-top: 5px; /* Small padding at the top of nav items */
-            position: fixed;
+            align-items: flex-start;
+            padding-top: 5px;
+            position: fixed; /* Fixed at the bottom */
             bottom: 0;
-            left: 0; /* Ensure it spans full width */
-            right: 0; /* Ensure it spans full width */
+            left: 0;
+            right: 0;
             width: 100%;
-            max-width: 480px; /* Match app-container */
-            margin: 0 auto; /* Center it with app-container */
+            max-width: 450px; /* Match app-container */
+            margin: 0 auto; /* Center it */
             z-index: 1000;
         }
-
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: var(--tt-text-secondary-color);
-            font-size: 0.75em;
+            font-size: 0.7em; /* Smaller text for nav */
             font-weight: 500;
             cursor: pointer;
             flex: 1;
-            padding: 5px 0;
-            transition: color 0.2s;
+            padding: 3px 0;
         }
-        .nav-item i { font-size: 1.8em; margin-bottom: 3px; }
+        .nav-item i { font-size: 1.6em; margin-bottom: 2px; }
         .nav-item.active { color: var(--tt-text-color); }
-        .nav-item.active.home-nav i { font-weight: 900; } /* Bolder home icon when active */
-        
-        .nav-item-create {
-            width: 50px; /* Fixed width */
-            margin: 0 5px; /* Some horizontal margin */
-            position: relative;
-            top: -3px; /* Slightly adjust vertical alignment */
-        }
-        .nav-item-create .create-button-bg {
-            width: 48px;
-            height: 32px;
+        .nav-item-create .create-button-bg { /* Simplified create button for this page */
+            width: 45px;
+            height: 28px;
             background-color: var(--tt-text-color);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            box-shadow: 0 0 8px rgba(255,255,255,0.3);
         }
-        .nav-item-create .create-button-bg::before { /* Blue part */
-            content: "";
-            position: absolute;
-            width: 18px;
-            height: 100%;
-            background-color: var(--tt-accent-blue);
-            left: -4px;
-            border-radius: 10px 0 0 10px;
-            filter: brightness(1.1);
-        }
-        .nav-item-create .create-button-bg::after { /* Pink part */
-            content: "";
-            position: absolute;
-            width: 18px;
-            height: 100%;
-            background-color: var(--tt-accent-color);
-            right: -4px;
-            border-radius: 0 10px 10px 0;
-            filter: brightness(1.1);
-        }
-        .nav-item-create i {
-            font-size: 1.5em;
-            color: var(--tt-bg-color);
-            z-index: 1; /* Above pseudo-elements */
-            font-weight: 900;
-        }
-        .nav-item-create span { color: transparent; } /* Hide text for create button */
+        .nav-item-create i { font-size: 1.3em; color: var(--tt-bg-color); font-weight: 900; }
 
 
-        /* Loading spinner */
-        .loading-spinner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid var(--tt-text-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            z-index: 10;
-            display: none;
-        }
-        .video-slide.loading .loading-spinner { display: block; }
-
-        /* Pause/Play icon overlay */
-        .play-pause-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(1.5);
-            font-size: 3em; /* Smaller than before, more subtle */
-            color: rgba(255, 255, 255, 0.8);
-            background-color: rgba(0,0,0,0.3);
-            padding: 10px;
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-            pointer-events: none;
-            z-index: 5;
-        }
-        .play-pause-indicator.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
-        /* Modals (Comments, Share) */
-        .modal {
+        /* Utility for alerts/messages */
+        .prank-message {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            max-width: 480px; /* Match app-container */
-            margin: 0 auto;
-            width: 100%;
-            background-color: #181818; /* Darker than main bg */
-            border-top-left-radius: 15px;
-            border-top-right-radius: 15px;
-            z-index: 2000;
-            transform: translateY(100%);
-            transition: transform 0.3s ease-out;
-            padding-bottom: var(--safe-area-inset-bottom);
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-        }
-        .modal.active { transform: translateY(0); }
-
-        .modal-header {
-            padding: 15px;
-            text-align: center;
-            position: relative;
-            border-bottom: 1px solid var(--tt-border-color);
-        }
-        .modal-header h3 { font-size: 1em; font-weight: 600; }
-        .modal-close-btn {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            font-size: 1.5em;
-            color: var(--tt-text-secondary-color);
-            cursor: pointer;
-        }
-
-        .modal-content {
-            padding: 15px;
-            max-height: 60vh; /* Limit height */
-            overflow-y: auto;
-        }
-
-        /* Comments Modal Specific */
-        #commentsModal .modal-content {
-            display: flex;
-            flex-direction: column;
-            height: 60vh; /* Fixed height for comments */
-        }
-        .comments-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-        .comment-item {
-            display: flex;
-            margin-bottom: 15px;
-        }
-        .comment-item img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            margin-right: 10px;
-            object-fit: cover;
-        }
-        .comment-text-content p { font-size: 0.9em; margin-bottom: 3px; }
-        .comment-text-content span { font-size: 0.8em; color: var(--tt-text-secondary-color); }
-        .comment-text-content .comment-user { font-weight: 600; color: var(--tt-text-color); }
-        
-        .comment-input-area {
-            display: flex;
-            align-items: center;
-            padding: 10px 0; /* Only top/bottom padding */
-            border-top: 1px solid var(--tt-border-color);
-        }
-        .comment-input-area input {
-            flex-grow: 1;
-            background-color: #2f2f2f;
-            border: none;
+            bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 20px);
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(40,40,40,0.9);
+            color: white;
+            padding: 10px 20px;
             border-radius: 20px;
-            padding: 10px 15px;
-            color: var(--tt-text-color);
             font-size: 0.9em;
-            margin-right:10px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease, bottom 0.3s ease;
+            pointer-events: none;
         }
-        .comment-input-area input::placeholder { color: var(--tt-text-secondary-color); }
-        .comment-input-area button {
-            background: none;
-            border: none;
-            color: var(--tt-accent-color);
-            font-size: 1.5em;
-            cursor: pointer;
+        .prank-message.show {
+            opacity: 1;
+            bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 30px);
         }
-        
-        /* Share Modal Specific */
-        #shareModal .modal-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-            gap: 20px;
-            text-align: center;
-        }
-        .share-option i {
-            font-size: 2.5em;
-            margin-bottom: 8px;
-            padding: 10px;
-            border-radius: 50%;
-            width: 60px; /* Fixed width for circle */
-            height: 60px; /* Fixed height for circle */
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .share-option span { font-size: 0.8em; color: var(--tt-text-secondary-color); }
-        .share-option .fa-whatsapp { background-color: #25D366; color: white;}
-        .share-option .fa-twitter { background-color: #1DA1F2; color: white;}
-        .share-option .fa-facebook { background-color: #1877F2; color: white;}
-        .share-option .fa-link { background-color: #555; color: white;}
-        .share-option .fa-ellipsis { background-color: #555; color: white;}
-
-        /* Placeholder Page Styles */
-        .placeholder-page-content {
-            text-align: center;
-            color: var(--tt-text-secondary-color);
-        }
-        .placeholder-page-content i { font-size: 3em; margin-bottom: 15px; }
-        .placeholder-page-content h2 { margin-bottom: 10px; color: var(--tt-text-color); }
-
-        /* User/Sound Profile Page placeholder */
-        .profile-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .profile-header img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--tt-text-color);
-            margin-bottom: 10px;
-        }
-        .profile-header h2 { font-size: 1.5em; margin-bottom: 5px; }
-        .profile-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
-        .stat-item { text-align: center; }
-        .stat-item strong { display: block; font-size: 1.1em; }
-        .stat-item span { font-size: 0.9em; color: var(--tt-text-secondary-color); }
-        .profile-tabs { display: flex; justify-content: center; border-bottom: 1px solid var(--tt-border-color); margin-bottom: 15px; }
-        .profile-tab { padding: 10px 20px; cursor: pointer; color: var(--tt-text-secondary-color); }
-        .profile-tab.active { color: var(--tt-text-color); border-bottom: 2px solid var(--tt-text-color); }
-        .profile-content-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
-        .grid-item-placeholder {
-            aspect-ratio: 1/1.3; /* TikTok-ish video thumbnail ratio */
-            background-color: var(--tt-border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--tt-text-secondary-color);
-        }
-        .grid-item-placeholder i { font-size: 1.5em; }
-
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Pages -->
-        <div id="pageFeed" class="page page-feed active">
-            <div class="video-feed" id="videoFeedContainer">
-                <!-- Video slides injected here -->
+        <div class="profile-page-content">
+            <div class="profile-top-bar">
+                <i class="fas fa-arrow-left icon" onclick="showPrankMessage('Back to For You Page!')"></i>
+                <span class="username-top" id="usernameTop">@username</span>
+                <i class="fas fa-ellipsis-h icon" onclick="showPrankMessage('Options: Not available in prank mode!')"></i>
+                <!-- Or use fa-user-plus if you want that icon -->
+                <!-- <i class="fas fa-user-plus icon" onclick="showPrankMessage('Add Friends: Not implemented')"></i> -->
             </div>
-        </div>
 
-        <div id="pageDiscover" class="page">
-            <div class="placeholder-page-content">
-                <i class="fas fa-search"></i>
-                <h2>Discover</h2>
-                <p>Explore trends and creators. (Not Implemented)</p>
-            </div>
-        </div>
-
-        <div id="pageCreate" class="page">
-            <div class="placeholder-page-content">
-                <i class="fas fa-camera-retro"></i>
-                <h2>Create</h2>
-                <p>Camera & upload features. (Not Implemented)</p>
-            </div>
-        </div>
-
-        <div id="pageInbox" class="page">
-            <div class="placeholder-page-content">
-                <i class="fas fa-inbox"></i>
-                <h2>Inbox</h2>
-                <p>Your messages and notifications. (Not Implemented)</p>
-            </div>
-        </div>
-
-        <div id="pageProfile" class="page"> <!-- "Me" page -->
-             <div class="profile-header">
-                <img src="https://randomuser.me/api/portraits/lego/1.jpg" alt="My Profile" id="myProfilePic">
-                <h2 id="myUsername">@MyTingTongSelf</h2>
-             </div>
-             <div class="profile-stats">
-                <div class="stat-item"><strong>1.2M</strong><span>Following</span></div>
-                <div class="stat-item"><strong>15.9M</strong><span>Followers</span></div>
-                <div class="stat-item"><strong>300.7M</strong><span>Likes</span></div>
-             </div>
-             <div class="profile-tabs">
-                <div class="profile-tab active"><i class="fas fa-th"></i></div>
-                <div class="profile-tab"><i class="fas fa-heart"></i></div>
-                <div class="profile-tab"><i class="fas fa-lock"></i></div>
-             </div>
-             <div class="profile-content-grid">
-                <div class="grid-item-placeholder"><i class="fas fa-video"></i></div>
-                <div class="grid-item-placeholder"><i class="fas fa-video"></i></div>
-                <div class="grid-item-placeholder"><i class="fas fa-video"></i></div>
-                <!-- Add more placeholders -->
-             </div>
-             <p style="text-align:center; margin-top:20px; color: var(--tt-text-secondary-color);">Your content here. (Not Implemented)</p>
-        </div>
-
-        <div id="pageUserProfile" class="page"> <!-- For viewing other users' profiles -->
-            <div id="userProfileContent"> <!-- Content injected by JS -->
-                <div class="placeholder-page-content">
-                    <i class="fas fa-user"></i>
-                    <h2>User Profile</h2>
-                    <p>Details about the user. (Not Implemented)</p>
+            <div class="profile-header">
+                <div class="profile-pic-container">
+                    <img src="https://picsum.photos/seed/prankprofile/100/100" alt="Profile Picture" class="profile-pic" id="profilePic">
                 </div>
-            </div>
-        </div>
-        <div id="pageSound" class="page"> <!-- For viewing sound details -->
-            <div id="soundPageContent"> <!-- Content injected by JS -->
-                 <div class="placeholder-page-content">
-                    <i class="fas fa-music"></i>
-                    <h2>Sound Page</h2>
-                    <p>Videos using this sound. (Not Implemented)</p>
+                <div class="profile-username" id="profileUsername">@username</div>
+
+                <div class="profile-stats">
+                    <div class="stat-item" onclick="showPrankMessage('Viewing Following List (Fake)')">
+                        <span class="count" id="followingCount">0</span>
+                        <span class="label">Following</span>
+                    </div>
+                    <div class="stat-item" onclick="showPrankMessage('Viewing Followers List (Fake)')">
+                        <span class="count" id="followerCount">0</span>
+                        <span class="label">Followers</span>
+                    </div>
+                    <div class="stat-item" onclick="showPrankMessage('Total Likes (Fake)')">
+                        <span class="count" id="likesCount">0</span>
+                        <span class="label">Likes</span>
+                    </div>
                 </div>
+
+                <div class="profile-actions">
+                    <button class="profile-button" onclick="showPrankMessage('Edit Profile: You wish!')">Edit Profile</button>
+                    <button class="profile-button icon-only" onclick="showPrankMessage('Saved Videos (Fake)')"><i class="fas fa-bookmark"></i></button>
+                    <!-- TikTok sometimes has an "Add Friends" icon here too -->
+                    <!-- <button class="profile-button icon-only" onclick="showPrankMessage('Add Friends (Fake)')"><i class="fas fa-user-plus"></i></button> -->
+                </div>
+
+                <div class="profile-bio" id="profileBio">
+                    This is the bio section.
+                    You can add multiple lines here!
+                    #PrankMaster #TingTongFamous
+                </div>
+                <a href="#" class="profile-link" id="profileLink" onclick="event.preventDefault(); showPrankMessage('Link Clicked! (But it goes nowhere)')">
+                    <i class="fas fa-link"></i><span id="profileLinkText">yourwebsite.com</span>
+                </a>
+            </div>
+
+            <div class="profile-tabs">
+                <div class="tab-item active" onclick="showPrankMessage('Your amazing posts!', true, this)">
+                    <i class="fas fa-th"></i> <!-- Grid icon -->
+                </div>
+                <div class="tab-item" onclick="showPrankMessage('Liked videos: All of them!', true, this)">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="tab-item" onclick="showPrankMessage('Private videos: Top secret!', true, this)">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <!-- Optional: Saved videos tab -->
+                <!-- <div class="tab-item" onclick="showPrankMessage('Saved collection!', true, this)">
+                    <i class="fas fa-bookmark"></i>
+                </div> -->
+            </div>
+
+            <div class="profile-content-grid" id="profileContentGrid">
+                <!-- Video thumbnails will be injected here by JavaScript -->
             </div>
         </div>
 
-
-        <!-- Bottom Navigation -->
         <div class="bottom-nav">
-            <div class="nav-item active home-nav" data-page="pageFeed">
+            <div class="nav-item" data-page="pageFeed" onclick="showPrankMessage('Going to Home Feed (Not Really)')">
                 <i class="fas fa-home"></i>
                 <span>Home</span>
             </div>
-            <div class="nav-item" data-page="pageDiscover">
+            <div class="nav-item" data-page="pageDiscover" onclick="showPrankMessage('Discover Page? Maybe later.')">
                 <i class="fas fa-search"></i>
                 <span>Discover</span>
             </div>
-            <div class="nav-item nav-item-create" data-page="pageCreate">
+            <div class="nav-item nav-item-create" data-page="pageCreate" onclick="showPrankMessage('Create a video? Nice try!')">
                 <div class="create-button-bg">
                     <i class="fas fa-plus"></i>
                 </div>
-                <span>Create</span>
+                <!-- Create button usually has no text -->
             </div>
-            <div class="nav-item" data-page="pageInbox">
+            <div class="nav-item" data-page="pageInbox" onclick="showPrankMessage('Inbox: Full of fan mail!')">
                 <i class="fas fa-comment-dots"></i>
                 <span>Inbox</span>
             </div>
-            <div class="nav-item" data-page="pageProfile">
+            <div class="nav-item active" data-page="pageProfile"> <!-- Profile is active -->
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
             </div>
         </div>
 
-        <!-- Modals -->
-        <div id="commentsModal" class="modal">
-            <div class="modal-header">
-                <h3 id="commentsCountHeader">0 comments</h3>
-                <i class="fas fa-times modal-close-btn" data-modal="commentsModal"></i>
-            </div>
-            <div class="modal-content">
-                <div class="comments-list" id="commentsListContainer">
-                    <!-- Comments injected here -->
-                </div>
-                <div class="comment-input-area">
-                    <input type="text" placeholder="Add comment...">
-                    <button><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <div id="shareModal" class="modal">
-            <div class="modal-header">
-                <h3>Share to</h3>
-                <i class="fas fa-times modal-close-btn" data-modal="shareModal"></i>
-            </div>
-            <div class="modal-content">
-                <div class="share-option"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></div>
-                <div class="share-option"><i class="fab fa-twitter"></i><span>Twitter</span></div>
-                <div class="share-option"><i class="fab fa-facebook"></i><span>Facebook</span></div>
-                <div class="share-option"><i class="fas fa-link"></i><span>Copy Link</span></div>
-                <div class="share-option"><i class="fas fa-envelope"></i><span>Email</span></div>
-                <div class="share-option"><i class="fab fa-sms"></i><span>SMS</span></div>
-                <div class="share-option"><i class="fas fa-ellipsis"></i><span>More</span></div>
-            </div>
-        </div>
+        <div class="prank-message" id="prankMessageElement"></div>
 
     </div>
 
     <script>
-        // --- DATA ---
-        const usersData = {
-            "user1": { id: "user1", username: "NatureLover123", profilePic: "https://randomuser.me/api/portraits/women/65.jpg", followers: "1.2M", following: "345", bio: "Exploring the beauty of our planet 🌍" },
-            "user2": { id: "user2", username: "AdventureSeeker", profilePic: "https://randomuser.me/api/portraits/men/43.jpg", followers: "500K", following: "102", bio: "Life is an adventure or nothing at all!" },
-            "user3": { id: "user3", username: "YogaLife", profilePic: "https://randomuser.me/api/portraits/women/75.jpg", followers: "750K", following: "88", bio: "Finding peace and balance through yoga 🙏" },
-            "user4": { id: "user4", username: "SurferDude", profilePic: "https://randomuser.me/api/portraits/men/32.jpg", followers: "2.1M", following: "560", bio: "Riding waves and good vibes only 🤙" },
-            "user5": { id: "user5", username: "TechGuru", profilePic: "https://randomuser.me/api/portraits/men/55.jpg", followers: "980K", following: "12", bio: "Latest tech reviews and news!" },
-        };
+        // --- 💣 CUSTOMIZE YOUR PRANK HERE! 💣 ---
+        const PRANK_USERNAME = "SuperstarMe"; // Your desired username
+        const PRANK_PROFILE_PIC_URL = "https://randomuser.me/api/portraits/lego/5.jpg"; // URL to your "profile picture"
+        const PRANK_FOLLOWER_COUNT = "15.7M"; // e.g., "1.2M", "500K", "10570"
+        const PRANK_FOLLOWING_COUNT = "123";
+        const PRANK_LIKES_COUNT = "250.9M";
+        const PRANK_BIO = `🌟 Living my best life on TingTong!\n🚀 To the moon! #Blessed #Influencer\n👇 Check out my awesome link!`;
+        const PRANK_LINK_URL = "https://example.com/superstarme"; // The URL your link points to
+        const PRANK_LINK_TEXT = "linktr.ee/SuperstarMe"; // The text displayed for the link
 
-        const soundsData = {
-            "sound1": { id: "sound1", title: "Original Sound - NatureLover123", artist: "NatureLover123", coverArt: usersData["user1"].profilePic },
-            "sound2": { id: "sound2", title: "Upbeat Electronic Pop", artist: "SynthwaveMaster", coverArt: "https://picsum.photos/seed/sound2/100/100" },
-            "sound3": { id: "sound3", title: "Calming Meditation Sounds", artist: "ZenFlow", coverArt: "https://picsum.photos/seed/sound3/100/100" },
-            "sound4": { id: "sound4", title: "Epic Surf Rock", artist: "TheWaveRiders", coverArt: usersData["user4"].profilePic },
-            "sound5": { id: "sound5", title: "Future Tech Intro", artist: "ByteBeats", coverArt: "https://picsum.photos/seed/sound5/100/100" },
-        };
+        const NUM_FAKE_VIDEOS = 21; // How many video thumbnails to show
+        // --- END OF CUSTOMIZATION ---
+
+        // Populate dynamic content
+        document.getElementById('usernameTop').textContent = `@${PRANK_USERNAME}`;
+        document.getElementById('profilePic').src = PRANK_PROFILE_PIC_URL;
+        document.getElementById('profileUsername').textContent = `@${PRANK_USERNAME}`;
         
-        const videosData = [
-            {
-                id: 1,
-                src: "https://assets.mixkit.co/videos/preview/mixkit-father-and-daughter-playing-in-the-meadow-at-sunset-43096-large.mp4",
-                userId: "user1",
-                description: "Golden hour magic with my little one! ✨ #family #sunset #goldenhour @AdventureSeeker check this out!",
-                soundId: "sound1",
-                likes: 12345, shares: 910,
-                commentsData: [
-                    { userPic: usersData["user2"].profilePic, username: usersData["user2"].username, text: "Absolutely stunning! 😍", time: "2h ago" },
-                    { userPic: usersData["user3"].profilePic, username: usersData["user3"].username, text: "So precious! ❤️", time: "1h ago" },
-                ]
-            },
-            {
-                id: 2,
-                src: "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-winding-road-in-the-forest-401-large.mp4",
-                userId: "user2",
-                description: "Lost in the green. This drone shot is insane! 🌲🚁 #drone #forest #adventure #travel",
-                soundId: "sound2",
-                likes: 25800, shares: 1500,
-                commentsData: [
-                    { userPic: usersData["user1"].profilePic, username: usersData["user1"].username, text: "Wow, amazing footage!", time: "5h ago" },
-                    { userPic: usersData["user4"].profilePic, username: usersData["user4"].username, text: "Where is this? Need to go!", time: "3h ago" },
-                    { userPic: usersData["user5"].profilePic, username: usersData["user5"].username, text: "Incredible quality!", time: "30m ago" },
-                ]
-            },
-            {
-                id: 3,
-                src: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-exercises-on-a-mat-outdoors-4010-large.mp4",
-                userId: "user3",
-                description: "Morning yoga flow to connect with nature. 🧘‍♀️ #yoga #mindfulness #outdooryoga @YogaLife",
-                soundId: "sound3",
-                likes: 18500, shares: 760,
-                commentsData: [
-                    { userPic: usersData["user1"].profilePic, username: usersData["user1"].username, text: "So peaceful!", time: "1d ago" },
-                ]
-            },
-            {
-                id: 4,
-                src: "https://assets.mixkit.co/videos/preview/mixkit-surfer-riding-a-wave-with-his-board-42340-large.mp4",
-                userId: "user4",
-                description: "Shredding some epic waves today! 🏄‍♂️🤙 #surf #oceanlife #waves #beach @NatureLover123",
-                soundId: "sound4",
-                likes: 32100, shares: 1150,
-                commentsData: []
-            },
-            {
-                id: 5,
-                src: "https://assets.mixkit.co/videos/preview/mixkit-futuristic-wireframe-head-scan-4020-large.mp4",
-                userId: "user5",
-                description: "Exploring the future of UI with this cool animation. What do you think? #tech #future #uiux #innovation",
-                soundId: "sound5",
-                likes: 9500, shares: 320,
-                commentsData: [
-                    { userPic: usersData["user2"].profilePic, username: usersData["user2"].username, text: "This is sick!", time: "10m ago" },
-                    { userPic: usersData["user3"].profilePic, username: usersData["user3"].username, text: "Mind blown 🤯", time: "5m ago" },
-                ]
-            }
-        ];
+        document.getElementById('followingCount').textContent = PRANK_FOLLOWING_COUNT;
+        document.getElementById('followerCount').textContent = PRANK_FOLLOWER_COUNT;
+        document.getElementById('likesCount').textContent = PRANK_LIKES_COUNT;
 
-        // --- DOM ELEMENTS ---
-        const appContainer = document.querySelector('.app-container');
-        const videoFeedContainer = document.getElementById('videoFeedContainer');
-        const bottomNavItems = document.querySelectorAll('.bottom-nav .nav-item');
-        const pages = document.querySelectorAll('.app-container > .page');
-        const commentsModal = document.getElementById('commentsModal');
-        const shareModal = document.getElementById('shareModal');
-        const modalCloseBtns = document.querySelectorAll('.modal-close-btn');
-        const commentsListContainer = document.getElementById('commentsListContainer');
-        const commentsCountHeader = document.getElementById('commentsCountHeader');
-        
-        // --- STATE ---
-        let currentVideoIndex = 0;
-        let videoElements = [];
-        let touchStartY = 0;
-        let touchMoveY = 0;
-        const swipeThreshold = 50;
-        let activeVideo = null;
-        let likedVideos = JSON.parse(localStorage.getItem('tingtong_likedVideos')) || {};
-        let followedUsers = JSON.parse(localStorage.getItem('tingtong_followedUsers')) || {};
+        document.getElementById('profileBio').textContent = PRANK_BIO;
+        document.getElementById('profileLink').href = PRANK_LINK_URL;
+        document.getElementById('profileLinkText').textContent = PRANK_LINK_TEXT;
 
-
-        // --- FUNCTIONS ---
-
-        // Page Navigation
-        function navigateToPage(pageId) {
-            pages.forEach(page => {
-                page.classList.toggle('active', page.id === pageId);
-            });
-            bottomNavItems.forEach(item => {
-                item.classList.toggle('active', item.dataset.page === pageId);
-                // Special handling for home icon boldness
-                if (item.classList.contains('home-nav')) {
-                    item.querySelector('i').style.fontWeight = (item.dataset.page === pageId && pageId === 'pageFeed') ? '900' : '400';
-                }
-            });
-
-            // Pause video if navigating away from feed
-            if (pageId !== 'pageFeed' && activeVideo && !activeVideo.paused) {
-                activeVideo.pause();
-            }
-            // Play video if navigating back to feed and video was playing
-            else if (pageId === 'pageFeed' && activeVideo) {
-                activeVideo.play().catch(e => console.warn("Re-play failed", e));
-            }
-        }
-
-        // Modal Management
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.add('active');
-                // Pause video when modal opens
-                if (activeVideo && !activeVideo.paused) activeVideo.pause();
-            }
-        }
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.remove('active');
-                 // Resume video if it was playing and feed is active
-                if (activeVideo && document.getElementById('pageFeed').classList.contains('active')) {
-                     activeVideo.play().catch(e => console.warn("Modal close play failed", e));
-                }
-            }
-        }
-
-        // Video Feed Logic
-        function formatCount(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-            return num.toString();
-        }
-        
-        function parseDescription(description) {
-            // Hashtags
-            description = description.replace(/#(\w+)/g, '<span class="hashtag" data-hashtag="$1">#$1</span>');
-            // Mentions
-            description = description.replace(/@(\w+)/g, (match, username) => {
-                const userExists = Object.values(usersData).find(u => u.username === username);
-                if (userExists) {
-                    return `<span class="mention" data-userid="${userExists.id}">@${username}</span>`;
-                }
-                return match; // Return original if user not found
-            });
-            return description;
-        }
-
-        function createVideoSlide(videoData, index) {
-            const user = usersData[videoData.userId];
-            const sound = soundsData[videoData.soundId];
-
-            const slide = document.createElement('div');
-            slide.classList.add('video-slide');
-            slide.dataset.index = index;
-            slide.dataset.videoId = videoData.id;
-            slide.style.transform = `translateY(${index * 100}%)`;
-
-            const video = document.createElement('video');
-            video.src = videoData.src;
-            video.loop = true;
-            video.playsInline = true;
-            video.muted = true; // Start muted, unmute when active
-            video.preload = "auto";
-
-            const loadingSpinner = document.createElement('div');
-            loadingSpinner.classList.add('loading-spinner');
-            slide.appendChild(loadingSpinner);
-            slide.appendChild(video);
-
-            const overlay = document.createElement('div');
-            overlay.classList.add('video-overlay');
-            overlay.innerHTML = `
-                <div class="video-info-column">
-                    <div class="user-info" data-userid="${user.id}">
-                        <img src="${user.profilePic}" alt="${user.username}" class="profile-pic-small">
-                        <span class="username">@${user.username}</span>
-                    </div>
-                    <p class="video-description">${parseDescription(videoData.description)}</p>
-                    <div class="music-info" data-soundid="${sound.id}">
-                        <i class="fas fa-music icon"></i>
-                        <div class="music-info-text"><span class="music-name">${sound.title} - ${sound.artist}</span></div>
-                    </div>
-                </div>
-                <div class="video-actions-column">
-                    <div class="action-button action-user-profile" data-userid="${user.id}">
-                        <img src="${user.profilePic}" alt="${user.username}" class="profile-action-pic">
-                        <div class="follow-icon" data-userid="${user.id}">
-                            <i class="fas ${followedUsers[user.id] ? 'fa-check' : 'fa-plus'}"></i>
-                        </div>
-                    </div>
-                    <div class="action-button like-button" data-video-id="${videoData.id}">
-                        <i class="fas fa-heart ${likedVideos[videoData.id] ? 'liked' : ''}"></i>
-                        <span class="like-count">${formatCount(videoData.likes + (likedVideos[videoData.id] ? 1 : 0))}</span>
-                    </div>
-                    <div class="action-button comment-button" data-video-id="${videoData.id}">
-                        <i class="fas fa-comment-dots"></i>
-                        <span class="comment-count">${formatCount(videoData.commentsData.length)}</span>
-                    </div>
-                    <div class="action-button share-button" data-video-id="${videoData.id}">
-                        <i class="fas fa-share"></i>
-                        <span class="share-count">${formatCount(videoData.shares)}</span>
-                    </div>
-                    <div class="action-button action-sound-disc" data-soundid="${sound.id}">
-                        <div class="sound-disc">
-                            <img src="${sound.coverArt}" alt="Sound cover">
-                        </div>
-                    </div>
-                </div>
-                <div class="play-pause-indicator">
-                    <i class="fas fa-play"></i>
-                </div>
-            `;
-            slide.appendChild(overlay);
+        // Generate fake video thumbnails
+        const grid = document.getElementById('profileContentGrid');
+        for (let i = 0; i < NUM_FAKE_VIDEOS; i++) {
+            const itemView = document.createElement('div');
+            itemView.classList.add('grid-video-item');
+            itemView.onclick = () => showPrankMessage(`Playing video ${i+1}... Just kidding!`);
             
-            // Event listeners for interactions within overlay
-            overlay.querySelector('.user-info').addEventListener('click', (e) => showUserProfile(e.currentTarget.dataset.userid));
-            overlay.querySelector('.action-user-profile').addEventListener('click', (e) => {
-                const target = e.target.closest('.action-user-profile');
-                if (e.target.closest('.follow-icon')) { // If click is on follow icon
-                    toggleFollow(target.dataset.userid, e.target.closest('.follow-icon'));
-                } else { // Click on profile pic part
-                    showUserProfile(target.dataset.userid);
-                }
-            });
-            overlay.querySelector('.music-info').addEventListener('click', (e) => showSoundPage(e.currentTarget.dataset.soundid));
-            overlay.querySelector('.action-sound-disc').addEventListener('click', (e) => showSoundPage(e.currentTarget.dataset.soundid));
+            const img = document.createElement('img');
+            // Use Picsum for varied placeholder images or provide your own array of thumbnail URLs
+            img.src = `https://picsum.photos/seed/${PRANK_USERNAME}${i}/200/300`; 
+            img.alt = `Fake Video ${i+1}`;
 
-            overlay.querySelectorAll('.hashtag').forEach(el => el.addEventListener('click', (e) => alert(`Tapped hashtag: ${e.target.dataset.hashtag}`)));
-            overlay.querySelectorAll('.mention').forEach(el => el.addEventListener('click', (e) => showUserProfile(e.target.dataset.userid)));
-            
-            overlay.querySelector('.like-button').addEventListener('click', (e) => {
-                const btn = e.currentTarget;
-                const videoId = btn.dataset.videoId;
-                const icon = btn.querySelector('i');
-                const countEl = btn.querySelector('.like-count');
-                let currentLikes = videosData.find(v => v.id == videoId).likes;
-
-                icon.classList.toggle('liked');
-                likedVideos[videoId] = icon.classList.contains('liked');
-                
-                if (likedVideos[videoId]) {
-                    currentLikes++;
-                    icon.style.animation = 'like-pop 0.3s ease'; // Add a little pop
-                } else {
-                    currentLikes--;
-                    icon.style.animation = 'none';
-                }
-                videosData.find(v => v.id == videoId)._tempLikes = currentLikes; // Store temp for display
-                countEl.textContent = formatCount(currentLikes);
-                localStorage.setItem('tingtong_likedVideos', JSON.stringify(likedVideos));
-            });
-            
-            overlay.querySelector('.comment-button').addEventListener('click', (e) => {
-                const videoId = e.currentTarget.dataset.videoId;
-                const currentVidData = videosData.find(v => v.id == videoId);
-                loadComments(currentVidData);
-                openModal('commentsModal');
-            });
-            overlay.querySelector('.share-button').addEventListener('click', () => openModal('shareModal'));
-
-
-            // Video events
-            video.addEventListener('loadeddata', () => slide.classList.remove('loading'));
-            video.addEventListener('waiting', () => slide.classList.add('loading'));
-            video.addEventListener('playing', () => slide.classList.remove('loading'));
-
-            // Tap to play/pause
-            slide.addEventListener('click', (e) => {
-                if (e.target.closest('.video-info-column') || e.target.closest('.video-actions-column')) {
-                    return; // Don't toggle if clicking on interactive UI elements
-                }
-                togglePlayPause(video, slide);
-            });
-
-            return slide;
-        }
-
-        function togglePlayPause(video, slide) {
-            const indicator = slide.querySelector('.play-pause-indicator');
-            const icon = indicator.querySelector('i');
-            if (video.paused) {
-                video.play().catch(error => console.error("Play error:", error));
-                icon.classList.remove('fa-play');
-                icon.classList.add('fa-pause');
+            const views = document.createElement('div');
+            views.classList.add('views');
+            const randomViews = Math.floor(Math.random() * 2000000) + 10000; // 10k to 2M views
+            let viewsText;
+            if (randomViews >= 1000000) {
+                viewsText = (randomViews / 1000000).toFixed(1) + 'M';
+            } else if (randomViews >= 1000) {
+                viewsText = (randomViews / 1000).toFixed(1) + 'K';
             } else {
-                video.pause();
-                icon.classList.remove('fa-pause');
-                icon.classList.add('fa-play');
+                viewsText = randomViews;
             }
-            indicator.classList.add('visible');
-            setTimeout(() => indicator.classList.remove('visible'), 600);
-        }
-
-        function initFeed() {
-            videoFeedContainer.innerHTML = ''; // Clear previous slides
-            videoElements = [];
-            videosData.forEach((videoData, index) => {
-                const slide = createVideoSlide(videoData, index);
-                videoFeedContainer.appendChild(slide);
-                videoElements.push(slide);
-            });
-            // Add a dummy slide at the end for "pull up to refresh" feel, or "no more videos"
-            const endSlide = document.createElement('div');
-            endSlide.classList.add('video-slide', 'end-of-feed');
-            endSlide.style.transform = `translateY(${videosData.length * 100}%)`;
-            endSlide.innerHTML = `<div style="text-align:center; color: #555;"><i class="fas fa-redo fa-2x"></i><p>No more videos</p><p><small>Swipe down to go back</small></p></div>`;
-            videoFeedContainer.appendChild(endSlide);
-            videoElements.push(endSlide); // Add to array for transform logic
-
-            loadVideo(currentVideoIndex);
-        }
-
-        function loadVideo(index, direction = 0) {
-            if (index < 0 || index >= videosData.length) { // Only allow index within actual video data
-                // Snap back if trying to swipe beyond limits
-                if (index < 0) index = 0;
-                if (index >= videosData.length) index = videosData.length - 1;
-                // Reset transforms for current and attempted out-of-bounds slide
-                if (videoElements[currentVideoIndex]) videoElements[currentVideoIndex].style.transform = `translateY(0%)`;
-                if (videoElements[index]) videoElements[index].style.transform = `translateY(${(index - currentVideoIndex) * 100}%)`;
-                return;
-            }
-
-            const oldActiveVideo = activeVideo;
-            if (oldActiveVideo && oldActiveVideo !== videoElements[index].querySelector('video')) {
-                oldActiveVideo.pause();
-                oldActiveVideo.currentTime = 0; // Reset previous video
-                oldActiveVideo.muted = true;
-            }
-
-            videoElements.forEach((slide, i) => {
-                const video = slide.querySelector('video');
-                const slideRelativeIndex = i - index; // Position relative to new current video
-
-                slide.style.transform = `translateY(${slideRelativeIndex * 100}%)`;
-                
-                if (i === index) { // Current video
-                    slide.classList.add('active');
-                    slide.style.zIndex = 1;
-                    activeVideo = video;
-                    if (activeVideo) {
-                        activeVideo.muted = false; // Unmute current video
-                        if (document.getElementById('pageFeed').classList.contains('active') && !commentsModal.classList.contains('active') && !shareModal.classList.contains('active')) {
-                             activeVideo.play().catch(error => console.warn("Autoplay failed:", error));
-                        }
-                    }
-                } else { // Other videos
-                    slide.classList.remove('active');
-                    slide.style.zIndex = 0;
-                    if (video) {
-                        video.pause();
-                        video.muted = true;
-                        if (i !== index -1 && i !== index + 1) { // Don't reset immediately adjacent videos for smoother feel
-                            video.currentTime = 0;
-                        }
-                    }
-                }
-            });
-            currentVideoIndex = index;
-        }
-
-        // Swipe Controls
-        videoFeedContainer.addEventListener('touchstart', (e) => {
-            if (!document.getElementById('pageFeed').classList.contains('active')) return;
-            touchStartY = e.touches[0].clientY;
-            touchMoveY = touchStartY;
-            videoElements.forEach(slide => slide.style.transition = 'none'); // Faster response
-        }, {passive: true});
-
-        videoFeedContainer.addEventListener('touchmove', (e) => {
-            if (!document.getElementById('pageFeed').classList.contains('active') || touchStartY === 0) return;
-            touchMoveY = e.touches[0].clientY;
-            const deltaY = touchMoveY - touchStartY;
-
-            const currentSlideRealIndex = videoElements.findIndex(s => s.dataset.index == currentVideoIndex);
-
-            // Move current, next, and previous slides with the finger
-            if (videoElements[currentSlideRealIndex]) {
-                videoElements[currentSlideRealIndex].style.transform = `translateY(${deltaY}px)`;
-            }
-            if (deltaY < 0) { // Swiping up (to next video)
-                if (videoElements[currentSlideRealIndex + 1]) {
-                    videoElements[currentSlideRealIndex + 1].style.transform = `translateY(calc(100% + ${deltaY}px))`;
-                }
-            } else { // Swiping down (to previous video)
-                if (videoElements[currentSlideRealIndex - 1]) {
-                    videoElements[currentSlideRealIndex - 1].style.transform = `translateY(calc(-100% + ${deltaY}px))`;
-                }
-            }
-        }, {passive: true});
-
-        videoFeedContainer.addEventListener('touchend', () => {
-            if (!document.getElementById('pageFeed').classList.contains('active') || touchStartY === 0) return;
-            videoElements.forEach(slide => slide.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)');
-            const deltaY = touchMoveY - touchStartY;
-            let newIndex = currentVideoIndex;
-
-            if (Math.abs(deltaY) > swipeThreshold) {
-                if (deltaY < 0 && currentVideoIndex < videosData.length -1) { // Swipe Up
-                    newIndex++;
-                } else if (deltaY > 0 && currentVideoIndex > 0) { // Swipe Down
-                    newIndex--;
-                } else if (deltaY < 0 && currentVideoIndex === videosData.length -1) { // Swiped up on last video
-                    // Snap back last video
-                    videoElements[videoElements.length-2].style.transform = `translateY(0%)`; // last actual video
-                    videoElements[videoElements.length-1].style.transform = `translateY(100%)`; // end-of-feed slide
-                    touchStartY = 0; return;
-                }
-            }
-            loadVideo(newIndex);
-            touchStartY = 0; // Reset touch
-        });
-
-        // Placeholder Page Content Fillers
-        function showUserProfile(userId) {
-            const user = usersData[userId];
-            if (!user) return;
-            const contentEl = document.getElementById('userProfileContent');
-            contentEl.innerHTML = `
-                <div class="profile-header">
-                    <img src="${user.profilePic}" alt="${user.username}">
-                    <h2>@${user.username}</h2>
-                    <p style="font-size:0.9em; color:var(--tt-text-secondary-color); max-width: 80%; margin: 5px auto;">${user.bio || 'No bio yet.'}</p>
-                </div>
-                <div class="profile-stats">
-                    <div class="stat-item"><strong>${user.following}</strong><span>Following</span></div>
-                    <div class="stat-item"><strong>${user.followers}</strong><span>Followers</span></div>
-                    <div class="stat-item"><strong>...</strong><span>Likes</span></div>
-                </div>
-                <button class="${followedUsers[user.id] ? 'followed' : ''}" onclick="toggleFollow('${user.id}', this, true)" style="padding:10px 20px; background-color: ${followedUsers[user.id] ? 'var(--tt-border-color)' : 'var(--tt-accent-color)'}; color:white; border:none; border-radius:5px; font-weight:bold; margin-bottom:20px;">
-                    ${followedUsers[user.id] ? 'Following' : 'Follow'}
-                </button>
-                <div class="profile-tabs">
-                    <div class="profile-tab active"><i class="fas fa-th"></i></div>
-                    <div class="profile-tab"><i class="fas fa-heart"></i></div>
-                    <div class="profile-tab"><i class="fas fa-lock"></i></div>
-                </div>
-                <div class="profile-content-grid">
-                    ${[1,2,3,4,5,6].map(() => `<div class="grid-item-placeholder"><i class="fas fa-video"></i></div>`).join('')}
-                </div>
-                <p style="text-align:center; margin-top:20px; color: var(--tt-text-secondary-color);">User's content here. (Not Implemented)</p>
-            `;
-            navigateToPage('pageUserProfile');
-        }
-
-        function showSoundPage(soundId) {
-            const sound = soundsData[soundId];
-            if (!sound) return;
-            const contentEl = document.getElementById('soundPageContent');
-            contentEl.innerHTML = `
-                <div class="profile-header"> <!-- Reusing profile header style for sound -->
-                    <img src="${sound.coverArt}" alt="${sound.title}" style="width:120px; height:120px; border-radius:10px;">
-                    <h2>${sound.title}</h2>
-                    <p style="font-size:1em; color:var(--tt-text-color);">${sound.artist}</p>
-                    <p style="font-size:0.9em; color:var(--tt-text-secondary-color);">1.5M videos</p>
-                </div>
-                <button style="padding:10px 20px; background-color:var(--tt-accent-color); color:white; border:none; border-radius:5px; font-weight:bold; margin-bottom:20px;">
-                    <i class="fas fa-plus"></i> Add to Favorites
-                </button>
-                 <div class="profile-tabs"> <!-- Simple tab for "Videos" -->
-                    <div class="profile-tab active">Videos</div>
-                </div>
-                <div class="profile-content-grid">
-                     ${[1,2,3,4,5,6,7,8,9].map(() => `<div class="grid-item-placeholder"><i class="fas fa-play"></i></div>`).join('')}
-                </div>
-                <p style="text-align:center; margin-top:20px; color: var(--tt-text-secondary-color);">Videos using this sound. (Not Implemented)</p>
-            `;
-            navigateToPage('pageSound');
-        }
-
-        function toggleFollow(userId, iconElement, isProfilePageButton = false) {
-            followedUsers[userId] = !followedUsers[userId];
-            localStorage.setItem('tingtong_followedUsers', JSON.stringify(followedUsers));
+            views.innerHTML = `<i class="fas fa-play"></i> ${viewsText.replace('.0','')}`;
             
-            if (isProfilePageButton) { // Button on profile page
-                iconElement.textContent = followedUsers[userId] ? 'Following' : 'Follow';
-                iconElement.style.backgroundColor = followedUsers[userId] ? 'var(--tt-border-color)' : 'var(--tt-accent-color)';
-            } else { // Icon on video overlay
-                const i = iconElement.querySelector('i');
-                i.className = `fas ${followedUsers[userId] ? 'fa-check' : 'fa-plus'}`;
-                iconElement.classList.toggle('followed', followedUsers[userId]);
-            }
-            // Also update any other follow icons for this user on the page
-            document.querySelectorAll(`.follow-icon[data-userid="${userId}"]`).forEach(el => {
-                el.querySelector('i').className = `fas ${followedUsers[userId] ? 'fa-check' : 'fa-plus'}`;
-                el.classList.toggle('followed', followedUsers[userId]);
-            });
+            itemView.appendChild(img);
+            itemView.appendChild(views);
+            grid.appendChild(itemView);
         }
 
-        // Comments Modal Logic
-        function loadComments(videoData) {
-            commentsCountHeader.textContent = `${videoData.commentsData.length} comments`;
-            commentsListContainer.innerHTML = videoData.commentsData.map(comment => `
-                <div class="comment-item">
-                    <img src="${comment.userPic}" alt="${comment.username}">
-                    <div class="comment-text-content">
-                        <p><span class="comment-user">@${comment.username}</span> ${comment.text}</p>
-                        <span>${comment.time}</span>
-                    </div>
-                </div>
-            `).join('');
-            if (videoData.commentsData.length === 0) {
-                commentsListContainer.innerHTML = `<p style="text-align:center; color:var(--tt-text-secondary-color); padding:20px;">No comments yet.</p>`;
+        // Prank message function
+        let messageTimeout;
+        function showPrankMessage(message, isTab = false, tabElement = null) {
+            const msgElement = document.getElementById('prankMessageElement');
+            msgElement.textContent = message;
+            msgElement.classList.add('show');
+
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                msgElement.classList.remove('show');
+            }, 2000);
+
+            if (isTab && tabElement) {
+                document.querySelectorAll('.profile-tabs .tab-item').forEach(tab => tab.classList.remove('active'));
+                tabElement.classList.add('active');
             }
         }
 
-        // --- EVENT LISTENERS ---
-        bottomNavItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const pageId = item.dataset.page;
-                if (pageId) navigateToPage(pageId);
-            });
-        });
-
-        modalCloseBtns.forEach(btn => {
-            btn.addEventListener('click', () => closeModal(btn.dataset.modal));
-        });
-        
-        // Keyboard controls for desktop testing
-        document.addEventListener('keydown', (e) => {
-            if (!document.getElementById('pageFeed').classList.contains('active')) return;
-            if (commentsModal.classList.contains('active') || shareModal.classList.contains('active')) return; // Don't interfere with modals
-
-            if (e.key === 'ArrowUp' && currentVideoIndex < videosData.length - 1) {
-                loadVideo(currentVideoIndex + 1);
-            } else if (e.key === 'ArrowDown' && currentVideoIndex > 0) {
-                loadVideo(currentVideoIndex - 1);
-            } else if (e.key === ' ') { // Spacebar for play/pause
-                e.preventDefault();
-                if (activeVideo) {
-                    const activeSlide = videoElements.find(slide => slide.classList.contains('active'));
-                    if(activeSlide) togglePlayPause(activeVideo, activeSlide);
-                }
-            } else if (e.key.toLowerCase() === 'm') { // Mute/unmute
-                if(activeVideo) activeVideo.muted = !activeVideo.muted;
-            }
-        });
-        
-        // --- INITIALIZATION ---
-        navigateToPage('pageFeed'); // Start on feed page
-        initFeed();
-
-        // Apply safe area padding to overlay bottom
-        const videoOverlays = document.querySelectorAll('.video-overlay');
-        const bottomNav = document.querySelector('.bottom-nav');
-        const safeAreaBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom');
-        
-        if (safeAreaBottom && safeAreaBottom !== "0px") {
-            videoOverlays.forEach(vo => vo.style.paddingBottom = `calc(15px + ${safeAreaBottom})`);
-            // The main .bottom-nav already uses var(--safe-area-inset-bottom) for its own padding-bottom
-        }
-
-
-        // Example of how a comment might be added (simulation)
-        const commentForm = commentsModal.querySelector('.comment-input-area');
-        commentForm.addEventListener('submit', (e) => e.preventDefault()); // Prevent actual form submission
-        commentForm.querySelector('button').addEventListener('click', () => {
-            const input = commentForm.querySelector('input');
-            if (input.value.trim() === '') return;
-            
-            const newComment = {
-                userPic: usersData["user1"].profilePic, // Simulate current user posting
-                username: usersData["user1"].username,
-                text: input.value.trim(),
-                time: "Just now"
-            };
-            
-            // This would ideally update videosData and re-render, but for simplicity:
-            const tempCommentHTML = `
-                <div class="comment-item">
-                    <img src="${newComment.userPic}" alt="${newComment.username}">
-                    <div class="comment-text-content">
-                        <p><span class="comment-user">@${newComment.username}</span> ${newComment.text}</p>
-                        <span>${newComment.time}</span>
-                    </div>
-                </div>`;
-            if (commentsListContainer.querySelector('p')) { // If "no comments yet" is shown
-                commentsListContainer.innerHTML = '';
-            }
-            commentsListContainer.insertAdjacentHTML('beforeend', tempCommentHTML);
-            commentsListContainer.scrollTop = commentsListContainer.scrollHeight; // Scroll to bottom
-
-            let count = parseInt(commentsCountHeader.textContent) + 1;
-            commentsCountHeader.textContent = `${count} comments`;
-            // Also update the count on the video overlay (this part is tricky without full data binding)
-            const currentVideoOnFeed = videoElements.find(slide => slide.classList.contains('active'));
-            if(currentVideoOnFeed) {
-                const commentCountEl = currentVideoOnFeed.querySelector('.comment-count');
-                if(commentCountEl) commentCountEl.textContent = formatCount(count);
-            }
-            input.value = '';
-        });
+        // Initial "page load" message (optional)
+        // setTimeout(() => showPrankMessage(`Welcome back, @${PRANK_USERNAME}!`), 500);
 
     </script>
 </body>
