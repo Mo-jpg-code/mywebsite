@@ -1,448 +1,856 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Profil</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>Echo Show UI Concept</title>
     <style>
+        /* Reset and Basic Setup */
         :root {
-            --tt-bg-color: #000000;
-            --tt-text-color: #ffffff;
-            --tt-text-secondary-color: #a7a7a7;
-            --tt-text-tertiary-color: #707070;
-            --tt-accent-color: #FE2C55;
-            --tt-accent-blue: #25F4EE;
-            --tt-button-bg: #1f1f1f;
-            --tt-button-bg-hover: #2f2f2f;
-            --tt-button-bg-light-opaque: rgba(50, 50, 50, 0.8); /* For modals */
-            --tt-border-color: #2a2a2a; /* Slightly darker border from screenshot */
-            --tt-profile-pic-plus-bg: #0099ff;
-            --safe-area-inset-top: env(safe-area-inset-top, 0px);
-            --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-            --bottom-nav-height: 55px;
-            --top-bar-height: 50px;
+            --alexa-bg: #121212;
+            --alexa-card-bg: #1e1e1e;
+            --alexa-text-primary: #f0f0f0;
+            --alexa-text-secondary: #a0a0a0;
+            --alexa-accent: #00a0d2; /* Alexa Blue */
+            --alexa-accent-light: #4cbde5;
+            --alexa-red: #ff4c4c;
+            --alexa-green: #4caf50;
+            --border-radius: 12px;
+            --font-family: 'Amazon Ember', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
-        /* Basic Reset & Font */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; height: 100dvh; overflow: hidden; background-color: var(--tt-bg-color); color: var(--tt-text-color); font-size: 15px; /* Base size from image looks a bit smaller */ }
-        .app-container { width: 100%; height: 100%; max-width: 450px; margin: 0 auto; position: relative; background-color: var(--tt-bg-color); display: flex; flex-direction: column; overflow: hidden; }
-        .profile-page-scroll-content { flex-grow: 1; overflow-y: auto; padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 25px); }
 
-        /* Splash Screen */
-        .splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--tt-bg-color); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.3s ease-out 0.5s; /* Fade out after 0.5s delay */ }
-        .splash-screen.hidden { opacity: 0; pointer-events: none; }
-        .splash-screen svg { width: 80px; height: 80px; } /* TikTok Logo SVG */
+        @font-face {
+            font-family: 'Amazon Ember'; /* A common font used by Amazon */
+            src: url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIFont-amazonember_Rg-552172239._V2_.woff2') format('woff2'),
+                 url('https://m.media-amazon.com/images/G/01/AUIClients/AmazonUIFont-amazonember_Rg-552172239._V2_.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
 
-        /* Top Bar */
-        .profile-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 12px; padding-top: var(--safe-area-inset-top); height: calc(var(--top-bar-height) + var(--safe-area-inset-top)); background-color: var(--tt-bg-color); position: sticky; top: 0; z-index: 100; }
-        .profile-top-bar .icon { font-size: 1.5em; color: var(--tt-text-color); cursor: pointer; padding: 8px; } /* Slightly larger icons */
-        .username-dropdown-container { position: relative; }
-        .profile-top-bar .username-dropdown { display: flex; align-items: center; cursor: pointer; font-weight: bold; font-size: 1.05em; /* Slightly smaller from image */ }
-        .profile-top-bar .username-dropdown .fa-chevron-down { font-size: 0.6em; margin-left: 6px; }
-        .fake-dropdown-menu { position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%); background-color: var(--tt-button-bg-hover); border-radius: 8px; padding: 5px 0; width: 180px; z-index: 110; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display: none; }
-        .fake-dropdown-menu.active { display: block; }
-        .fake-dropdown-menu-item { padding: 10px 15px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
-        .fake-dropdown-menu-item .fa-check { color: var(--tt-accent-color); }
-        .profile-top-bar .top-right-icons { display: flex; align-items: center; gap: 0px; /* Reduced gap */ }
-        /* Custom Neurobotic Icon */
-        .neurobotic-event-icon { display: flex; align-items: center; gap: 4px; background-color: var(--tt-button-bg); padding: 3px 6px; border-radius: 15px; font-size: 0.75em; cursor: pointer; height: 26px; }
-        .neurobotic-logo-container { width: 20px; height: 20px; background-color: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 1px solid #444; }
-        .neurobotic-logo-container::before { content: ""; position: absolute; width: 60%; height: 30%; background: linear-gradient(to right, #555, #777); border-radius: 3px; top: 25%; }
-        .neurobotic-logo-container::after { content: ""; position: absolute; width: 30%; height: 20%; background-color: #444; border-radius: 2px; bottom: 20%; }
-        .neurobotic-event-icon strong { font-size: 0.9em; margin-left: 2px; }
 
-        .profile-pronouns { text-align: center; font-size: 0.8em; color: var(--tt-text-secondary-color); margin-top: -10px; margin-bottom: 8px; }
-        .profile-header { padding: 0px 15px 12px 15px; text-align: center; }
-        .profile-pic-container { position: relative; width: 90px; height: 90px; margin: 0 auto 10px auto; } /* Slightly smaller */
-        .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .profile-pic-add-story { position: absolute; bottom: -2px; right: -2px; background-color: var(--tt-profile-pic-plus-bg); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em; border: 2.5px solid var(--tt-bg-color); cursor: pointer; }
-        .profile-event-bubble { position: absolute; top: -12px; right: -30px; background-color: rgba(55,55,55,0.95); color: white; padding: 5px 10px; border-radius: 10px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
-        .profile-event-bubble::after { content: ''; position: absolute; bottom: -4px; left: 15px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid rgba(55,55,55,0.95); }
-        .profile-username-main { font-size: 1.1em; font-weight: 600; margin-bottom: 12px; }
-        .profile-stats { display: flex; justify-content: center; gap: 18px; margin-bottom: 15px; }
-        .stat-item { text-align: center; cursor: pointer; min-width: 65px; }
-        .stat-item .count { font-size: 1.1em; font-weight: bold; display: block; }
-        .stat-item .label { font-size: 0.8em; color: var(--tt-text-secondary-color); }
-        .profile-actions-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 15px; }
-        .profile-action-button { background-color: var(--tt-button-bg); color: var(--tt-text-color); border: none; padding: 9px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 600; cursor: pointer; flex-grow: 1; transition: background-color 0.15s, transform 0.1s; }
-        .profile-action-button:active { transform: scale(0.97); background-color: var(--tt-button-bg-hover); }
-        .profile-action-button.icon-btn { flex-grow: 0; width: 38px; }
-        .profile-bio-main { font-size: 0.85em; line-height: 1.45; margin-bottom: 8px; white-space: pre-line; }
-        .profile-extra-links { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 15px; font-size: 0.85em; font-weight: 600;}
-        .profile-extra-links a { color: var(--tt-text-color); text-decoration: none; display: flex; align-items: center; gap: 4px;}
-        .profile-extra-links .separator { color: var(--tt-text-secondary-color); font-size: 0.9em; }
-        .profile-extra-links i { font-size: 1em; } .fa-star { color: #FFC107; } .fa-rocket { color: var(--tt-accent-color); }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        /* Tabs */
-        .profile-tabs-container { display: flex; justify-content: space-around; border-top: 1px solid var(--tt-border-color); border-bottom: 1px solid var(--tt-border-color); background-color: var(--tt-bg-color); position: sticky; top: calc(var(--top-bar-height) + var(--safe-area-inset-top)); z-index: 99; }
-        .tab-item { padding: 9px 0; flex: 1; text-align: center; cursor: pointer; color: var(--tt-text-tertiary-color); position: relative; transition: color 0.2s; }
-        .tab-item i { font-size: 1.5em; } .tab-item .fa-chevron-down { font-size: 0.45em; margin-left: 2px; vertical-align: middle; }
-        .tab-item.active { color: var(--tt-text-color); }
-        .tab-item.active::after { content: ''; position: absolute; bottom: -0.5px; /* Overlap border slightly */ left: 30%; right: 30%; height: 1.5px; background-color: var(--tt-text-color); }
-        
-        /* Stories Banner */
-        .stories-banner { display: flex; align-items: center; justify-content: space-between; background-color: var(--tt-button-bg); padding: 9px 10px; margin: 0px 0px 1.5px 0px; font-size: 0.8em; transition: opacity 0.3s, height 0.3s, padding 0.3s, margin 0.3s; }
-        .stories-banner.hidden { opacity: 0; height: 0; padding: 0 10px; margin: 0; pointer-events: none; }
-        .stories-banner-text { display: flex; align-items: center; gap: 6px; }
-        .stories-banner-text i { font-size: 1.3em; color: var(--tt-text-secondary-color); }
-        .stories-banner .close-btn { font-size: 1.1em; color: var(--tt-text-secondary-color); cursor: pointer; padding: 5px; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000; /* Fallback for outer area */
+            font-family: var(--font-family);
+            color: var(--alexa-text-primary);
+            -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
+        }
 
-        /* Content Grid & Tab Content Placeholders */
-        #tabContentContainer > div { display: none; } /* Hide all by default */
-        #tabContentContainer > div.active-tab-content { display: grid; /* Default for grid */ }
-        .profile-content-grid { grid-template-columns: repeat(3, 1fr); gap: 1.5px; padding: 1.5px;}
-        .grid-video-item { position: relative; aspect-ratio: 9 / 13.5; background-color: #101010; cursor: pointer; overflow: hidden; }
-        .grid-video-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
-        .grid-video-item:active img { transform: scale(0.98); }
-        .grid-video-item .views { position: absolute; bottom: 5px; left: 5px; color: var(--tt-text-color); font-size: 0.75em; font-weight: 600; display: flex; align-items: center; text-shadow: 0 0 4px rgba(0,0,0,0.9); }
-        .grid-video-item .views i { font-size: 0.8em; margin-right: 3px; }
-        .grid-video-item .multi-image-icon { position: absolute; top: 5px; right: 5px; font-size: 1em; color: var(--tt-text-color); text-shadow: 0 0 3px rgba(0,0,0,0.7); }
-        .tab-placeholder-content { display: flex !important; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align:center; color: var(--tt-text-secondary-color); min-height: 200px; }
-        .tab-placeholder-content i { font-size: 2.5em; margin-bottom: 15px; color: var(--tt-text-tertiary-color); }
-        .tab-placeholder-content p { font-size: 0.9em; } .tab-placeholder-content strong {color: var(--tt-text-color); font-size: 1.1em; margin-bottom: 5px;}
+        /* Main UI Container - Enforcing 9:16 Aspect Ratio */
+        #echo-show-ui {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            /* The magic for 9:16 aspect ratio */
+            max-width: calc(100vh * 9 / 16); /* Max width based on height */
+            max-height: calc(100vw * 16 / 9); /* Max height based on width */
+            margin: auto; /* Center it */
+            background-color: var(--alexa-bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
 
-        /* Bottom Nav */
-        .bottom-nav { height: var(--bottom-nav-height); padding-bottom: var(--safe-area-inset-bottom); background-color: var(--tt-bg-color); border-top: 1px solid var(--tt-border-color); display: flex; justify-content: space-around; align-items: flex-start; padding-top: 5px; position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 450px; margin: 0 auto; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--tt-text-secondary-color); font-size: 0.65em; font-weight: 500; cursor: pointer; flex: 1; text-align: center; position: relative; /* For badge */ }
-        .nav-item i { font-size: 1.6em; margin-bottom: 2px; }
-        .nav-item.active { color: var(--tt-text-color); font-weight: 600; }
-        .nav-item-create .create-button-container { position: relative; top: -2px; }
-        .nav-item-create .create-button-bg { width: 46px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background-color: var(--tt-text-color); border: 2px solid var(--tt-bg-color); }
-        .nav-item-create .create-button-bg::before { content: ""; position: absolute; width: 11px; height: 100%; background-color: var(--tt-accent-blue); left: -1.5px; filter: brightness(1.05); border-radius: 7px 0 0 7px;}
-        .nav-item-create .create-button-bg::after { content: ""; position: absolute; width: 11px; height: 100%; background-color: var(--tt-accent-color); right: -1.5px; filter: brightness(1.05); border-radius: 0 7px 7px 0;}
-        .nav-item-create i { font-size: 1.4em; color: var(--tt-bg-color); z-index: 1; font-weight: bold;}
-        .nav-item .nav-label { margin-top: 1px; line-height: 1.2; }
-        .nav-item .notification-badge { position: absolute; top: 1px; right: calc(50% - 18px); background-color: var(--tt-accent-color); color: white; font-size: 0.7em; font-weight: bold; padding: 0px 4.5px; border-radius: 10px; min-width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--tt-bg-color); }
+        /* Status Bar (Top) */
+        #status-bar {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0,0,0,0.1);
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+        #status-bar #time {
+            font-weight: bold;
+        }
+        #status-bar #weather {
+            display: flex;
+            align-items: center;
+        }
+        #status-bar #weather svg {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            fill: var(--alexa-text-secondary);
+        }
 
-        /* Modals & Overlays */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 1050; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; display: flex; align-items: center; justify-content: center; }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background-color: var(--tt-button-bg); padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; transform: scale(0.95); transition: transform 0.3s; }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--tt-border-color); }
-        .modal-header h3 { font-size: 1.1em; font-weight: bold; }
-        .modal-header .close-modal-btn { font-size: 1.4em; color: var(--tt-text-secondary-color); cursor: pointer; }
-        /* Edit Profile Modal Specifics */
-        .edit-profile-form .form-group { margin-bottom: 15px; }
-        .edit-profile-form label { display: block; font-size: 0.8em; color: var(--tt-text-secondary-color); margin-bottom: 5px; }
-        .edit-profile-form input, .edit-profile-form textarea { width: 100%; background-color: var(--tt-button-bg-hover); border: 1px solid var(--tt-border-color); border-radius: 5px; padding: 8px 10px; color: var(--tt-text-color); font-size: 0.9em; opacity: 0.7; cursor: not-allowed; }
-        .edit-profile-form textarea { min-height: 60px; resize: none; }
-        /* Share Modal Specifics */
-        .share-options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 15px; text-align: center; }
-        .share-option i { font-size: 2em; margin-bottom: 6px; padding: 12px; border-radius: 50%; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; color: white; }
-        .share-option span { font-size: 0.75em; color: var(--tt-text-secondary-color); }
-        /* Specific Share Icon Colors */
-        .share-option .fa-whatsapp { background-color: #25D366;} .share-option .fa-twitter { background-color: #1DA1F2;}
-        .share-option .fa-facebook { background-color: #1877F2;} .share-option .fa-link { background-color: #555;}
-        .share-option .fa-sms { background-color: #4CAF50;} .share-option .fa-ellipsis-h { background-color: #777;}
+        /* Main Content Area - Where Screens are Displayed */
+        #main-content {
+            flex-grow: 1;
+            position: relative; /* For absolute positioning of screens */
+            overflow: hidden; /* To clip screens during transitions */
+        }
 
-        /* Fake Video Player */
-        .fake-video-player-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 1100; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; }
-        .fake-video-player-overlay.active { opacity: 1; visibility: visible; }
-        .fake-video-player-overlay .spinner { border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid #fff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .fake-video-player-overlay p { font-size: 0.9em; color: var(--tt-text-secondary-color); }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--alexa-bg);
+            padding: 20px;
+            overflow-y: auto;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease;
+            transform: translateX(100%);
+            opacity: 0;
+            display: none; /* Initially hide all screens */
+            scrollbar-width: thin;
+            scrollbar-color: var(--alexa-accent) var(--alexa-card-bg);
+        }
+        .screen.active {
+            transform: translateX(0);
+            opacity: 1;
+            display: block; /* Show active screen */
+        }
+        .screen.previous {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
 
-        /* Fake Camera Overlay */
-        .fake-camera-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #111; z-index: 1100; display: flex; flex-direction: column; align-items: center; justify-content: space-between; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; padding: calc(20px + var(--safe-area-inset-top)) 20px calc(20px + var(--safe-area-inset-bottom)) 20px; }
-        .fake-camera-overlay.active { opacity: 1; visibility: visible; }
-        .fake-camera-top-icons, .fake-camera-bottom-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .fake-camera-top-icons i, .fake-camera-bottom-controls i { font-size: 1.5em; color: #fff; padding: 10px; }
-        .fake-camera-record-btn { width: 70px; height: 70px; background-color: var(--tt-accent-color); border-radius: 50%; border: 4px solid rgba(255,255,255,0.5); }
+        /* Home Screen Specifics */
+        #home-screen .greeting {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        .content-carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 15px; /* For scrollbar */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        .content-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+        .content-carousel::-webkit-scrollbar-track {
+            background: var(--alexa-bg);
+        }
+        .content-carousel::-webkit-scrollbar-thumb {
+            background: var(--alexa-card-bg);
+            border-radius: 4px;
+        }
+        .card {
+            flex: 0 0 85%; /* Card width */
+            min-width: 280px; /* Minimum card width */
+            height: 180px;
+            background-color: var(--alexa-card-bg);
+            border-radius: var(--border-radius);
+            margin-right: 15px;
+            padding: 15px;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .card:last-child { margin-right: 0; }
+        .card h3 {
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            color: var(--alexa-text-primary);
+        }
+        .card p {
+            font-size: 0.9em;
+            color: var(--alexa-text-secondary);
+        }
+        .card.suggestion-card { background-color: #2a2a2a; }
+        .card.news-card { background: linear-gradient(135deg, #333 0%, #222 100%); }
+        .card.photo-card {
+            background-image: url('https://source.unsplash.com/random/400x300?nature');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
 
-        /* Settings Slide-out Menu */
-        .settings-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.0); z-index: 1200; opacity: 0; visibility: hidden; transition: background-color 0.3s, opacity 0.3s, visibility 0.3s; }
-        .settings-menu-overlay.active { background-color: rgba(0,0,0,0.5); opacity: 1; visibility: visible; }
-        .settings-menu { position: fixed; top: 0; right: -300px; /* Start off-screen */ width: 80%; max-width: 300px; height: 100%; background-color: #0a0a0a; /* Darker than button bg */ z-index: 1201; padding-top: var(--safe-area-inset-top); box-shadow: -5px 0 15px rgba(0,0,0,0.2); transition: right 0.3s ease-out; overflow-y: auto; }
-        .settings-menu-overlay.active .settings-menu { right: 0; }
-        .settings-menu-header { padding: 15px; font-size: 1.2em; font-weight: bold; border-bottom: 1px solid var(--tt-border-color); }
-        .settings-menu-item { display: flex; align-items: center; padding: 15px; font-size: 0.95em; border-bottom: 1px solid var(--tt-border-color); cursor: pointer; }
-        .settings-menu-item:last-child { border-bottom: none; }
-        .settings-menu-item i { margin-right: 15px; font-size: 1.2em; width: 20px; text-align: center; color: var(--tt-text-secondary-color); }
+        /* Section Title */
+        .section-title {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            color: var(--alexa-text-primary);
+            padding-top: 10px;
+        }
 
-        /* Toast */
-        .prank-toast { position: fixed; bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 15px); left: 50%; transform: translateX(-50%); background-color: rgba(35,35,35,0.95); color: white; padding: 7px 14px; border-radius: 18px; font-size: 0.8em; z-index: 2000; opacity: 0; transition: opacity 0.25s ease, bottom 0.25s ease; pointer-events: none; white-space: nowrap; }
-        .prank-toast.show { opacity: 1; bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom) + 25px); }
+        /* Quick Actions / Smart Home Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        .grid-item {
+            background-color: var(--alexa-card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+        .grid-item:hover {
+            background-color: #333;
+        }
+        .grid-item svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--alexa-accent);
+            margin-bottom: 10px;
+        }
+        .grid-item span {
+            font-size: 0.9em;
+            color: var(--alexa-text-secondary);
+        }
+        .grid-item.active-device {
+            background-color: var(--alexa-accent-light);
+        }
+        .grid-item.active-device svg { fill: white; }
+        .grid-item.active-device span { color: white; font-weight: bold; }
+
+
+        /* Music Screen Specifics */
+        #music-screen .album-art {
+            width: 70%;
+            aspect-ratio: 1/1;
+            background-color: var(--alexa-card-bg);
+            margin: 0 auto 20px auto;
+            border-radius: var(--border-radius);
+            background-image: url('https://source.unsplash.com/random/400x400?album,cover');
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        #music-screen .track-info { text-align: center; margin-bottom: 20px; }
+        #music-screen .track-info h2 { font-size: 1.5em; margin-bottom: 5px; }
+        #music-screen .track-info p { font-size: 1em; color: var(--alexa-text-secondary); }
+        #music-screen .controls { display: flex; justify-content: space-around; align-items: center; padding: 0 20px; }
+        #music-screen .controls button {
+            background: none;
+            border: none;
+            color: var(--alexa-text-primary);
+            cursor: pointer;
+        }
+        #music-screen .controls svg { width: 28px; height: 28px; fill: currentColor; }
+        #music-screen .controls .play-pause svg { width: 48px; height: 48px; }
+
+        /* Settings Screen Example */
+        .settings-list .setting-item {
+            background-color: var(--alexa-card-bg);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .settings-list .setting-item:hover { background-color: #333; }
+        .settings-list .setting-item .label { font-size: 1.1em; }
+        .settings-list .setting-item .value { font-size: 1em; color: var(--alexa-text-secondary); }
+        .settings-list .setting-item .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background-color: #555;
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+        }
+        .settings-list .setting-item .toggle-switch .knob {
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease;
+        }
+        .settings-list .setting-item .toggle-switch.active {
+            background-color: var(--alexa-green);
+        }
+        .settings-list .setting-item .toggle-switch.active .knob {
+            transform: translateX(24px);
+        }
+
+
+        /* Navigation Bar (Bottom) */
+        #nav-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background-color: var(--alexa-card-bg);
+            border-top: 1px solid #333;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--alexa-text-secondary);
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-item svg {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+            margin-bottom: 4px;
+        }
+        .nav-item span {
+            font-size: 0.75em;
+        }
+        .nav-item.active, .nav-item:hover {
+            color: var(--alexa-accent);
+        }
+        .nav-item.active {
+            background-color: rgba(0, 160, 210, 0.1);
+        }
+
+
+        /* Voice Interaction Overlay */
+        #voice-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 35%; /* Covers bottom part of the screen */
+            background: linear-gradient(to top, rgba(18,18,18,1) 70%, rgba(18,18,18,0));
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: calc(60px + 30px); /* Nav bar height + some padding */
+            z-index: 1000;
+        }
+        #voice-overlay.active {
+            display: flex;
+        }
+        #listening-indicator {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--alexa-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        #listening-indicator svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+        #voice-text {
+            font-size: 1.2em;
+            color: var(--alexa-text-primary);
+            text-align: center;
+            min-height: 2em; /* Reserve space for text */
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 160, 210, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 160, 210, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 160, 210, 0); }
+        }
+
+        /* Mic Button - for initiating voice (simulated) */
+        #mic-button-container {
+            position: fixed; /* Fixed to viewport for easy access, even if main UI scrolls */
+            bottom: calc(60px + 15px); /* Above nav bar */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100; /* Above most content, below overlay */
+        }
+        #mic-button {
+            width: 56px;
+            height: 56px;
+            background-color: var(--alexa-accent);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: background-color 0.2s ease;
+        }
+        #mic-button:hover {
+            background-color: var(--alexa-accent-light);
+        }
+        #mic-button svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        /* Helper class for accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
 
     </style>
 </head>
 <body>
-    <div class="splash-screen" id="splashScreen">
-        <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 0C229.2224 0 0 229.2224 0 512s229.2224 512 512 512 512-229.2224 512-512S794.7776 0 512 0z m219.0336 689.0496A230.4 230.4 0 0 1 502.8864 768a230.4 230.4 0 0 1-228.3008-158.1056A153.6 153.6 0 0 0 256 665.6V358.4c0-30.9248 9.216-59.7504 25.1392-84.8896A153.6 153.6 0 0 0 256 230.4h460.8c0.0512 0 0.0512 0 0.1024 0h51.2c44.8512 0 81.92 36.864 81.92 82.1248v327.2704c0 26.624-12.6976 50.688-32.9728 65.7408-20.2752 15.0528-46.2848 17.6128-68.9152 6.8096zM502.8864 307.2A230.4 230.4 0 0 0 274.5856 465.3056 153.6 153.6 0 0 1 299.52 550.4v-192c0-30.9248-9.216-59.7504-25.1392-84.8896A153.6 153.6 0 0 1 299.52 179.2h460.8c-0.0512 0-0.0512 0-0.1024 0h51.2c44.8512 0 81.92-36.864 81.92-82.1248V60.8256c0-26.624 12.6976-50.688 32.9728-65.7408C805.3248-20.0192 779.3152-22.5792 756.6848-11.776A230.4 230.4 0 0 0 502.8864 307.2z" fill="#FE2C55"></path><path d="M502.8864 307.2A230.4 230.4 0 0 0 274.5856 465.3056 153.6 153.6 0 0 1 299.52 550.4v-192c0-30.9248-9.216-59.7504-25.1392-84.8896A153.6 153.6 0 0 1 299.52 179.2h460.8c-0.0512 0-0.0512 0-0.1024 0h51.2c44.8512 0 81.92-36.864 81.92-82.1248V60.8256c0-26.624 12.6976-50.688 32.9728-65.7408C805.3248-20.0192 779.3152-22.5792 756.6848-11.776A230.4 230.4 0 0 0 502.8864 307.2z" fill="#25F4EE"></path><path d="M731.968 689.0496A230.4 230.4 0 0 1 502.8864 768a230.4 230.4 0 0 1-228.3008-158.1056A153.6 153.6 0 0 0 256 665.6V358.4c0-30.9248 9.216-59.7504 25.1392-84.8896A153.6 153.6 0 0 0 256 230.4h460.8c0.0512 0 0.0512 0 0.1024 0h51.2c44.8512 0 81.92 36.864 81.92 82.1248v327.2704c0 26.624-12.6976 50.688-32.9728 65.7408-20.2752 15.0528-46.2848 17.6128-68.9152 6.8096z" fill="#FFFFFF"></path></svg>
-    </div>
 
-    <div class="app-container">
-        <div class="profile-top-bar">
-            <div class="username-dropdown-container">
-                <div class="username-dropdown" onclick="toggleUsernameDropdown()">
-                    <span id="usernameTop">@username</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="fake-dropdown-menu" id="fakeUsernameDropdown">
-                    <div class="fake-dropdown-menu-item"><span>@username</span><i class="fas fa-check"></i></div>
-                    <div class="fake-dropdown-menu-item" onclick="showToast('Konto hinzufügen')"><span>Konto hinzufügen</span></div>
-                </div>
-            </div>
-            <div class="top-right-icons">
-                <div class="neurobotic-event-icon" id="eventIconContainer" onclick="showToast('Event: Neurobotic')">
-                    <div class="neurobotic-logo-container"></div>
-                    <strong id="eventIconNumber">2</strong>
-                </div>
-                <i class="fas fa-bars icon" onclick="toggleSettingsMenu()"></i>
+    <div id="echo-show-ui">
+        <!-- Status Bar -->
+        <div id="status-bar">
+            <div id="time">10:08 AM</div>
+            <div id="weather">
+                <!-- Sun Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5S14.76,7,12,7z M12,4c0.55,0,1-0.45,1-1V1c0-0.55-0.45-1-1-1S11,0.45,11,1v2 C11,3.55,11.45,4,12,4z M12,20c-0.55,0-1,0.45-1,1v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2C13,20.45,12.55,20,12,20z M4.93,6.34 c0.39-0.39,1.02-0.39,1.41,0l1.41,1.41c0.39,0.39,0.39,1.02,0,1.41s-1.02,0.39-1.41,0L4.93,7.76C4.54,7.37,4.54,6.73,4.93,6.34z M16.24,17.66c0.39-0.39,1.02-0.39,1.41,0l1.41,1.41c0.39,0.39,0.39,1.02,0,1.41s-1.02,0.39-1.41,0l-1.41-1.41 C15.85,18.68,15.85,18.05,16.24,17.66z M20,11h-2c-0.55,0-1,0.45-1,1s0.45,1,1,1h2c0.55,0,1-0.45,1-1S20.55,11,20,11z M4,11H2 c-0.55,0-1,0.45-1,1s0.45,1,1,1h2c0.55,0,1-0.45,1-1S4.55,11,4,11z M17.66,6.34c0.39,0.39,1.02,0.39,1.41,0l1.41-1.41 c0.39-0.39,0.39-1.02,0-1.41s-1.02-0.39-1.41,0l-1.41,1.41C18.05,4.54,17.37,4.54,17.66,6.34z M7.76,19.07 c-0.39,0.39-0.39,1.02,0,1.41l1.41,1.41c0.39,0.39,1.02,0.39,1.41,0s0.39-1.02,0-1.41l-1.41-1.41 C8.78,18.68,8.15,18.68,7.76,19.07z"/></svg>
+                <span>72°F & Sunny</span>
             </div>
         </div>
 
-        <div class="profile-page-scroll-content">
-            <!-- All profile content from previous version goes here -->
-            <!-- Pronouns, Header, Stats, Actions, Bio, Extra Links, Tabs, Stories Banner, Tab Content -->
-            <div class="profile-pronouns" id="profilePronouns">he/him/his</div>
-            <div class="profile-header">
-                <div class="profile-pic-container">
-                    <img src="" alt="Profilbild" class="profile-pic" id="profilePicMain">
-                    <div class="profile-event-bubble" id="profileEventBubble">Mother's Day!</div>
-                    <div class="profile-pic-add-story" onclick="openFakeCamera()">
-                        <i class="fas fa-plus"></i>
+        <!-- Main Content - Holds different screens -->
+        <div id="main-content">
+            <!-- Home Screen -->
+            <div id="home-screen" class="screen active">
+                <div class="greeting">Good morning, User!</div>
+                <div class="content-carousel">
+                    <div class="card suggestion-card">
+                        <h3>Try "Alexa, what's the news?"</h3>
+                        <p>Stay updated with the latest headlines.</p>
+                    </div>
+                    <div class="card news-card">
+                        <h3>Top Story: Tech Advances</h3>
+                        <p>New AI models are changing the game...</p>
+                    </div>
+                    <div class="card photo-card">
+                        <h3>Memories</h3>
+                        <p>A beautiful sunset from last summer.</p>
+                    </div>
+                    <div class="card suggestion-card">
+                        <h3>"Alexa, set a timer for 5 minutes"</h3>
+                        <p>Perfect for your kitchen tasks.</p>
                     </div>
                 </div>
-                <div class="profile-username-main" id="profileUsernameMain">@username</div>
-                <div class="profile-stats">
-                    <div class="stat-item" onclick="showToast('Liste: Gefolgt')">
-                        <span class="count" id="followingCountStat">0</span><span class="label">Gefolgt</span>
+
+                <div class="section-title">Quick Controls</div>
+                <div class="grid-container">
+                    <div class="grid-item" data-device="living-room-light" data-type="toggle">
+                        <!-- Lightbulb Icon SVG -->
+                        <svg viewBox="0 0 24 24"><path d="M9,2C7.95,2 7.04,2.53 6.43,3.34C7.5,4.5 8.07,5.92 8.07,7.4C8.07,8.88 7.5,10.3 6.43,11.46 C7.04,12.27 7.95,12.8 9,12.8C10.05,12.8 10.96,12.27 11.57,11.46C10.5,10.3 9.93,8.88 9.93,7.4 C9.93,5.92 10.5,4.5 11.57,3.34C10.96,2.53 10.05,2 9,2M9,0C10.38,0 11.63,0.67 12.5,1.76C10.89,2.18 9.53,3.47 9.08,5.07 C8.62,6.67 9.03,8.37 10.11,9.63C10.5,10.08 10.96,10.46 11.47,10.76C11.19,12.06 10.19,13.06 8.89,13.28 C7.13,13.57 5.5,12.31 5.15,10.56C4.8,8.81 5.94,7.21 7.66,6.78C8.07,6.66 8.5,6.61 8.92,6.61 C9.22,6.61 9.53,6.64 9.82,6.71C9.75,6.18 9.61,5.67 9.39,5.2C8.81,3.89 7.73,2.91 6.38,2.54 C5.03,2.17 3.62,2.47 2.53,3.34L2.54,3.34C1.03,4.59 0,6.54 0,8.59C0,12.08 2.69,14.77 6,14.77C6.26,14.77 6.5,14.75 6.75,14.71C7.9,15.44 9.28,15.8 10.75,15.8C11.91,15.8 13,15.5 13.96,14.95L14,15C14,18.31 16.69,21 20,21C23.31,21 26,18.31 26,15C26,11.69 23.31,9 20,9C19.38,9 18.79,9.11 18.25,9.31C17.34,6.18 14.5,4 11,4C10.34,4 9.7,4.11 9.11,4.3L9,4C9,2.9 8.7,1.86 8.13,1C7.25,0.37 6.17,0 5,0L9,0Z M15,12C15,11.45 14.55,11 14,11H12V9H14C14.55,9 15,8.55 15,8C15,7.45 14.55,7 14,7H12V5H14C14.55,5 15,4.45 15,4C15,3.45 14.55,3 14,3H10C9.45,3 9,3.45 9,4V8C9,8.55 9.45,9 10,9H11V11H10C9.45,11 9,11.45 9,12C9,12.55 9.45,13 10,13H11V15H10C9.45,15 9,15.45 9,16C9,16.55 9.45,17 10,17H14C14.55,17 15,16.55 15,16V12Z" transform="translate(-2 -2) scale(1.1)"/></svg>
+                        <span>Living Room Light</span>
                     </div>
-                    <div class="stat-item" onclick="showToast('Liste: Follower')">
-                        <span class="count" id="followerCountStat">0</span><span class="label">Follower*innen</span>
+                    <div class="grid-item" data-device="thermostat" data-type="adjust">
+                        <!-- Thermostat Icon SVG -->
+                        <svg viewBox="0 0 24 24"><path d="M12,13A5,5 0 0,0 7,8H9A3,3 0 0,1 12,11A3,3 0 0,1 15,8H17A5,5 0 0,0 12,13M12,3A3,3 0 0,0 9,6H15A3,3 0 0,0 12,3M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19Z"/></svg>
+                        <span>Thermostat</span>
                     </div>
-                    <div class="stat-item" onclick="showToast('Gesamte Likes')">
-                        <span class="count" id="likesCountStat">0</span><span class="label">Likes</span>
+                    <div class="grid-item" data-command="play-discover-weekly">
+                         <!-- Music Note SVG for a playlist -->
+                        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zm-2 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                        <span>Discover Weekly</span>
                     </div>
-                </div>
-                <div class="profile-actions-row">
-                    <button class="profile-action-button" onclick="openEditProfileModal()">Profil bearbeiten</button>
-                    <button class="profile-action-button" onclick="openShareModal()">Profil teilen</button>
-                    <button class="profile-action-button icon-btn" onclick="showToast('Freund hinzufügen')"><i class="fas fa-user-plus"></i></button>
-                </div>
-                <div class="profile-bio-main" id="profileBioMain">Bio text here.</div>
-                <div id="pdosTextContainer" style="font-size: 0.85em; color: var(--tt-text-secondary-color); text-align: center; margin-bottom: 8px;">Pdos sichten und vernichten</div>
-                <div class="profile-extra-links">
-                    <a href="#" onclick="event.preventDefault(); showToast('TikTok Studio')"><i class="fas fa-star"></i> TikTok Studio</a>
-                    <span class="separator">|</span>
-                    <a href="#" onclick="event.preventDefault(); showToast('Abonnements')"><i class="fas fa-rocket"></i> Abo</a>
                 </div>
             </div>
-            <div class="profile-tabs-container" id="profileTabsContainer">
-                <div class="tab-item active" data-tab="grid" onclick="switchTab(this)"><i class="fas fa-table-cells"></i><i class="fas fa-chevron-down"></i></div>
-                <div class="tab-item" data-tab="mentions" onclick="switchTab(this)"><i class="fas fa-at"></i></div>
-                <div class="tab-item" data-tab="private" onclick="switchTab(this)"><i class="fas fa-lock"></i></div>
-                <div class="tab-item" data-tab="reposts" onclick="switchTab(this)"><i class="fas fa-retweet"></i></div>
-                <div class="tab-item" data-tab="blocked" onclick="switchTab(this)"><i class="fas fa-heart-crack"></i></div>
-                <div class="tab-item" data-tab="liked" onclick="switchTab(this)"><i class="fas fa-heart"></i></div>
+
+            <!-- Music Screen -->
+            <div id="music-screen" class="screen">
+                <div class="album-art"></div>
+                <div class="track-info">
+                    <h2 id="music-title">Song Title</h2>
+                    <p id="music-artist">Artist Name</p>
+                </div>
+                <div class="controls">
+                    <button id="prev-track" aria-label="Previous Track">
+                        <!-- Skip Previous SVG -->
+                        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button id="play-pause-music" class="play-pause" aria-label="Play">
+                        <!-- Play SVG (changes to Pause) -->
+                        <svg viewBox="0 0 24 24" id="play-icon"><path d="M8 5v14l11-7z"/></svg>
+                        <svg viewBox="0 0 24 24" id="pause-icon" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <button id="next-track" aria-label="Next Track">
+                        <!-- Skip Next SVG -->
+                        <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                </div>
+                <div class="section-title" style="margin-top:30px;">Up Next</div>
+                <div class="grid-item" style="text-align:left; padding:10px 15px; justify-content:flex-start;">
+                    <span>1. Another Cool Song - Some Artist</span><br>
+                    <span style="font-size:0.8em; color: #888;">Album Name</span>
+                </div>
             </div>
-            <div class="stories-banner" id="storiesBanner">
-                <div class="stories-banner-text"><i class="fas fa-bullseye"></i><span>Schau dir abgelaufene Stories bei „Deine privaten Videos“ an</span></div>
-                <i class="fas fa-times close-btn" onclick="closeStoriesBanner()"></i>
+
+            <!-- Smart Home Screen -->
+            <div id="smart-home-screen" class="screen">
+                <div class="section-title">My Devices</div>
+                <div class="grid-container">
+                    <div class="grid-item" data-device="living-room-light" data-type="toggle">
+                        <svg viewBox="0 0 24 24"><path d="M9,2C7.95,2 7.04,2.53 6.43,3.34C7.5,4.5 8.07,5.92 8.07,7.4C8.07,8.88 7.5,10.3 6.43,11.46 C7.04,12.27 7.95,12.8 9,12.8C10.05,12.8 10.96,12.27 11.57,11.46C10.5,10.3 9.93,8.88 9.93,7.4 C9.93,5.92 10.5,4.5 11.57,3.34C10.96,2.53 10.05,2 9,2M9,0C10.38,0 11.63,0.67 12.5,1.76C10.89,2.18 9.53,3.47 9.08,5.07 C8.62,6.67 9.03,8.37 10.11,9.63C10.5,10.08 10.96,10.46 11.47,10.76C11.19,12.06 10.19,13.06 8.89,13.28 C7.13,13.57 5.5,12.31 5.15,10.56C4.8,8.81 5.94,7.21 7.66,6.78C8.07,6.66 8.5,6.61 8.92,6.61 C9.22,6.61 9.53,6.64 9.82,6.71C9.75,6.18 9.61,5.67 9.39,5.2C8.81,3.89 7.73,2.91 6.38,2.54 C5.03,2.17 3.62,2.47 2.53,3.34L2.54,3.34C1.03,4.59 0,6.54 0,8.59C0,12.08 2.69,14.77 6,14.77C6.26,14.77 6.5,14.75 6.75,14.71C7.9,15.44 9.28,15.8 10.75,15.8C11.91,15.8 13,15.5 13.96,14.95L14,15C14,18.31 16.69,21 20,21C23.31,21 26,18.31 26,15C26,11.69 23.31,9 20,9C19.38,9 18.79,9.11 18.25,9.31C17.34,6.18 14.5,4 11,4C10.34,4 9.7,4.11 9.11,4.3L9,4C9,2.9 8.7,1.86 8.13,1C7.25,0.37 6.17,0 5,0L9,0Z M15,12C15,11.45 14.55,11 14,11H12V9H14C14.55,9 15,8.55 15,8C15,7.45 14.55,7 14,7H12V5H14C14.55,5 15,4.45 15,4C15,3.45 14.55,3 14,3H10C9.45,3 9,3.45 9,4V8C9,8.55 9.45,9 10,9H11V11H10C9.45,11 9,11.45 9,12C9,12.55 9.45,13 10,13H11V15H10C9.45,15 9,15.45 9,16C9,16.55 9.45,17 10,17H14C14.55,17 15,16.55 15,16V12Z" transform="translate(-2 -2) scale(1.1)"/></svg>
+                        <span>Living Room Light</span>
+                    </div>
+                    <div class="grid-item active-device" data-device="kitchen-light" data-type="toggle">
+                        <svg viewBox="0 0 24 24"><path d="M9,2C7.95,2 7.04,2.53 6.43,3.34C7.5,4.5 8.07,5.92 8.07,7.4C8.07,8.88 7.5,10.3 6.43,11.46 C7.04,12.27 7.95,12.8 9,12.8C10.05,12.8 10.96,12.27 11.57,11.46C10.5,10.3 9.93,8.88 9.93,7.4 C9.93,5.92 10.5,4.5 11.57,3.34C10.96,2.53 10.05,2 9,2M9,0C10.38,0 11.63,0.67 12.5,1.76C10.89,2.18 9.53,3.47 9.08,5.07 C8.62,6.67 9.03,8.37 10.11,9.63C10.5,10.08 10.96,10.46 11.47,10.76C11.19,12.06 10.19,13.06 8.89,13.28 C7.13,13.57 5.5,12.31 5.15,10.56C4.8,8.81 5.94,7.21 7.66,6.78C8.07,6.66 8.5,6.61 8.92,6.61 C9.22,6.61 9.53,6.64 9.82,6.71C9.75,6.18 9.61,5.67 9.39,5.2C8.81,3.89 7.73,2.91 6.38,2.54 C5.03,2.17 3.62,2.47 2.53,3.34L2.54,3.34C1.03,4.59 0,6.54 0,8.59C0,12.08 2.69,14.77 6,14.77C6.26,14.77 6.5,14.75 6.75,14.71C7.9,15.44 9.28,15.8 10.75,15.8C11.91,15.8 13,15.5 13.96,14.95L14,15C14,18.31 16.69,21 20,21C23.31,21 26,18.31 26,15C26,11.69 23.31,9 20,9C19.38,9 18.79,9.11 18.25,9.31C17.34,6.18 14.5,4 11,4C10.34,4 9.7,4.11 9.11,4.3L9,4C9,2.9 8.7,1.86 8.13,1C7.25,0.37 6.17,0 5,0L9,0Z M15,12C15,11.45 14.55,11 14,11H12V9H14C14.55,9 15,8.55 15,8C15,7.45 14.55,7 14,7H12V5H14C14.55,5 15,4.45 15,4C15,3.45 14.55,3 14,3H10C9.45,3 9,3.45 9,4V8C9,8.55 9.45,9 10,9H11V11H10C9.45,11 9,11.45 9,12C9,12.55 9.45,13 10,13H11V15H10C9.45,15 9,15.45 9,16C9,16.55 9.45,17 10,17H14C14.55,17 15,16.55 15,16V12Z" transform="translate(-2 -2) scale(1.1)"/></svg>
+                        <span>Kitchen Light</span>
+                    </div>
+                    <div class="grid-item" data-device="thermostat" data-type="adjust">
+                         <svg viewBox="0 0 24 24"><path d="M12,13A5,5 0 0,0 7,8H9A3,3 0 0,1 12,11A3,3 0 0,1 15,8H17A5,5 0 0,0 12,13M12,3A3,3 0 0,0 9,6H15A3,3 0 0,0 12,3M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19Z"/></svg>
+                        <span>Thermostat: 70°F</span>
+                    </div>
+                     <div class="grid-item" data-device="front-door-lock" data-type="toggle">
+                        <!-- Lock Icon SVG -->
+                        <svg viewBox="0 0 24 24"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10A2,2 0 0,1 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                        <span>Front Door (Locked)</span>
+                    </div>
+                </div>
             </div>
-            <div id="tabContentContainer">
-                <div class="profile-content-grid active-tab-content" data-tab-content="grid"> <!-- Grid videos injected here --> </div>
-                <div class="tab-placeholder-content" data-tab-content="mentions"><i class="fas fa-at"></i><strong>Markierungen</strong><p>Videos, in denen du markiert wurdest, erscheinen hier.</p></div>
-                <div class="tab-placeholder-content" data-tab-content="private"><i class="fas fa-lock"></i><strong>Private Videos</strong><p>Hier siehst du deine privaten Videos.</p></div>
-                <div class="tab-placeholder-content" data-tab-content="reposts"><i class="fas fa-retweet"></i><strong>Reposts</strong><p>Videos, die du gerepostet hast.</p></div>
-                <div class="tab-placeholder-content" data-tab-content="blocked"><i class="fas fa-heart-crack"></i><strong>Nicht interessiert</strong><p>Inhalte, die du als "nicht interessiert" markiert hast.</p></div>
-                <div class="tab-placeholder-content" data-tab-content="liked"><i class="fas fa-heart"></i><strong> आवडलेले व्हिडिओ</strong><p>व्हिडिओ ज्या तुम्हाला आवडल्या आहेत त्या येथे दिसतील.</p></div>
+
+            <!-- Settings Screen (Example) -->
+            <div id="settings-screen" class="screen">
+                <div class="section-title">Display & Brightness</div>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <span class="label">Adaptive Brightness</span>
+                        <div class="toggle-switch active" data-setting="adaptive-brightness">
+                            <div class="knob"></div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <span class="label">Brightness</span>
+                        <input type="range" min="10" max="100" value="70" style="flex-grow:1; margin-left:20px;">
+                    </div>
+                </div>
+                <div class="section-title">Sounds</div>
+                 <div class="settings-list">
+                    <div class="setting-item">
+                        <span class="label">Alarms & Timers Volume</span>
+                         <input type="range" min="0" max="100" value="60" style="flex-grow:1; margin-left:20px;">
+                    </div>
+                    <div class="setting-item">
+                        <span class="label">Do Not Disturb</span>
+                        <div class="toggle-switch" data-setting="dnd">
+                            <div class="knob"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bottom-nav">
-            <div class="nav-item" onclick="showToast('Home')"><i class="fas fa-home"></i><span class="nav-label">Home</span></div>
-            <div class="nav-item" onclick="showToast('Shop')"><i class="fas fa-shopping-bag"></i><span class="nav-label">Shop</span></div>
-            <div class="nav-item nav-item-create" onclick="showToast('Video erstellen')"><div class="create-button-container"><div class="create-button-bg"><i class="fas fa-plus"></i></div></div></div>
-            <div class="nav-item" onclick="showToast('Posteingang')"><i class="far fa-paper-plane"></i><span class="notification-badge" id="inboxNotificationBadge">0</span><span class="nav-label">Posteingang</span></div>
-            <div class="nav-item active" onclick="showToast('Profil')"><i class="fas fa-user"></i><span class="nav-label">Profil</span></div>
+        <!-- Voice Interaction Visual Cue -->
+        <div id="voice-overlay">
+            <div id="listening-indicator">
+                <!-- Mic Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M12,14c1.66,0,3-1.34,3-3V5c0-1.66-1.34-3-3-3S9,3.34,9,5v6C9,12.66,10.34,14,12,14z M17.3,11c0,3-2.54,5.1-5.3,5.1 S6.7,14,6.7,11H5c0,3.41,2.72,6.23,6,6.72V21h2v-3.28c3.28-0.49,6-3.31,6-6.72H17.3z"/></svg>
+            </div>
+            <div id="voice-text">Listening...</div>
         </div>
 
-        <!-- Modals & Overlays -->
-        <div class="modal-overlay" id="editProfileModal">
-            <div class="modal-content">
-                <div class="modal-header"><h3>Profil bearbeiten</h3><i class="fas fa-times close-modal-btn" onclick="closeModal('editProfileModal')"></i></div>
-                <div class="edit-profile-form">
-                    <div class="form-group"><label>Name</label><input type="text" id="editNameInput" readonly></div>
-                    <div class="form-group"><label>Benutzername</label><input type="text" id="editUsernameInput" readonly></div>
-                    <div class="form-group"><label>Pronomen</label><input type="text" id="editPronounsInput" readonly></div>
-                    <div class="form-group"><label>Steckbrief</label><textarea id="editBioInput" readonly></textarea></div>
-                     <button class="profile-action-button" style="width:100%; margin-top:10px; background-color: var(--tt-button-bg-hover); opacity:0.7; cursor:not-allowed;">Speichern</button>
-                </div>
-            </div>
+
+        <!-- Navigation Bar -->
+        <div id="nav-bar">
+            <a href="#" class="nav-item active" data-screen="home-screen">
+                <!-- Home Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item" data-screen="music-screen">
+                <!-- Music Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zm-2 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                <span>Music</span>
+            </a>
+            <a href="#" class="nav-item" data-screen="smart-home-screen">
+                <!-- Smart Home Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 2.17L17.83 10H6.17L12 5.17zM7 18v-6.03l5-4.5 5 4.5V18H7z"/><path d="M0 0h24v24H0z" fill="none"/><path d="M10 10.02h4V12h-4z"/></svg>
+                <span>Smart Home</span>
+            </a>
+             <a href="#" class="nav-item" data-screen="settings-screen">
+                <!-- Settings Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                <span>Settings</span>
+            </a>
         </div>
-        <div class="modal-overlay" id="shareProfileModal">
-            <div class="modal-content">
-                <div class="modal-header"><h3>Profil teilen</h3><i class="fas fa-times close-modal-btn" onclick="closeModal('shareProfileModal')"></i></div>
-                <div class="share-options-grid">
-                    <div class="share-option" onclick="showToast('Geteilt via WhatsApp')"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></div>
-                    <div class="share-option" onclick="showToast('Geteilt via Twitter')"><i class="fab fa-twitter"></i><span>Twitter</span></div>
-                    <div class="share-option" onclick="showToast('Geteilt via Facebook')"><i class="fab fa-facebook"></i><span>Facebook</span></div>
-                    <div class="share-option" onclick="showToast('Link kopiert')"><i class="fas fa-link"></i><span>Link kopieren</span></div>
-                    <div class="share-option" onclick="showToast('Geteilt via SMS')"><i class="fas fa-sms"></i><span>SMS</span></div>
-                    <div class="share-option" onclick="showToast('Weitere Optionen')"><i class="fas fa-ellipsis-h"></i><span>Mehr</span></div>
-                </div>
-            </div>
+
+        <!-- Floating Mic Button (Conceptual - in a real Echo Show, this isn't a button but wake word) -->
+        <div id="mic-button-container">
+            <button id="mic-button" aria-label="Activate Alexa">
+                <!-- Mic Icon SVG -->
+                <svg viewBox="0 0 24 24"><path d="M12,14c1.66,0,3-1.34,3-3V5c0-1.66-1.34-3-3-3S9,3.34,9,5v6C9,12.66,10.34,14,12,14z M17.3,11c0,3-2.54,5.1-5.3,5.1 S6.7,14,6.7,11H5c0,3.41,2.72,6.23,6,6.72V21h2v-3.28c3.28-0.49,6-3.31,6-6.72H17.3z"/></svg>
+            </button>
         </div>
-        <div class="fake-video-player-overlay" id="fakeVideoPlayer">
-            <div class="spinner"></div> <p>Video wird geladen...</p>
-        </div>
-        <div class="fake-camera-overlay" id="fakeCamera">
-            <div class="fake-camera-top-icons"><i class="fas fa-bolt"></i> <i class="fas fa-sync-alt"></i> <i class="fas fa-times" onclick="closeFakeCamera()"></i></div>
-            <div class="fake-camera-record-btn" onclick="showToast('Aufnahme gestartet (Fake)')"></div>
-            <div class="fake-camera-bottom-controls"><i class="fas fa-photo-video"></i> <i class="fas fa-magic"></i></div>
-        </div>
-        <div class="settings-menu-overlay" id="settingsMenuOverlay" onclick="closeSettingsMenuOutside(event)">
-            <div class="settings-menu" id="settingsMenu">
-                <div class="settings-menu-header">Einstellungen</div>
-                <div class="settings-menu-item" onclick="showToast('Einstellungen und Datenschutz')"><i class="fas fa-user-shield"></i>Einstellungen und Datenschutz</div>
-                <div class="settings-menu-item" onclick="showToast('QR-Code')"><i class="fas fa-qrcode"></i>QR-Code</div>
-                <div class="settings-menu-item" onclick="showToast('Sprache')"><i class="fas fa-language"></i>Sprache</div>
-                <div class="settings-menu-item" onclick="showToast('Abmelden')"><i class="fas fa-sign-out-alt"></i>Abmelden</div>
-            </div>
-        </div>
-        <div class="prank-toast" id="prankToastElement"></div>
+
     </div>
 
     <script>
-        // --- 💣 CUSTOMIZE YOUR PRANK HERE! (German Labels for Screenshot Accuracy) 💣 ---
-        const PRANK_DATA = {
-            nameField: "Superstar DE", // For the "Name" field in Edit Profile
-            username: "SuperstarDE",
-            pronouns: "sie/ihr",
-            profilePicUrl: "https://randomuser.me/api/portraits/women/45.jpg",
-            eventBubbleText: "Vatertag!",
-            followingCount: "789", followerCount: "1.523.456", likesCount: "25.378.910", // Use raw numbers for formatting
-            bio: "🇩🇪 Living my best life!\n✨ Content Creator | Gamer 🎮\n👇 Links & Merch",
-            pdosText: "Pdos sichten und vernichten", // Text above TikTok Studio/Abo
-            showTikTokStudio: true, showAboLink: true,
-            eventIconNumber: "2", // For Neurobotic icon
-            showStoriesBanner: true,
-            numFakeVideos: 21, minViews: 1000, maxViews: 3500000,
-            inboxNotifications: "7"
-        };
-        // --- END OF CUSTOMIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeEl = document.getElementById('time');
+            const weatherEl = document.getElementById('weather').querySelector('span');
+            const screens = document.querySelectorAll('.screen');
+            const navItems = document.querySelectorAll('.nav-item');
+            const micButton = document.getElementById('mic-button');
+            const voiceOverlay = document.getElementById('voice-overlay');
+            const voiceText = document.getElementById('voice-text');
+            let currentScreenId = 'home-screen';
 
-        function germanFormatNumber(num) {
-            if (num >= 10000000) return (num / 1000000).toFixed(1).replace('.', ',') + ' Mio'; // e.g. 25,3 Mio
-            if (num >= 1000000) return (num / 1000000).toFixed(2).replace('.', ',') + ' Mio'; // e.g. 1,52 Mio
-            if (num >= 10000) return (num / 1000).toFixed(1).replace('.', ',') + 'K'; // e.g. 28,0K
-            if (num >= 1000) return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); // e.g. 1.281
-            return num.toString();
-        }
-        function germanFormatViews(num) { // Simpler for views, often just K or Mio
-            if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0','').replace('.', ',') + ' Mio';
-            if (num >= 1000) return (num / 1000).toFixed(1).replace('.0','').replace('.', ',') + 'K';
-            return num.toString();
-        }
-
-        document.getElementById('usernameTop').textContent = `@${PRANK_DATA.username}`;
-        document.getElementById('profileUsernameMain').textContent = `@${PRANK_DATA.username}`;
-        if (PRANK_DATA.pronouns) document.getElementById('profilePronouns').textContent = PRANK_DATA.pronouns;
-        else document.getElementById('profilePronouns').style.display = 'none';
-        document.getElementById('profilePicMain').src = PRANK_DATA.profilePicUrl;
-        if (PRANK_DATA.eventBubbleText) document.getElementById('profileEventBubble').textContent = PRANK_DATA.eventBubbleText;
-        else document.getElementById('profileEventBubble').style.display = 'none';
-        
-        document.getElementById('followingCountStat').textContent = germanFormatNumber(parseInt(PRANK_DATA.followingCount.replace(/\./g, '')));
-        document.getElementById('followerCountStat').textContent = germanFormatNumber(parseInt(PRANK_DATA.followerCount.replace(/\.|Mio|K/gi, '').replace(',', '.')));
-        document.getElementById('likesCountStat').textContent = germanFormatNumber(parseInt(PRANK_DATA.likesCount.replace(/\.|Mio|K/gi, '').replace(',', '.')));
-
-        document.getElementById('profileBioMain').textContent = PRANK_DATA.bio;
-        if (PRANK_DATA.pdosText) document.getElementById('pdosTextContainer').textContent = PRANK_DATA.pdosText;
-        else document.getElementById('pdosTextContainer').style.display = 'none';
-
-        const studioLink = document.querySelector('.profile-extra-links a[href*="TikTok Studio"]');
-        const aboLink = document.querySelector('.profile-extra-links a[href*="Abonnements"]');
-        const separator = document.querySelector('.profile-extra-links .separator');
-        if (!PRANK_DATA.showTikTokStudio) studioLink.style.display = 'none';
-        if (!PRANK_DATA.showAboLink) aboLink.style.display = 'none';
-        if (!PRANK_DATA.showTikTokStudio && !PRANK_DATA.showAboLink) { if (separator) separator.style.display = 'none'; document.querySelector('.profile-extra-links').style.display = 'none'; }
-        else if (!PRANK_DATA.showTikTokStudio || !PRANK_DATA.showAboLink) { if (separator) separator.style.display = 'none'; }
-
-        document.getElementById('eventIconNumber').textContent = PRANK_DATA.eventIconNumber;
-        if (!PRANK_DATA.showStoriesBanner) document.getElementById('storiesBanner').style.display = 'none';
-        const inboxBadge = document.getElementById('inboxNotificationBadge');
-        if (PRANK_DATA.inboxNotifications && PRANK_DATA.inboxNotifications !== "0") { inboxBadge.textContent = PRANK_DATA.inboxNotifications; inboxBadge.style.display = 'flex'; }
-        else inboxBadge.style.display = 'none';
-
-        const gridContainer = document.querySelector('.profile-content-grid[data-tab-content="grid"]');
-        for (let i = 0; i < PRANK_DATA.numFakeVideos; i++) {
-            const item = document.createElement('div'); item.classList.add('grid-video-item');
-            item.onclick = () => openFakeVideoPlayer();
-            const img = document.createElement('img'); img.src = `https://picsum.photos/seed/${PRANK_DATA.username.toLowerCase()}${i}/270/405`; img.alt = `Fake Video ${i+1}`;
-            const viewsDiv = document.createElement('div'); viewsDiv.classList.add('views');
-            const randomViews = Math.floor(Math.random() * (PRANK_DATA.maxViews - PRANK_DATA.minViews + 1)) + PRANK_DATA.minViews;
-            viewsDiv.innerHTML = `<i class="fas fa-play"></i> ${germanFormatViews(randomViews)}`;
-            item.appendChild(img); item.appendChild(viewsDiv);
-            if (Math.random() < 0.2) { const multiIcon = document.createElement('i'); multiIcon.className = 'fas fa-clone multi-image-icon'; item.appendChild(multiIcon); }
-            gridContainer.appendChild(item);
-        }
-
-        let toastTimeout;
-        function showToast(message) {
-            const toastElement = document.getElementById('prankToastElement');
-            toastElement.textContent = message; toastElement.classList.add('show');
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => { toastElement.classList.remove('show'); }, 1800);
-        }
-
-        function switchTab(tabElement) {
-            document.querySelectorAll('#profileTabsContainer .tab-item').forEach(tab => tab.classList.remove('active'));
-            tabElement.classList.add('active');
-            const tabContents = document.querySelectorAll('#tabContentContainer > div');
-            tabContents.forEach(content => content.classList.remove('active-tab-content'));
-            const activeTabContentId = tabElement.dataset.tab;
-            const activeContent = document.querySelector(`#tabContentContainer > div[data-tab-content="${activeTabContentId}"]`);
-            if(activeContent) activeContent.classList.add('active-tab-content');
-            // showToast(`Tab: ${activeTabContentId} ausgewählt`); // Optional toast on tab switch
-        }
-        function closeStoriesBanner() { document.getElementById('storiesBanner').classList.add('hidden'); showToast('Banner geschlossen'); }
-        
-        // Modals & Overlays
-        function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
-        function openEditProfileModal() {
-            document.getElementById('editNameInput').value = PRANK_DATA.nameField;
-            document.getElementById('editUsernameInput').value = `@${PRANK_DATA.username}`;
-            document.getElementById('editPronounsInput').value = PRANK_DATA.pronouns;
-            document.getElementById('editBioInput').value = PRANK_DATA.bio;
-            openModal('editProfileModal');
-        }
-        function openShareModal() { openModal('shareProfileModal'); }
-        function openFakeVideoPlayer() {
-            openModal('fakeVideoPlayer');
-            setTimeout(() => closeModal('fakeVideoPlayer'), 1500 + Math.random() * 1000); // Close after 1.5-2.5s
-        }
-        function openFakeCamera() {
-            openModal('fakeCamera');
-            // setTimeout(() => closeModal('fakeCamera'), 2000); // Optionally auto-close
-        }
-        function closeFakeCamera() { closeModal('fakeCamera'); }
-
-        const usernameDropdown = document.getElementById('fakeUsernameDropdown');
-        function toggleUsernameDropdown() { usernameDropdown.classList.toggle('active'); }
-        document.addEventListener('click', function(event) { // Close dropdown if clicked outside
-            const container = document.querySelector('.username-dropdown-container');
-            if (!container.contains(event.target) && usernameDropdown.classList.contains('active')) {
-                usernameDropdown.classList.remove('active');
+            // Clock Update
+            function updateTime() {
+                const now = new Date();
+                timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
-        });
+            updateTime();
+            setInterval(updateTime, 1000 * 30); // Update every 30 seconds
 
-        const settingsMenuOverlay = document.getElementById('settingsMenuOverlay');
-        const settingsMenu = document.getElementById('settingsMenu');
-        function toggleSettingsMenu() { settingsMenuOverlay.classList.toggle('active'); }
-        function closeSettingsMenuOutside(event) {
-            if (event.target === settingsMenuOverlay) { settingsMenuOverlay.classList.remove('active'); }
-        }
-        
-        // Splash Screen
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.getElementById('splashScreen').classList.add('hidden');
-            }, 100); // Show splash for 100ms then start fade out (0.3s) + 0.5s delay from CSS = ~0.9s total
+            // Mock Weather (can be expanded)
+            function updateWeather() {
+                // In a real app, this would be an API call
+                const temperatures = ['72°F & Sunny', '65°F & Cloudy', '58°F & Rainy', '75°F & Clear'];
+                const icons = [
+                    '<svg viewBox="0 0 24 24"><path d="M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5S14.76,7,12,7z M12,4c0.55,0,1-0.45,1-1V1c0-0.55-0.45-1-1-1S11,0.45,11,1v2 C11,3.55,11.45,4,12,4z M12,20c-0.55,0-1,0.45-1,1v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2C13,20.45,12.55,20,12,20z M4.93,6.34 c0.39-0.39,1.02-0.39,1.41,0l1.41,1.41c0.39,0.39,0.39,1.02,0,1.41s-1.02,0.39-1.41,0L4.93,7.76C4.54,7.37,4.54,6.73,4.93,6.34z M16.24,17.66c0.39-0.39,1.02-0.39,1.41,0l1.41,1.41c0.39,0.39,0.39,1.02,0,1.41s-1.02,0.39-1.41,0l-1.41-1.41 C15.85,18.68,15.85,18.05,16.24,17.66z M20,11h-2c-0.55,0-1,0.45-1,1s0.45,1,1,1h2c0.55,0,1-0.45,1-1S20.55,11,20,11z M4,11H2 c-0.55,0-1,0.45-1,1s0.45,1,1,1h2c0.55,0,1-0.45,1-1S4.55,11,4,11z M17.66,6.34c0.39,0.39,1.02,0.39,1.41,0l1.41-1.41 c0.39-0.39,0.39-1.02,0-1.41s-1.02-0.39-1.41,0l-1.41,1.41C18.05,4.54,17.37,4.54,17.66,6.34z M7.76,19.07 c-0.39,0.39-0.39,1.02,0,1.41l1.41,1.41c0.39,0.39,1.02,0.39,1.41,0s0.39-1.02,0-1.41l-1.41-1.41 C8.78,18.68,8.15,18.68,7.76,19.07z"/></svg>', // Sun
+                    '<svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>', // Cloud
+                    '<svg viewBox="0 0 24 24"><path d="M18 14.97V10c0-3.87-3.13-7-7-7S4 6.13 4 10v4.97c-1.69.43-3 1.95-3 3.78 0 2.21 1.79 4 4 4h12c2.21 0 4-1.79 4-4 0-1.83-1.31-3.35-3-3.78zM8 10c0-2.21 1.79-4 4-4s4 1.79 4 4v4.34c-1.11-.21-2.28-.34-3.5-.34s-2.39.13-3.5.34V10zm7.5 8H10c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h5.5c1.1 0 2-.9 2-2s-.9-2-2-2h-.85c.33-.47.55-.99.63-1.55.09-.56.02-1.13-.19-1.65-.22-.52-.57-.98-1.02-1.34-.45-.35-.98-.6-1.57-.7V10c0-1.1-.9-2-2-2s-2 .9-2 2v.76c-.59.1-1.12.35-1.57.7-.45.36-.8.82-1.02 1.34-.21.52-.28 1.09-.19 1.65.08.56.3 1.08.63 1.55H6.5c-1.1 0-2 .9-2 2s.9 2 2 2h1.5v.5c0 .28.22.5.5.5s.5-.22.5-.5V18h1.5v.5c0 .28.22.5.5.5s.5-.22.5-.5V18h1.5v.5c0 .28.22.5.5.5s.5-.22.5-.5V18z"/></svg>' // Rain
+                ];
+                const randomIndex = Math.floor(Math.random() * temperatures.length);
+                weatherEl.textContent = temperatures[randomIndex];
+                document.getElementById('weather').querySelector('svg').outerHTML = icons[randomIndex];
+            }
+            updateWeather(); // Initial call
+            // setInterval(updateWeather, 1000 * 60 * 15); // Update every 15 mins
+
+            // Screen Navigation
+            function showScreen(screenId, direction = 'forward') {
+                const currentActiveScreen = document.querySelector('.screen.active');
+                const nextScreen = document.getElementById(screenId);
+
+                if (currentActiveScreen && currentActiveScreen.id === screenId) return; // Already on this screen
+
+                navItems.forEach(item => item.classList.remove('active'));
+                const activeNavItem = document.querySelector(`.nav-item[data-screen="${screenId}"]`);
+                if (activeNavItem) activeNavItem.classList.add('active');
+
+                if (currentActiveScreen) {
+                    currentActiveScreen.classList.remove('active');
+                    if (direction === 'forward') {
+                        currentActiveScreen.classList.add('previous'); // Slide out to left
+                    } else {
+                        // For 'backward' transition, the currentActiveScreen (which is now previous)
+                        // will slide out to the right. We'll rely on new screen sliding in from left.
+                    }
+                }
+
+                screens.forEach(s => {
+                    if (s.id !== screenId && s.id !== (currentActiveScreen ? currentActiveScreen.id : null)) {
+                        s.style.display = 'none'; // Hide non-relevant screens immediately
+                        s.classList.remove('previous'); // Clean up previous class
+                        s.style.transform = 'translateX(100%)'; // Reset position for next time
+                    }
+                });
+                
+                if (nextScreen) {
+                    nextScreen.style.display = 'block'; // Make it visible for transition
+                    requestAnimationFrame(() => { // Ensure display:block is applied before transition
+                        if (direction === 'forward') {
+                            nextScreen.style.transform = 'translateX(100%)'; // Start from right
+                        } else {
+                            nextScreen.style.transform = 'translateX(-100%)'; // Start from left
+                        }
+                        requestAnimationFrame(() => { // Trigger transition
+                           nextScreen.classList.add('active');
+                           currentScreenId = screenId;
+                        });
+                    });
+                }
+                
+                // Clean up 'previous' class after transition
+                 if (currentActiveScreen) {
+                    setTimeout(() => {
+                        currentActiveScreen.classList.remove('previous');
+                        if (currentActiveScreen.id !== screenId) { // If not the current active screen
+                           currentActiveScreen.style.display = 'none';
+                        }
+                    }, 400); // Match CSS transition duration
+                }
+            }
+
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const screenId = item.dataset.screen;
+                    // Determine direction based on current nav item index vs new one (simple approach)
+                    let currentIdx = -1, nextIdx = -1;
+                    navItems.forEach((nav, idx) => {
+                        if (nav.classList.contains('active')) currentIdx = idx;
+                        if (nav.dataset.screen === screenId) nextIdx = idx;
+                    });
+                    const direction = (nextIdx > currentIdx) ? 'forward' : 'backward';
+                    showScreen(screenId, direction);
+                });
+            });
+
+            // Voice Interaction Simulation
+            let voiceTimeout;
+            micButton.addEventListener('click', () => {
+                if (voiceOverlay.classList.contains('active')) {
+                    // If already active, maybe cancel? For now, let it run.
+                    return;
+                }
+                voiceOverlay.classList.add('active');
+                voiceText.textContent = "Listening...";
+
+                clearTimeout(voiceTimeout);
+                voiceTimeout = setTimeout(() => {
+                    const command = prompt("Alexa, I heard: (type your command)");
+                    if (command) {
+                        processVoiceCommand(command.toLowerCase());
+                    } else {
+                        voiceText.textContent = "Sorry, I didn't catch that.";
+                        setTimeout(hideVoiceOverlay, 2000);
+                    }
+                }, 1500); // Simulate listening duration
+            });
+
+            function hideVoiceOverlay() {
+                voiceOverlay.classList.remove('active');
+            }
+
+            function processVoiceCommand(command) {
+                let response = "Sorry, I can't do that yet.";
+                if (command.includes("time")) {
+                    const now = new Date();
+                    response = `The time is ${now.toLocaleTimeString([], { hour: 'numeric', minute:'2-digit' })}`;
+                } else if (command.includes("weather")) {
+                    response = `It's currently ${weatherEl.textContent}.`;
+                } else if (command.includes("play music") || command.includes("discover weekly")) {
+                    showScreen('music-screen');
+                    response = "Playing your music.";
+                    // Simulate music playing
+                    document.getElementById('music-title').textContent = "Awesome Mix Vol. 1";
+                    document.getElementById('music-artist').textContent = "Various Artists";
+                    togglePlayPauseMusic(true); // Start playing
+                } else if (command.includes("stop music")) {
+                    response = "Stopping music.";
+                     if(currentScreenId === 'music-screen') togglePlayPauseMusic(false); // Stop playing
+                } else if (command.includes("turn on living room light")) {
+                    response = "Okay, turning on the Living Room Light.";
+                    toggleDeviceState('living-room-light', true);
+                    if(currentScreenId !== 'smart-home-screen') showScreen('smart-home-screen');
+                } else if (command.includes("turn off living room light")) {
+                    response = "Okay, turning off the Living Room Light.";
+                    toggleDeviceState('living-room-light', false);
+                     if(currentScreenId !== 'smart-home-screen') showScreen('smart-home-screen');
+                } else if (command.includes("what's on my shopping list")) {
+                     response = "You have milk, eggs, and bread on your shopping list.";
+                } else if (command.includes("go home")) {
+                    response = "Okay.";
+                    showScreen('home-screen');
+                }
+
+
+                voiceText.textContent = response;
+                setTimeout(hideVoiceOverlay, 3000);
+            }
+            
+            // Smart Home Device Toggling
+            document.querySelectorAll('.grid-item[data-device]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const deviceId = item.dataset.device;
+                    const deviceType = item.dataset.type;
+                    if (deviceType === 'toggle') {
+                        const isActive = item.classList.toggle('active-device');
+                         voiceText.textContent = `${deviceId.replace(/-/g, ' ')} ${isActive ? 'ON' : 'OFF'}`;
+                         voiceOverlay.classList.add('active');
+                         setTimeout(hideVoiceOverlay, 1500);
+                    } else if (deviceType === 'adjust') {
+                        // For thermostat, a modal or dedicated screen would be better
+                        const currentTemp = parseInt(prompt("Set thermostat temperature:", "70"));
+                        if (!isNaN(currentTemp)) {
+                           item.querySelector('span').textContent = `Thermostat: ${currentTemp}°F`;
+                           voiceText.textContent = `Thermostat set to ${currentTemp} degrees.`;
+                           voiceOverlay.classList.add('active');
+                           setTimeout(hideVoiceOverlay, 1500);
+                        }
+                    }
+                });
+            });
+            
+            function toggleDeviceState(deviceId, turnOn) {
+                 const deviceElement = document.querySelector(`.grid-item[data-device="${deviceId}"]`);
+                 if (deviceElement) {
+                     if (turnOn) {
+                         deviceElement.classList.add('active-device');
+                     } else {
+                         deviceElement.classList.remove('active-device');
+                     }
+                 }
+            }
+
+            // Music Player Controls
+            const playPauseButton = document.getElementById('play-pause-music');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            let isPlayingMusic = false;
+
+            function togglePlayPauseMusic(forcePlay) {
+                if (typeof forcePlay === 'boolean') {
+                    isPlayingMusic = !forcePlay; // Set to opposite so next toggle is correct
+                }
+
+                isPlayingMusic = !isPlayingMusic;
+                if (isPlayingMusic) {
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                    playPauseButton.setAttribute('aria-label', 'Pause');
+                    document.getElementById('music-title').style.color = 'var(--alexa-accent)'; // Indicate playing
+                } else {
+                    playIcon.style.display = 'block';
+                    pauseIcon.style.display = 'none';
+                    playPauseButton.setAttribute('aria-label', 'Play');
+                    document.getElementById('music-title').style.color = 'var(--alexa-text-primary)';
+                }
+            }
+            playPauseButton.addEventListener('click', () => togglePlayPauseMusic());
+
+            document.getElementById('prev-track').addEventListener('click', () => {
+                document.getElementById('music-title').textContent = "Previous Amazing Song";
+                document.getElementById('music-artist').textContent = "Another Artist";
+                togglePlayPauseMusic(true);
+            });
+            document.getElementById('next-track').addEventListener('click', () => {
+                document.getElementById('music-title').textContent = "Next Great Hit";
+                document.getElementById('music-artist').textContent = "Yet Another Band";
+                togglePlayPauseMusic(true);
+            });
+
+            // Settings Toggles
+            document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    toggle.classList.toggle('active');
+                    const setting = toggle.dataset.setting;
+                    const isActive = toggle.classList.contains('active');
+                    console.log(`Setting ${setting} is now ${isActive ? 'ON' : 'OFF'}`);
+                    // Here you could save the setting or trigger an action
+                });
+            });
+
+
+            // Initialize first screen
+            showScreen('home-screen');
         });
 
     </script>
