@@ -3,290 +3,663 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fremd im Spiegel - Das Buch (Erweitert)</title>
+    <title>Fremd im Spiegel - Das erweiterte Buch (PC-Version)</title>
     <style>
         /* Globale Stile & Reset */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; overflow: hidden; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Verhindert Scrollen der Hauptseite */
+            background-color: #333; /* Dunkler Hintergrund außen */
+        }
+
         body {
-            font-family: 'Georgia', serif; background-color: #e0d6c7;
-            display: flex; justify-content: center; align-items: center;
-            padding: 10px; color: #3a2a1e;
+            font-family: 'Times New Roman', Times, serif; /* Klassische Buch-Schriftart für PC */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Abstand zum Rand */
         }
-        /* Buch-Container */
+
+        /* Buch-Container - Breiter für PC */
         .book-wrapper {
-            width: 90vw; height: 90vh; max-width: 500px; max-height: 750px; /* Etwas höher für mehr Inhalt */
-            background-color: #5c4d41; box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.2);
-            border-radius: 8px 3px 3px 8px; display: flex; flex-direction: column; position: relative; overflow: hidden;
+            width: 95vw; /* Größere Breite */
+            height: 90vh; /* Größere Höhe */
+            max-width: 900px; /* Maximale Breite für große Bildschirme */
+            max-height: 90%; 
+            background-color: #f5f1e9; /* Helleres, leicht gealtertes Papier */
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5); 
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden; /* Wichtig für Seiten-Handling */
+            border: 1px solid #d1c7b8; /* Leichter Rand */
         }
-        /* Buchrücken-Titel (nur für breitere Screens) */
-        .book-spine-title {
-            writing-mode: vertical-rl; text-orientation: mixed; background-color: #4a3b31;
-            color: #d4c8be; padding: 15px 5px; font-size: 1em; text-align: center; letter-spacing: 1px;
-            position: absolute; left: 0; top: 15%; height: 70%; border-right: 2px solid #30261e; display: none;
-        }
+        
         .main-book-content {
-            flex-grow: 1; background-color: #fdfaf3; padding: 15px; /* Padding reduziert für mehr Platz */
-            overflow-y: auto; position: relative;
+            flex-grow: 1;
+            padding: 40px 60px; /* Mehr Innenabstand für PC */
+            overflow-y: auto; /* Scrollen innerhalb der Seite */
+            position: relative;
+            scrollbar-width: thin; /* Schmalere Scrollbar */
+            scrollbar-color: #a09388 #f5f1e9; /* Angepasste Scrollbarfarben */
         }
+        /* Für Webkit-Browser (Chrome, Safari) */
+        .main-book-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .main-book-content::-webkit-scrollbar-track {
+            background: #f5f1e9;
+        }
+        .main-book-content::-webkit-scrollbar-thumb {
+            background-color: #a09388;
+            border-radius: 4px;
+            border: 2px solid #f5f1e9;
+        }
+
+
         /* Seiten-Styling */
         .page-content {
-            display: none; animation: fadeIn 0.6s ease-in-out; min-height: 95%; /* Fast die volle Höhe nutzen */
-            padding: 10px; /* Innenpadding für den Text */
+            display: none; /* Alle Seiten standardmäßig ausblenden */
+            animation: contentFadeIn 0.6s ease-out;
+            min-height: 100%; 
+            color: #2c1f13; /* Sehr dunkles Braun für Text */
         }
-        .page-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .page-content h1 { font-size: 1.8em; text-align: center; margin-bottom: 15px; color: #4a3b31; padding-bottom: 8px; border-bottom: 1px solid #d4c8be; }
-        .page-content h2 { font-size: 1.3em; text-align: center; margin-bottom: 15px; margin-top: 5px; color: #5c4d41; font-style: italic; }
-        .page-content p { margin-bottom: 1em; line-height: 1.55; font-size: 0.9em; text-align: justify; }
-        .thought { font-style: italic; color: #6d5f53; margin: 0.8em 15px 0.8em 5px; padding-left: 8px; border-left: 2px solid #d4c8be; }
-        .dialogue { margin-left: 10px; margin-bottom: 0.8em; padding: 5px; background-color: rgba(212, 200, 190, 0.1); border-radius: 3px; }
-        .dialogue strong { font-weight: bold; color: #4a3b31; }
+        .page-content.active {
+            display: block;
+        }
+
+        @keyframes contentFadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-content h1 { /* Buchtitel auf der ersten Seite */
+            font-size: 2.8em;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #5c3a21; /* Titel etwas dunkler */
+            font-weight: normal;
+            letter-spacing: 1px;
+        }
+        
+        .page-content h2 { /* Untertitel / Kapitel */
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 30px; /* Mehr Abstand */
+            margin-top: 20px;
+            color: #7a5c42;
+            font-style: italic;
+            font-weight: normal;
+            border-bottom: 1px solid #d1c7b8;
+            padding-bottom: 15px;
+        }
+        
+        .page-content h3 { /* Kleinere Überschriften innerhalb einer Seite */
+            font-size: 1.3em;
+            color: #5c3a21;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .page-content p {
+            margin-bottom: 1.3em; /* Etwas mehr Abstand */
+            line-height: 1.7; /* Gute Lesbarkeit */
+            font-size: 1.1em; /* Größere Schrift für PC */
+            text-align: justify;
+        }
+
+        .thought {
+            font-style: italic;
+            color: #554236;
+            margin: 1em 30px 1em 30px; /* Mehr Einzug */
+            padding: 10px 15px;
+            border-left: 3px solid #c8b9a9;
+            background-color: rgba(210, 199, 184, 0.1); /* Leichte Hintergrundtönung */
+        }
+        
+        .emphasis {
+            font-style: italic;
+            font-weight: bold;
+            color: #8c3b12; /* Auffälligere Farbe für Panik etc. */
+        }
+
+        .dialogue {
+            margin-left: 20px; /* Etwas mehr Einzug */
+            margin-bottom: 1em;
+            margin-top: 1em;
+        }
+        .dialogue strong { /* Sprecher */
+            font-weight: bold;
+            color: #5c3a21;
+            display: block; /* Sprecher in neue Zeile */
+            margin-bottom: 3px;
+        }
+        
+        .setting {
+            font-style: italic;
+            color: #777;
+            margin-bottom: 1.5em;
+            display: block;
+            text-align: center;
+            font-size: 0.95em;
+            border-top: 1px dashed #ccc;
+            border-bottom: 1px dashed #ccc;
+            padding: 8px 0;
+        }
+        
+        .action {
+             font-style: italic;
+             color: #666;
+             margin: 0.5em 0;
+        }
 
         /* Navigations-Buttons */
         .navigation {
-            display: flex; justify-content: space-between; padding: 10px 15px;
-            background-color: #fdfaf3; border-top: 1px solid #d4c8be;
-            position: sticky; bottom: 0; left: 0; width: 100%; z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 60px; /* Angepasst an Seitenpadding */
+            background-color: #e8e2d9; /* Etwas dunklerer Fußbereich */
+            border-top: 1px solid #d1c7b8; 
+            position: sticky; 
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10; /* Sicherstellen, dass es über dem Inhalt liegt */
         }
-        .nav-button {
-            background-color: #7a6a5d; color: #fdfaf3; border: none; padding: 8px 12px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.85em;
-            border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease, transform 0.1s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .nav-button:hover { background-color: #5c4d41; }
-        .nav-button:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .nav-button:disabled { background-color: #a09388; cursor: not-allowed; box-shadow: none; }
-        .page-number { font-size: 0.85em; color: #7a6a5d; align-self: center; }
 
-        /* Responsive Anpassungen */
-        @media (min-width: 600px) {
-            .book-wrapper { flex-direction: row; }
-            .book-spine-title { display: block; }
-            .main-book-content { padding: 25px 35px; }
-            .page-content p { font-size: 1em; }
-            .navigation { padding: 12px 35px; }
-            .nav-button { padding: 10px 15px; font-size: 0.9em; }
-            .page-number { font-size: 0.9em; }
+        .nav-button {
+            background-color: #8b7a6b; /* Angepasste Buttonfarbe */
+            color: #f5f1e9;
+            border: none;
+            padding: 12px 25px; /* Größere Buttons */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1em;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
-        @media (max-width: 400px) { /* Kleinere Handys */
-             .page-content p { font-size: 0.85em; line-height: 1.5; }
-             .page-content h1 { font-size: 1.6em; }
-             .page-content h2 { font-size: 1.2em; }
+
+        .nav-button:hover {
+            background-color: #6a5a4b; /* Dunkler bei Hover */
         }
+        .nav-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        
+        .nav-button:disabled {
+            background-color: #b0a398; /* Heller für deaktiviert */
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #d1c7b8;
+        }
+
+        .page-number {
+            font-size: 1em;
+            color: #7a6a5d;
+            align-self: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
     </style>
 </head>
 <body>
 
     <div class="book-wrapper">
-        <div class="book-spine-title">Fremd im Spiegel</div>
         <div class="main-book-content">
-
+            
             <!-- Seite 1: Titelblatt -->
             <div class="page-content active" id="page1">
                 <h1>Fremd im Spiegel</h1>
-                <h2>Der Morgen, als Erik Sarah wurde</h2>
-                <p style="text-align:center; margin-top: 30px; font-style:italic;">Stell dir vor, du wachst auf...<br>und nichts ist mehr deins.<br>Nicht dein Körper, nicht dein Zimmer,<br>nicht dein Leben.</p>
-                <p style="text-align:center; margin-top: 80px; font-size: 0.8em;">(Blättere mit den Knöpfen unten)</p>
+                <h2>Ein Albtraum in Seide und Make-up</h2>
+                <p style="text-align:center; margin-top: 80px; font-size: 1.2em; font-style:italic;">Was passiert, wenn dein größter Wunsch<br>auf die grausamste Art wahr wird?</p>
+                <p style="text-align:center; margin-top: 150px; font-size: 0.9em; color: #777;">(Benutze die Navigationsknöpfe am unteren Rand, um zu blättern)</p>
             </div>
 
-            <!-- Seite 2: Das Erwachen - Der erste Schock -->
+            <!-- === KAPITEL 1: DAS BRUTALE ERWACHEN === -->
+
+            <!-- Seite 2: Kapitel 1 -->
             <div class="page-content" id="page2">
-                <h2>Kapitel 1: Zimmer mit fremdem Ausblick</h2>
-                <p>Der Wecker schrillte. Ein Geräusch wie von Elfen auf Speed, definitiv nicht sein basslastiges Brummen. Erik tastete blind – und traf Seide. Er riss die Augen auf. Rosa. Alles rosa. Plüsch, Glitzer, ein Hauch von teurem Parfüm in der Luft. Sein Herz begann zu rasen. Wo war er?</p>
-                <p>Er setzte sich auf, und das war der Moment, in dem die Welt kippte. Lange, blonde Haare fielen ihm über die Schultern. Ein fremdes Gewicht auf der Brust. Panisch blickte er an sich herunter. Schlanke Gliedmaßen, ein zartes Nachthemd. Darunter Brüste.</p>
-                <p class="thought">"Okay, Albtraum. Definitiv Albtraum. Jederzeit wach ich jetzt auf. Gleich. Jetzt!"</p>
+                <h2>Kapitel 1: Das brutale Erwachen</h2>
+                <p>
+                    Der Wecker. Ein sanftes, melodisches Klingeln, das so gar nicht zu Eriks üblichem, schrillem Alarmton passen wollte. Er griff danach, seine Finger trafen auf glattes, kühles Metall. Komisch. Sein Wecker war aus billigem Plastik. Er öffnete die Augen. Sonnenlicht flutete den Raum durch riesige Fenster, die von schweren, cremefarbenen Seidenvorhängen gerahmt wurden. Das Zimmer war riesig, elegant eingerichtet in Weiß- und Goldtönen. Ein Himmelbett dominierte den Raum, gegenüber stand eine Chaiselongue, die aussah, als koste sie mehr als das gesamte Mobiliar in Eriks Elternhaus.
+                </p>
+                <p class="setting">Sarah Wagners luxuriöses Schlafzimmer. Dienstagmorgen, 7:03 Uhr.</p>
+                <p>
+                    Panik, kalt und scharf, durchzuckte ihn. Das war nicht sein Zimmer. Das war nicht einmal annähernd sein Zimmer. Er wollte sich aufsetzen, doch etwas fühlte sich fundamental falsch an. Ein Gewicht auf seiner Brust, das er nicht kannte. Lange, blonde Haare kitzelten seine Wange. Sein Blick wanderte nach unten. Zarte, schlanke Arme. Ein fließendes Nachthemd aus etwas, das sich wie echte Seide anfühlte. Und darunter… Brüste. Nicht klein, sondern… unübersehbar.
+                </p>
+                <p class="thought">
+                    <span class="emphasis">"Okay, das ist nicht witzig. Wer hat mich hierher gebracht? Ist das ein Streich? Ein sehr, sehr aufwendiger, kranker Streich?"</span>
+                </p>
             </div>
 
-            <!-- Seite 3: Der Spiegel - Die schreckliche Wahrheit -->
+            <!-- Seite 3: Kapitel 1 Forts. -->
             <div class="page-content" id="page3">
-                <h2>Kapitel 1: Das Gesicht im Spiegel</h2>
-                <p>Taumelnd stand er auf Beinen auf, die sich wie Stelzen anfühlten. Der hochflorige Teppich schluckte jedes Geräusch. Sein Blick wurde magnetisch vom riesigen Spiegel über dem opulenten Schminktisch angezogen. Er zwang sich hinzusehen.</p>
-                <p>Sarah Wagner starrte zurück. Perfekte Haut, große blaue Augen voller Panik (seiner Panik!), volle Lippen. Das schönste Mädchen der Schule. Seine heimliche Liebe. Und nun offenbar... er?</p>
-                <p class="thought">"Das kann nicht sein. Das ist physisch unmöglich! Vielleicht... Koma? Halluzination?"</p>
-                 <p>Er hob zitternd eine Hand – ihre Hand – und berührte die Wange. Weich. Warm. Real. Ein unterdrückter Würgereiz stieg ihm die Kehle hoch. Er war hier. In ihr.</p>
-            </div>
-
-            <!-- Seite 4: Badezimmer-Desaster Teil 1 - Die Grundlagen -->
-            <div class="page-content" id="page4">
-                <h2>Kapitel 2: Grundkurs Körperpflege (Weiblich)</h2>
-                <p>Ein Klopfen. "Sarah, Schatz? Aufstehen! Dein Detox-Smoothie wird warm!" Die Stimme ihrer Mutter – Mrs. Wagner. Klang wie aus einem Modemagazin. Erik stammelte eine Antwort, die Stimme dünn und fremd.</p>
-                <p>Er musste ins Bad. Dringend. Schon der Gang zur Toilette war eine Lektion in Anatomie. Anders sitzen, anders... alles. Es war demütigend und verwirrend.</p>
-                 <p>Dann die Dusche. Ein Elfenbeinturm aus Marmor und Glas. Und die Produkte! Ein Arsenal an Flaschen. Er griff nach etwas, das blumig roch. Das Gefühl, diesen fremden Körper zu waschen, die Kurven, die Weichheit, war zutiefst verstörend. Und wie zum Teufel sollte er diese Mähne bändigen?</p>
-                <p class="thought">"Okay, einfach nur Wasser und Seife. Ignorier den Rest. Ignorier... alles."</p>
-            </div>
-
-            <!-- Seite 5: Badezimmer-Desaster Teil 2 - Haare & Haut -->
-             <div class="page-content" id="page5">
-                <h2>Kapitel 2: Die Tücken der Schönheit</h2>
-                <p>Das Handtuch war flauschiger als alles, was er besaß. Er trocknete sich ab, vermied den Spiegel. Doch das Haarproblem blieb. Nass klebten ihm die langen Strähnen am Kopf. Er fand einen Föhn, der aussah wie ein Raumschiff, und machte mehr Lärm als Fortschritt. Am Ende hatte er einen blonden Wischmopp auf dem Kopf.</p>
-                 <p>Auf dem Waschtisch standen Cremes, Seren, Toner. Er hatte keine Ahnung, wofür das alles gut war. Seine eigene Hautpflege bestand aus Wasser und gelegentlich Seife. Er ließ es.</p>
-                 <p class="thought">"Sarah wird mich umbringen, wenn ich ihre Routine versaue... Moment, ich BIN Sarah. Oh Gott."</p>
-                 <p>Ein flüchtiger Blick in den Spiegel bestätigte: Er sah aus wie Sarah Wagner nach einer durchzechten Nacht und einem Kampf mit einem Föhn.</p>
-            </div>
-
-            <!-- Seite 6: Ankleiden unter Beobachtung -->
-             <div class="page-content" id="page6">
-                <h2>Kapitel 2: Kleiderschrank des Grauens</h2>
-                <p>Zurück im Schlafzimmer stand er vor dem begehbaren Kleiderschrank. So groß wie sein eigenes Zimmer. Reihenweise Designerkleidung, Schuhe, Taschen. Alles schrie "Reichtum" und "Mode". Erik fühlte sich wie ein Alien.</p>
-                <p>Er griff nach der schlabberigsten Jeans und einem einfachen Shirt. Da ging die Tür auf und Mrs. Wagner stand da. Perfekt gestylt, schlank, mit einem kritischen Blick, der ihn von Kopf bis Fuß maß.</p>
-                <p class="dialogue"><strong>Mrs. Wagner:</strong> "Sarah, Liebling. Was ist denn das? Das kannst du doch nicht anziehen! Wir haben doch das neue Set von Chloé! Und hast du zugenommen? Deine Hüften wirken... breiter in dieser furchtbaren Hose."</p>
-                <p class="thought">"Breiter? Ich bin ein 15-jähriger JUNGE in diesem Körper! Natürlich ist alles anders!"</p>
-                <p>Seine Mutter hätte gesagt: "Hauptsache sauber, mein Schatz." Mrs. Wagner schob ihn zur Seite und zog ein enges Top und einen Designerrock heraus. "Das hier. Und mach was mit deinen Haaren!"</p>
-            </div>
-
-            <!-- Seite 7: Frühstück mit der Eis-Königin (Mutter) -->
-            <div class="page-content" id="page7">
-                 <h2>Kapitel 2: Frühstück unter Palmen (oder so ähnlich)</h2>
-                <p>Erik (als Sarah), nun in unbequeme, teure Kleidung gezwängt, folgte Mrs. Wagner in einen riesigen Wintergarten, wo ein perfekt gedeckter Frühstückstisch wartete. Mr. Wagner war schon weg, "wichtiger Termin".</p>
-                <p class="dialogue"><strong>Mrs. Wagner:</strong> (nippt an ihrem grünen Smoothie) "Du siehst immer noch blass aus. Nimmst du deine Vitamine? Und lächle doch mal, Sarah. Ein hübsches Gesicht muss strahlen. Denk an die Fotos für den Yachtclub-Newsletter am Wochenende."</p>
-                 <p>Erik stocherte in einer winzigen Portion Obstsalat. Er hatte Hunger, aber die Atmosphäre schnürte ihm die Kehle zu. Diese Frau schien ihre Tochter wie ein Accessoire zu betrachten.</p>
-                <p class="thought">"Kein Wunder, dass Sarah manchmal so... kalt wirkt. Bei der Mutter."</p>
-            </div>
-
-            <!-- Seite 8: Schulweg - Die ungewollte Aufmerksamkeit -->
-            <div class="page-content" id="page8">
-                <h2>Kapitel 3: Spießrutenlauf zur Schule</h2>
-                <p>Der Chauffeur fuhr ihn zur Schule. Allein das war schon surreal. Als er aus dem Luxuswagen stieg, waren alle Augen auf ihn gerichtet. Nicht nur Blicke, sondern taxierende Blicke. Jungs musterten seinen Körper unverhohlen, Mädchen scannten sein Outfit nach Marken und Makeln.</p>
-                <p>Er zog die Schultern hoch, versuchte sich klein zu machen – eine Geste, die bei Sarahs Körpergröße und Ausstrahlung absurd wirkte. Sarahs Clique kam auf ihn zu.</p>
-                <p class="dialogue"><strong>Jessica:</strong> "Wow, Sarah, Chloé? Heiß! Aber dein Haar ist ja... wild heute. Alles okay?"</p>
-                <p class="dialogue"><strong>Erik (als Sarah):</strong> "Ja, äh, verschlafen."</p>
-                <p class="thought">"Ich hasse das. Ich hasse diese Aufmerksamkeit. Ich will einfach nur unsichtbar sein."</p>
-            </div>
-
-            <!-- Seite 9: Der Mathe-Fail und die Folgen -->
-            <div class="page-content" id="page9">
-                 <h2>Kapitel 3: Blackout im Klassenzimmer</h2>
-                <p>Die Mathearbeit. Ein Desaster. Erik starrte auf die Gleichungen wie auf Hieroglyphen. Die Stille im Raum wurde nur vom Kratzen der Stifte unterbrochen. Sarahs Stift blieb stumm.</p>
-                <p>Mr. Henderson sammelte die Arbeiten ein und sein Blick auf Eriks (Sarahs) leeres Blatt sprach Bände. Enttäuschung, Verwirrung.</p>
-                <p>In der Pause kamen Jessica und Chloe sofort auf ihn zu.</p>
-                <p class="dialogue"><strong>Chloe:</strong> "Sarah, was war los bei Mathe? Hast du echt nichts abgegeben? Bist du krank? Oder... ist was mit Mark?"</p>
-                 <p>Erik merkte, wie schnell hier Gerüchte entstanden. Jede Abweichung vom "perfekten Sarah"-Bild wurde sofort seziert.</p>
-                 <p class="thought">"Ich mache ihr ganzes Leben kaputt. Ihre Noten, ihren Ruf..."</p>
-            </div>
-
-            <!-- Seite 10: Cafeteria - Der Ausbruch -->
-            <div class="page-content" id="page10">
-                 <h2>Kapitel 3: Eine unerwartete Verteidigung</h2>
-                <p>Mittagspause. Der Lärm, das Gedränge. Erik saß mit den Mädchen am Elitetisch. Am Nebentisch wurde Tim, der stille Nerd, von Mark und seiner Crew bedrängt. Mark schüttete demonstrativ Cola auf Tims Bücher.</p>
-                 <p>Etwas in Erik riss. Der alte Erik, der selbst oft genug gemobbt wurde, übernahm kurz das Steuer.</p>
-                 <p class="dialogue"><strong>Erik (als Sarah):</strong> (steht auf, laute Stimme) "Mark! Was soll der Mist? Lass ihn gefälligst in Ruhe!"</p>
-                 <p>Die Cafeteria verstummte. Mark drehte sich um, sichtlich überrascht und belustigt. "Oho, die Prinzessin verteidigt den Hofnarren? Was ist los, Wagner? Mitleid bekommen?"</p>
-                 <p class="dialogue"><strong>Erik (als Sarah):</strong> "Ich hab nur was gegen Arschlöcher. Und du bist gerade das größte hier."</p>
-                 <p>Marks Gesicht wurde dunkelrot. Jessica zerrte an Eriks Arm. "Sarah, spinnst du?!" Tim starrte Erik an wie eine Erscheinung.</p>
-            </div>
-
-            <!-- Seite 11: Shopping-Albtraum Teil 1 - Der Befehl -->
-            <div class="page-content" id="page11">
-                 <h2>Kapitel 4: Mission Einkaufszentrum</h2>
-                <p>Nach der Schule stand der Chauffeur bereit. Mrs. Wagner saß schon im Wagen, das Handy am Ohr. Sie beendete ihr Gespräch und musterte Erik kritisch.</p>
-                <p class="dialogue"><strong>Mrs. Wagner:</strong> "Sarah, dein Auftritt heute Morgen war... suboptimal. Und die Sache in der Cafeteria, Mark hat mich angerufen! Sein Vater ist unser Geschäftspartner! Wir gehen jetzt shoppen. Du brauchst dringend etwas Passendes für das Charity Dinner am Samstag. Etwas Elegantes, das deine Figur betont, aber nicht billig wirkt."</p>
-                 <p>Erik sank tiefer in den Ledersitz. Shoppen. Als Mädchen. Mit dieser Frau. Das klang wie die Hölle.</p>
-                 <p class="thought">"Ich weiß nicht mal meine... ihre... Kleidergröße! Was ist ' фигура betonen'? Und was kostet hier eigentlich 'nicht billig'?"</p>
-            </div>
-
-            <!-- Seite 12: Shopping-Albtraum Teil 2 - Markenwahn -->
-            <div class="page-content" id="page12">
-                 <h2>Kapitel 4: Im Dschungel der Designer</h2>
-                <p>Das Einkaufszentrum war ein Tempel des Konsums. Mrs. Wagner steuerte zielsicher auf die teuersten Boutiquen zu. Erik trottete hinterher, überwältigt von den Preisschildern und den Namen, die er nur aus Hochglanzmagazinen kannte.</p>
-                <p class="dialogue"><strong>Mrs. Wagner:</strong> "Nein, Schatz, nicht Zara. Das trägt doch jeder. Wir brauchen etwas Exklusives. Wie wäre es mit diesem Kleid von Valentino? Oder vielleicht doch lieber Prada für den Anlass?"</p>
-                 <p>Erik wurde von Verkäuferinnen umschwirrt, die ihn mit "Miss Wagner" ansprachen und ihm Seide und Kaschmir entgegenhielten. Er fühlte sich wie eine Puppe.</p>
-                <p class="thought">"Ein T-Shirt von Valentino kostet mehr als meine ganze Garderobe... Das ist doch krank."</p>
-            </div>
-
-            <!-- Seite 13: Shopping-Albtraum Teil 3 - Die BH-Hölle -->
-            <div class="page-content" id="page13">
-                 <h2>Kapitel 4: Die Unterwäsche-Prüfung</h2>
-                <p>Mrs. Wagner entschied, dass Sarah auch "darunter" etwas Neues brauchte. Sie landeten in einer luxuriösen Dessous-Abteilung.</p>
-                <p class="dialogue"><strong>Mrs. Wagner:</strong> "Du brauchst unbedingt einen neuen Push-Up, Liebling. Der alte macht keine gute Form mehr unter den neuen Kleidern." Sie winkte eine Verkäuferin herbei. "Zeigen Sie uns doch mal Ihre besten Stücke. Größe 75B, nehme ich an?"</p>
-                 <p>Erik wurde knallrot. Eine fremde Frau sollte ihn... vermessen? Er sollte diese Spitzen-Dinger anprobieren? Panik stieg auf.</p>
-                 <p class="dialogue"><strong>Verkäuferin:</strong> "Gerne, Miss Wagner. Kommen Sie mit in die Kabine, dann schauen wir mal."</p>
-                 <p class="thought">"NEIN! Auf keinen Fall! Ich kann das nicht! Wie funktionieren diese Dinger überhaupt?!"</p>
-                 <p>Erik stammelte etwas von "später" und "keine Zeit" und zog seine Mutter förmlich aus dem Laden, bevor die Situation eskalieren konnte. Mrs. Wagner war sichtlich genervt.</p>
-            </div>
-
-            <!-- Seite 14: Shopping-Albtraum Teil 4 - Ergebnis -->
-             <div class="page-content" id="page14">
-                <h2>Kapitel 4: Beute und Erschöpfung</h2>
-                <p>Am Ende hatte Mrs. Wagner mehrere Tüten mit Kleidern, Schuhen und einer neuen Handtasche für "Sarah" gekauft. Erik hatte kaum ein Mitspracherecht gehabt. Alles war eng, teuer und fühlte sich falsch an.</p>
-                 <p class="dialogue"><strong>Mrs. Wagner:</strong> "So, das sollte reichen. Und vergiss nicht, Sarah: Haltung! Ein teures Kleid wirkt nur, wenn es mit Selbstbewusstsein getragen wird."</p>
-                 <p>Im Auto auf dem Rückweg lehnte Erik den Kopf gegen die kühle Scheibe. Er war fix und fertig. Nicht nur körperlich. Diese ständige Bewertung, der Fokus auf Äußerlichkeiten, der Zwang zur Perfektion – es war erdrückend.</p>
-                 <p class="thought">"Jetzt verstehe ich vielleicht ein bisschen, warum Sarah so ist, wie sie ist. Es ist ein goldener Käfig."</p>
-            </div>
-
-             <!-- Seite 15: Zuhause - Ein unerwartetes Gefühl -->
-            <div class="page-content" id="page15">
-                <h2>Kapitel 5: Nachwirkungen und neue Probleme</h2>
-                <p>Zurück in Sarahs Zimmer warf Erik die Einkaufstüten in eine Ecke. Er wollte nur noch seine Ruhe. Er zog sich die unbequemen Klamotten aus und schlüpfte in das weiteste Pyjama-Oberteil, das er finden konnte.</p>
-                 <p>Plötzlich überkam ihn ein seltsames Gefühl im Unterleib. Ein dumpfes Ziehen, das er nicht einordnen konnte. Es wurde stärker, krampfartiger.</p>
-                 <p class="thought">"Was ist das denn jetzt? Hab ich was Falsches gegessen? Oder... oh nein. Oh bitte nicht DAS."</p>
-                 <p>Er erinnerte sich dunkel an den Biologieunterricht. Die Periode. Konnte das sein? Er war in einem weiblichen Körper. Panisch suchte er im Badezimmer nach... ja, wonach eigentlich? Tampons? Binden? Er fand eine Packung und starrte sie an wie ein außerirdisches Artefakt.</p>
-            </div>
-
-            <!-- Seite 16: Das Tagebuch - Tiefere Einblicke -->
-            <div class="page-content" id="page16">
-                <h2>Kapitel 5: Sarahs Worte</h2>
-                <p>Das Ziehen im Bauch wurde unangenehmer. Erik verkroch sich mit einer Wärmflasche (die er nach langem Suchen fand) in Sarahs riesiges Bett. Sein Blick fiel wieder auf das Tagebuch.</p>
-                 <p>Er schlug eine neuere Seite auf.</p>
-                 <p class="thought" style="font-style: normal; border-left: 2px solid #c8b09a; background-color: #f9f5f0; padding: 10px;">
-                    <em>"05. Oktober: Mutter war wieder unmöglich. Mein Kleid für die Gala sei 'nicht repräsentativ genug'. Manchmal glaube ich, ich bin nur ihre Anziehpuppe. Keiner fragt, wie es MIR geht. Ob ich überhaupt zu dieser dämlichen Gala will."</em><br><br>
-                    <em>"08. Oktober: Habe heute Tim in der Bibliothek gesehen. Er hat mir kurz zugenickt, wegen der Sache in der Cafeteria. Komisch. Normalerweise reden Jungs wie er nicht mit mir. Oder nur, um über mich zu lästern. Vielleicht war es doch richtig, was zu sagen?"</em><br><br>
-                    <em>"10. Oktober: Ich fühle mich so leer. Alles glänzt, aber nichts ist echt."</em>
+                <p>
+                    Seine Hände – oder vielmehr <span class="emphasis">ihre</span> Hände, denn sie waren schmal, mit langen Fingern und perfekt manikürten Nägeln in einem dezenten Rosaton – zitterten unkontrollierbar. Er schwang die Beine aus dem Bett. Sie fühlten sich länger an als seine eigenen, irgendwie… unkoordiniert. Er stand auf, schwankte leicht. Der Boden war mit einem dicken, weichen Teppich ausgelegt, der seine Füße verschluckte.
+                </p>
+                 <p class="action">
+                    Er drehte sich um und sah ihn: einen riesigen, opulenten Standspiegel mit Goldrahmen in einer Ecke des Zimmers.
                  </p>
-                 <p>Erik spürte einen Stich des Mitleids. Sarahs Leben war nicht nur Glanz und Glamour. Es war auch Druck, Einsamkeit und eine verzweifelte Suche nach Echtheit.</p>
+                <p>
+                    Langsam, wie in Zeitlupe, ging er darauf zu. Jeder Schritt war eine Qual. Er ahnte bereits, was er sehen würde, aber sein Verstand weigerte sich, es zu akzeptieren. Als er direkt davor stand, starrte er in das Gesicht von Sarah Wagner. Perfekte Haut, große blaue Augen, volle Lippen, eine kleine Stupsnase. Das Gesicht, das unzählige Male auf den Social-Media-Feeds der Schule aufgetaucht war. Das Gesicht, das er aus der Ferne bewundert hatte. Jetzt war es sein Spiegelbild.
+                </p>
+                <p>
+                    Ein Laut entwich ihm, ein hoher, keuchender Ton, der meilenweit von seiner eigenen Stimme entfernt war. <span class="emphasis">"NEIN!"</span> Er schlug mit der Faust gegen den Spiegel, doch die Bewegung fühlte sich schwach und fremd an. Das Glas erzitterte nicht einmal. Es war real.
+                </p>
+                 <p class="thought">
+                    Ich bin Sarah Wagner. Ich bin im Körper des Mädchens, in das ich verliebt bin. Das ist kein Traum. Das ist die Hölle. Eine sehr luxuriöse, gutaussehende Hölle.
+                </p>
+            </div>
+            
+            <!-- === KAPITEL 2: KÖRPERLICHE KATASTROPHEN === -->
+
+            <!-- Seite 4: Kapitel 2 -->
+            <div class="page-content" id="page4">
+                <h2>Kapitel 2: Körperliche Katastrophen</h2>
+                <p>
+                    Ein leises, bestimmtes Klopfen an der massiven Holztür. "Sarah? Bist du wach, Liebes? Estelle kommt um halb acht, um deine Haare zu machen. Und vergiss nicht, dass wir heute Nachmittag zu Dior müssen."
+                </p>
+                <p>
+                    Die Stimme klang kühl, elegant, aber mit einem Unterton von Ungeduld. Sarahs Mutter. Erik erstarrte. Estelle? Haare machen? Dior? Was zum Teufel? Er räusperte sich und versuchte, Sarahs Stimme nachzuahmen, was kläglich misslang.
+                </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Äh... ja, Mom! Bin... bin wach!" (Die Stimme klang piepsig und unsicher.)
+                </p>
+                <p class="dialogue">
+                    <strong>Mutter (durch die Tür):</strong> "Du klingst seltsam. Erkältet? Nimm bloß keine Medikamente, die aufschwemmen. Denk an die Fotos für die Charity-Gala am Wochenende."
+                </p>
+                <p>
+                    Fotos? Gala? Aufschwemmen? Erik verstand nur Bahnhof. Er musste ins Bad. Dringend. Er entdeckte eine Tür, die fast unsichtbar in die Wand eingelassen war. Dahinter verbarg sich ein Badezimmer, das größer war als sein gesamtes Zimmer zu Hause. Marmor, Goldarmaturen, eine freistehende Badewanne, eine riesige Regendusche. Und unzählige Produkte auf Ablagen und in Schränken.
+                </p>
+                <p class="thought">
+                    Okay, Prioritäten. Erstens: Toilette. Zweitens: Herausfinden, was hier los ist. Drittens: Nicht durchdrehen. Viertens: <span class="emphasis">Was zum Teufel ist eine Charity-Gala?!</span>
+                </p>
             </div>
 
-            <!-- Seite 17: Körperliche und Seelische Last -->
-            <div class="page-content" id="page17">
-                 <h2>Kapitel 5: Die Last des Seins</h2>
-                 <p>Die Bauchschmerzen wurden stärker. Erik krümmte sich unter der Decke. Dazu kam die emotionale Erschöpfung. Er hatte einen Tag lang eine Rolle gespielt, die ihm völlig fremd war, in einer Welt, die ihn abstieß und gleichzeitig faszinierte.</p>
-                 <p>Er hatte Dinge erlebt, die er als Junge nie erfahren hätte: die ständige Bewertung des Aussehens, die Komplexität weiblicher Freundschaften, die Art, wie Jungs ihn (als Sarah) ansahen, die körperlichen Unannehmlichkeiten.</p>
-                 <p class="thought">"Ich bin müde. Ich will das nicht mehr. Ich will nur noch mein altes, langweiliges Leben zurück. Selbst die Mathe-Fünf wäre mir jetzt lieber."</p>
-                 <p>Er vermisste seine Unbeholfenheit, seine Unsichtbarkeit. Sie waren ein Schutz gewesen, den er jetzt nicht mehr hatte.</p>
+            <!-- Seite 5: Kapitel 2 Forts. - Das Bad -->
+            <div class="page-content" id="page5">
+                <p>
+                    Der Toilettengang war eine bizarre Erfahrung der Entfremdung. Alles fühlte sich anders an, von der Sitzposition bis... naja, allem. Er versuchte, nicht darüber nachzudenken. Danach zwang er sich, in den riesigen, perfekt ausgeleuchteten Spiegel über dem Doppelwaschbecken zu blicken. Sarahs Gesicht starrte zurück, die Augen weit vor Panik. Sein Gesichtsausdruck in ihrem Gesicht. Es war surreal.
+                </p>
+                <p>
+                    Er musste duschen. Die Auswahl an Duschgels war überwältigend. Er griff nach dem, was am neutralsten roch – irgendwas mit "Meeresbrise". Das Gefühl des Wassers auf der fremden Haut war seltsam, die langen Haare waren schwer und unhandlich. Er wusste nicht, wie viel Shampoo man brauchte, wie man einen Conditioner benutzte. Er machte einfach irgendwas, hoffte, dass es nicht völlig falsch war.
+                </p>
+                 <p class="action">
+                    Beim Abtrocknen spürte er ein seltsames Ziehen im Unterleib. Ein dumpfer Schmerz, den er nicht einordnen konnte. Er ignorierte es zunächst, schob es auf den Stress.
+                 </p>
+                <p>
+                    Dann sah er es. Im flauschigen, weißen Handtuch. Ein kleiner, roter Fleck. Blut. Nicht viel, aber unverkennbar. Und es kam nicht von einer Wunde. Der Schmerz im Unterleib wurde stärker. Eisige Erkenntnis durchfuhr ihn.
+                </p>
+                <p class="thought">
+                    <span class="emphasis">Oh. Mein. Gott. Nein. Nicht das auch noch. Periode? Sarah hat ihre Periode? ICH habe ihre Periode?! Was mache ich jetzt?!</span>
+                </p>
             </div>
 
-            <!-- Seite 18: Ende des Tages - Ungewisser Morgen -->
-            <div class="page-content" id="page18">
-                 <h2>Kapitel 6: Einschlafen im fremden Bett</h2>
-                <p>Der Abend dämmerte. Erik aß allein in seinem Zimmer zu Abend (der Chauffeur brachte ihm etwas auf Anweisung der Mutter). Er lag im Bett, hörte die Geräusche des großen, stillen Hauses und fühlte sich unendlich verloren.</p>
-                <p>Was würde morgen sein? Würde der Spuk vorbei sein? Würde er wieder Erik sein, aufwachen in seinem vollgestopften Zimmer? Oder würde er wieder als Sarah aufwachen, mit Bauchschmerzen, einem Kleiderschrank voller unmöglicher Outfits und einer Mutter, die ihn zum nächsten Event schleifen würde?</p>
-                <p>Und Sarah? Wo war sie? Steckte sie in seinem Körper fest? Kämpfte sie gerade mit seiner alten Jeans, seinem stotternden Versuch, mit Mädchen zu reden, und dem Chaos in seinem Zimmer?</p>
-                <p class="thought">"Ich hoffe, ihr geht es... besser? Oder zumindest nicht schlechter. Das ist alles so unfair. Für uns beide."</p>
-                 <p>Mit einem Kopf voller Fragen, einem schmerzenden Bauch und der erdrückenden Realität seiner Situation schlief Erik schließlich ein, gefangen im Spiegelbild eines anderen Lebens.</p>
-                 <p style="text-align:center; margin-top:30px; font-style:italic;">- Fortsetzung folgt? -</p>
+            <!-- Seite 6: Kapitel 2 Forts. - Perioden-Panik -->
+            <div class="page-content" id="page6">
+                <p>
+                    Absolute, lähmende Panik ergriff ihn. Er wusste theoretisch, was eine Periode war, aus dem Biologieunterricht. Aber die praktische Anwendung? Null Ahnung. Was benutzte man da? Wo fand man das? Er riss Schränke auf, durchwühlte Schubladen unter dem Waschbecken. Tiegel mit Cremes, Schachteln mit Wattepads, teure Seifen. Nichts, was aussah wie... wie das, was er suchte. Was suchte er überhaupt? Tampons? Binden? Wie funktionierten die Dinger?
+                </p>
+                <p>
+                    Er fühlte sich hilflos, dumm und unglaublich fehl am Platz. Schweiß brach ihm auf der Stirn aus, obwohl ihm gleichzeitig kalt war. Er musste irgendwas tun. Er konnte so nicht aus dem Bad gehen. Konnte er ihre Mutter fragen? <span class="emphasis">NIEMALS!</span> Diese kühle, distanzierte Frau, die über "Aufschwemmen" sprach? Unmöglich.
+                </p>
+                 <p class="action">
+                    Verzweifelt begann er, die Schubladen des Schminktisches im Schlafzimmer zu durchsuchen, während er gleichzeitig versuchte, mit zusammengekniffenen Beinen zu gehen. Lippenstifte, Lidschattenpaletten, Puder... und dann, ganz hinten in einer Schublade, fand er eine Packung. Tampons. Mit Applikator. "Super Plus"? Was bedeutete das? Er starrte auf die kleine Anleitung mit den Diagrammen. Es sah kompliziert und irgendwie... invasiv aus.
+                 </p>
+                <p class="thought">
+                    Das soll... <span class="emphasis">dahin</span>? Wie? Warum gibt es keine einfachere Lösung? Warum hat mir das niemand beigebracht? Okay, warum sollte mir das jemand beibringen, ich war ja Erik... aber trotzdem! Das ist ein Designfehler im menschlichen Körper!
+                </p>
+                <p>
+                    Nach mehreren peinlichen, frustrierenden und fast schmerzhaften Versuchen im Bad gab er auf. Er fand auch eine Packung Binden ("Ultra dünn mit Flügeln" – was zum Teufel waren Flügel an einer Binde?). Das schien... machbarer. Irgendwie. Er klebte das Ding unbeholfen in eine der Seidenslips, die er in einer Schublade fand (der Gedanke, fremde Unterwäsche zu tragen, war nur ein weiteres Detail im Ozean des Grauens), und hoffte inständig, dass es hielt und man es nicht sah.
+                </p>
+            </div>
+            
+            <!-- === KAPITEL 3: DIE FASADE WAHREN === -->
+
+            <!-- Seite 7: Kapitel 3 -->
+            <div class="page-content" id="page7">
+                <h2>Kapitel 3: Die Fassade wahren</h2>
+                <p>
+                    Zurück im Schlafzimmer. Die Kleiderfrage. Er öffnete die Türen zu einem begehbaren Kleiderschrank, der so groß war wie sein altes Kinderzimmer. Reihen über Reihen von Designerkleidung, Schuhe, Taschen. Alles schrie nach Geld und Status. Nichts davon war Erik. Er hasste es.
+                </p>
+                 <p class="action">
+                    Er griff nach dem Einfachsten: einer dunklen, gut sitzenden Jeans (die sich anfühlte, als wäre sie maßgeschneidert) und einem schlichten Kaschmirpullover in Beige. Es war immer noch viel eleganter als alles, was er besaß, aber es schien am wenigsten "Sarah" zu sein. Schuhe. Er starrte auf eine Wand voller High Heels, Stiefelletten und edler Sneaker. Er entschied sich für flache Loafers. Gehen in High Heels schien ihm wie eine weitere Stufe der Folter, die er sich ersparen wollte.
+                 </p>
+                <p>
+                    Dann klopfte es erneut. "Sarah, Estelle ist da." Die Mutter trat ohne abzuwarten ein. Sie musterte ihn von Kopf bis Fuß, ihre Lippen wurden zu einem schmalen Strich. Sie war makellos gekleidet in einem Hosenanzug, perfekt frisiert und geschminkt.
+                </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Guten Morgen. Jeans und Pullover? Ernsthaft? An einem Dienstag? Du weißt, dass die Vanderbilts heute zum Lunch im Club sind. Du solltest das neue Kleid von Chanel tragen."
+                </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> (Stammelnd) "Ich... äh... fühle mich nicht so nach Kleid."
+                </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> (Schnaubt leise) "Gefühle sind irrelevant, wenn es um den richtigen Eindruck geht. Estelle, sehen Sie zu, dass Sie etwas aus diesem blassen Gesicht machen. Und die Haare... offen? Etwas mehr Volumen, bitte. Sie sieht ja aus wie... wie eine Bibliothekarin." Sie wandte sich zum Gehen. "Frühstück in zehn Minuten. Beeil dich."
+                </p>
+                 <p class="thought">
+                    Bibliothekarin? Ist das eine Beleidigung? Ich mag Bibliothekarinnen! Und wer zum Teufel sind die Vanderbilts?! Und wer ist Estelle?
+                 </p>
+                 <p>
+                    Eine Frau mittleren Alters mit einem riesigen Koffer voller Haarstyling-Produkte war mit seiner Mutter hereingekommen und lächelte ihn professionell an. "Guten Morgen, Miss Wagner. Setzen Sie sich doch."
+                 </p>
+                 <p>
+                    Erik ließ sich widerwillig auf den Stuhl vor dem Schminktisch fallen. Die nächste Stunde war eine Tortur aus Föhnen, Toupieren, Haarspray und Make-up. Estelle arbeitete geschickt, ignorierte sein verkrampftes Schweigen. Am Ende starrte ihn eine Version von Sarah aus dem Spiegel an, die noch perfekter, noch unnahbarer wirkte als sonst. Er hasste es.
+                 </p>
             </div>
 
-            <!-- Navigation etc. -->
+            <!-- Seite 8: Kapitel 3 Forts. - Das Frühstück -->
+            <div class="page-content" id="page8">
+                <p>
+                    Das Frühstück wurde im "kleinen" Speisesaal serviert, einem Raum mit einem langen Mahagonitisch, Kristalllüster und Ölgemälden an den Wänden. Ein Hausmädchen in Uniform schenkte ihm Orangensaft in ein Kristallglas. Mr. Wagner saß am Kopfende, vertieft in sein Tablet, auf dem Börsenkurse liefen. Er nickte Erik (Sarah) nur kurz zu.
+                </p>
+                <p class="setting">Der Speisesaal der Wagners. Luxuriös, kühl, formell.</p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Sarah, iss deinen Grapefruit-Avocado-Salat. Er ist gut für den Teint. Und sitz gerade."
+                </p>
+                <p>
+                    Erik stocherte in dem seltsamen Salat. Er vermisste seine Cornflakes.
+                </p>
+                <p class="dialogue">
+                    <strong>Mr. Wagner:</strong> (Ohne aufzublicken) "Habe gehört, die Mathearbeit gestern war... unterdurchschnittlich für deine Verhältnisse, Sarah. Was war los?"
+                </p>
+                <p class="thought">
+                    <span class="emphasis">Oh Scheiße. Das hat sich schnell herumgesprochen.</span>
+                </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Ich... hatte Kopfschmerzen." (Eine lahme Ausrede, er wusste es.)
+                </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Kopfschmerzen? Das ist keine Entschuldigung für Nachlässigkeit. Dein Vater und ich erwarten Bestleistungen. Denk an die Bewerbungen für die Ivy League nächstes Jahr. Wir können uns keine Ausrutscher leisten."
+                </p>
+                <p class="dialogue">
+                    <strong>Mr. Wagner:</strong> "Genau. Konzentrier dich. Und versuch, beim Lunch mit den Vanderbilts einen guten Eindruck zu machen. Deren Sohn, Jonathan, wäre eine... passende Partie."
+                </p>
+                <p>
+                    Erik verschluckte sich fast an seinem Orangensaft. Eine passende Partie? Sie redeten über eine arrangierte Beziehung, als wäre es das Normalste der Welt? Er fühlte sich, als wäre er in einem schlechten Film gelandet. Die Kälte und der Druck in diesem Haus waren erdrückend. Kein Wunder, dass Sarah in ihrem Tagebuch so unsicher klang.
+                </p>
+                 <p class="action">
+                    Er zwang sich, ein paar Bissen des Salats zu essen, der nach nichts schmeckte. Die Binde in seiner Unterhose fühlte sich wie ein Fremdkörper an. Alles fühlte sich falsch an.
+                 </p>
+            </div>
+            
+            <!-- === KAPITEL 4: SCHULISCHER HORROR UND SOZIALE MINENFELDER === -->
+
+            <!-- Seite 9: Kapitel 4 -->
+            <div class="page-content" id="page9">
+                 <h2>Kapitel 4: Schulischer Horror und soziale Minenfelder</h2>
+                 <p>
+                    Der Chauffeur fuhr ihn in einer schwarzen Limousine zur Schule. Erik starrte aus dem Fenster auf die ihm vertraute Umgebung, die nun völlig fremd wirkte. Als der Wagen vor dem Haupteingang hielt, fühlte es sich an, als würde ein Scheinwerfer auf ihn gerichtet. Alle Blicke waren auf die aussteigende Sarah Wagner gerichtet.
+                 </p>
+                 <p class="setting">Vor der Northwood High School. Das übliche morgendliche Chaos, aber für Erik fühlt es sich wie ein Tribunal an.</p>
+                 <p>
+                    Jessica und Chloe kamen sofort auf ihn zugestürmt, ihre Augen taxierten sein Outfit, seine Haare, sein Make-up.
+                 </p>
+                <p class="dialogue">
+                    <strong>Jessica:</strong> "Wow, Sarah! Okay, das sieht schon besser aus als gestern. Estelle hat gute Arbeit geleistet. Aber die Jeans? Immer noch?"
+                </p>
+                <p class="dialogue">
+                    <strong>Chloe:</strong> "Hast du gehört? Mark ist total sauer auf dich wegen gestern Mittag. Er meinte, du hättest ihn vor allen Leuten blamiert."
+                </p>
+                 <p class="thought">
+                    Gut so. Der Idiot hatte es verdient. Aber das laut zu sagen, wäre wohl nicht sehr Sarah-like.
+                 </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Er hat's provoziert." (Er versuchte, kühl zu klingen.)
+                </p>
+                <p class="dialogue">
+                    <strong>Jessica:</strong> "Vielleicht. Aber Mark? Das ist sozialer Selbstmord. Außerdem, was war das mit Tim, dem Nerd? Seit wann bist du Mutter Teresa?"
+                </p>
+                <p>
+                    Erik zuckte nur mit den Schultern. Die Gespräche drehten sich wieder um Partys, wer mit wem gesehen wurde, und spitze Bemerkungen über das Outfit einer Mitschülerin. Erik fühlte sich meilenweit entfernt. Er beobachtete die anderen Schüler, die tuschelnd auf ihn zeigten. Die Jungs mit einer Mischung aus Bewunderung und Begierde, die Mädchen oft mit Neid oder Missgunst. Er wurde zum Objekt reduziert, eine wandelnde Trophäe. Es war ekelhaft.
+                </p>
+            </div>
+            
+            <!-- Seite 10: Kapitel 4 Forts. - Der Unterricht -->
+            <div class="page-content" id="page10">
+                 <h3>Unterrichts-Martyrium</h3>
+                 <p>
+                    Der Vormittag war eine Abfolge von kleinen und großen Demütigungen. In Englisch sollten sie Shakespeares Sonette interpretieren. Erik, der Shakespeare eigentlich mochte, brachte kein Wort heraus. Die Lehrerin, die Sarah sonst immer lobte, sah ihn enttäuscht an. "Sarah, sind Sie heute nicht bei der Sache?"
+                 </p>
+                 <p>
+                    In Geschichte musste er einen Vortrag halten, den Sarah offenbar vorbereitet hatte. Er fand Notizen in ihrer Mappe, aber er stotterte sich nur durch die Stichpunkte, ohne Zusammenhang, ohne die übliche Eloquenz, die alle von Sarah erwarteten. Wieder diese verwirrten, mitleidigen Blicke.
+                 </p>
+                 <p>
+                    Der absolute Tiefpunkt war Sportunterricht. Sie spielten Volleyball. Erik, der in seinem eigenen Körper schon unsportlich war, war in Sarahs grazilem, aber untrainiertem Körper eine komplette Niete. Er stolperte über seine eigenen Füße, schlug Bälle ins Netz oder ins Aus. Die High Heels vom Vortag rächten sich mit schmerzenden Füßen in den unbequemen Sportschuhen, die er in Sarahs Spind gefunden hatte. Die Mädchen in seinem Team verdrehten die Augen. Selbst die Sportlehrerin schüttelte den Kopf.
+                 </p>
+                 <p class="thought">
+                    Ich bin eine wandelnde Katastrophe. Ich ruiniere ihr Leben. Ihre Noten, ihren Ruf, ihre sportliche... äh... Nicht-Karriere. Wenn die echte Sarah zurückkommt, wird sie mich umbringen. Wenn ich jemals zurückkomme.
+                 </p>
+                 <p>
+                    Die ständige Präsenz der Binde, das leichte Ziehen im Unterleib, die Angst, dass etwas durchsickern könnte – es war eine zusätzliche Ebene des Stresses, die ihn fast wahnsinnig machte. Wie hielten Mädchen das jeden Monat aus? Und wie schafften sie es, dabei normal zu wirken? Es war ihm ein Rätsel.
+                 </p>
+            </div>
+
+            <!-- === KAPITEL 5: SHOPPING-WAHNSINN MIT MUTTER === -->
+
+            <!-- Seite 11: Kapitel 5 -->
+            <div class="page-content" id="page11">
+                 <h2>Kapitel 5: Shopping-Wahnsinn mit Mutter</h2>
+                 <p>
+                    Kaum war die Schule aus, wartete schon der Chauffeur – und Sarahs Mutter auf dem Rücksitz, das Handy am Ohr. Sie beendete ihr Gespräch mit einem knappen "Wir regeln das später, Charles" und wandte sich Erik zu.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Steig ein, Sarah. Wir sind spät dran für unseren Termin bei Dior. Und danach müssen wir noch zu Prada und dringend neue Unterwäsche für dich besorgen. Deine sieht ja furchtbar aus."
+                </p>
+                 <p class="thought">
+                    Woher weiß sie das?! Hat sie in meinen... ihren... Schubladen gewühlt? Und was ist falsch an der Unterwäsche? Sie ist aus Seide! <span class="emphasis">Oh Gott, Unterwäsche kaufen mit IHR? Ich will sterben.</span>
+                 </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Müssen wir das heute machen? Ich bin müde."
+                </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> (Eiskalt) "Müdigkeit ist kein Zustand, den wir uns leisten können. Du repräsentierst diese Familie. Und dafür brauchst du die richtige Garderobe. Außerdem ist es eine gute Ablenkung von deiner... äh... schulischen Schwächephase."
+                </p>
+                <p class="setting">Die Fahrt geht durch die teuersten Einkaufsviertel der Stadt. Luxusboutiquen reihen sich aneinander.</p>
+                <p>
+                    Die Dior-Boutique war wie eine andere Welt. Alles war weiß und gold, leise klassische Musik spielte, Verkäuferinnen in eleganten schwarzen Kleidern schwebten durch den Raum. Sarahs Mutter wurde wie eine Königin begrüßt. "Ah, Mrs. Wagner! Mademoiselle Wagner! Wir haben die neue Kollektion für Sie zurücklegen lassen."
+                </p>
+                 <p class="action">
+                    Erik wurde in eine riesige, plüschige Umkleidekabine geführt. Minuten später begann das Anprobe-Martyrium. Ein Kleid nach dem anderen wurde ihm gereicht. Teure Stoffe, komplizierte Schnitte.
+                 </p>
+            </div>
+
+            <!-- Seite 12: Kapitel 5 Forts. - Dior & Prada -->
+             <div class="page-content" id="page12">
+                <p class="dialogue">
+                    <strong>Mutter:</strong> (Von außerhalb der Kabine) "Das Blaue betont deine Augen, aber der Schnitt macht die Hüften breit. Probier das Grüne."
+                </p>
+                 <p class="action">
+                    Erik zog das grüne Kleid an. Es war eng und unbequem.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Besser. Aber steh gerade, Kind! Schultern zurück! Du läufst herum wie ein Schluck Wasser."
+                </p>
+                 <p class="action">
+                    Nächstes Kleid. Rot. Sehr kurz.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Nein, zu vulgär. Das ist etwas für die Nouveau Riche. Wir haben Klasse."
+                </p>
+                 <p class="thought">
+                    Ich fühle mich wie eine Anziehpuppe. Eine sehr teure, unglückliche Anziehpuppe. Und ich muss dringend auf Toilette, um nach... nach dem Rechten zu sehen. Aber wie soll ich das hier sagen?
+                 </p>
+                 <p>
+                    Nach einer gefühlten Ewigkeit entschied die Mutter sich für drei Kleider, zwei Röcke, diverse Blusen und ein Paar Schuhe mit absurd hohen Absätzen. Erik musste alles mit einem gequälten Lächeln über sich ergehen lassen. Die Kreditkarte der Mutter glühte.
+                 </p>
+                 <p>
+                    Weiter zu Prada. Das gleiche Spiel. Noch mehr Kleidung, noch mehr kritische Kommentare. Erik fühlte sich immer leerer und verzweifelter. Das war Sarahs Realität? Ständiger Druck, ständige Bewertung, Reduzierung auf das Äußere?
+                 </p>
+             </div>
+
+            <!-- Seite 13: Kapitel 5 Forts. - Die Unterwäsche-Hölle -->
+            <div class="page-content" id="page13">
+                 <h3>Der Tiefpunkt: Dessous bei La Perla</h3>
+                 <p>
+                    Die letzte Station war eine exklusive Dessous-Boutique namens "La Perla". Erik wäre am liebsten im Erdboden versunken. Sarahs Mutter steuerte zielsicher auf die Abteilung mit den BHs zu. Eine Verkäuferin eilte herbei.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Meine Tochter braucht dringend etwas Neues. Etwas... Formendes. Zeigen Sie uns Ihre besten Push-ups."
+                </p>
+                 <p class="thought">
+                    <span class="emphasis">PUSH-UPS?! Ich will keinen Push-up! Ich will diesen Körper loswerden!</span>
+                 </p>
+                 <p>
+                    Erik wurde wieder in eine Kabine bugsiert, diesmal mit einem Stapel winziger, spitzenbesetzter BHs und passender Slips. Die Mutter stand vor der halb geöffneten Tür und kommentierte gnadenlos.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Der sitzt nicht richtig. Zu wenig Halt. Probier den Schwarzen."
+                </p>
+                 <p class="action">
+                    Erik kämpfte mit den Verschlüssen. Seine Finger waren ungeschickt.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Nein, die Träger sind zu breit. Wirkt billig. Der Nudefarbene mit der französischen Spitze, vielleicht?"
+                </p>
+                <p>
+                    Er fühlte sich nackt, bloßgestellt, gedemütigt. Die Verkäuferin versuchte professionell zu lächeln, aber er sah das Mitleid in ihren Augen. Oder bildete er sich das nur ein? Er wollte schreien, weglaufen, aber er war gefangen. Gefangen in Sarahs Körper, in Sarahs Leben, unter der Fuchtel ihrer eiskalten Mutter.
+                </p>
+                 <p class="action">
+                    Schließlich wurde ein Vermögen für ein paar Sets ausgegeben, die Erik am liebsten sofort verbrannt hätte. Auf der Rückfahrt im Auto herrschte Schweigen. Erik starrte aus dem Fenster, Tränen brannten ihm in den Augen, aber er weigerte sich, vor dieser Frau zu weinen.
+                 </p>
+             </div>
+
+            <!-- === KAPITEL 6: EIN ABEND IN DER GOLDENEN HÖLLE === -->
+
+            <!-- Seite 14: Kapitel 6 -->
+            <div class="page-content" id="page14">
+                 <h2>Kapitel 6: Ein Abend in der goldenen Hölle</h2>
+                 <p>
+                    Zurück in der Villa zog sich Erik sofort in Sarahs Zimmer zurück. Er warf die Einkaufstaschen in eine Ecke und ließ sich aufs Bett fallen. Er war fix und fertig. Körperlich, geistig, emotional. Er fühlte sich schmutzig und benutzt nach der Shopping-Tortur.
+                 </p>
+                 <p class="action">
+                    Sein Blick fiel auf Sarahs Handy, das auf dem Nachttisch lag. Er hatte es bisher ignoriert. Jetzt nahm er es zögernd in die Hand. Es war mit einem Fingerabdruck gesichert. Er drückte Sarahs Daumen darauf – es entsperrte sich. Unzählige Benachrichtigungen ploppten auf. Instagram, Snapchat, WhatsApp. Nachrichten von Jessica und Chloe, von Mark (eine wütende Tirade), von diversen anderen Leuten, deren Namen ihm nichts sagten.
+                 </p>
+                 <p class="thought">
+                    Ich kann das nicht. Ich kann nicht so tun, als wäre ich sie. Ich weiß nicht, was ich antworten soll. Was ist, wenn ich das Falsche sage?
+                 </p>
+                 <p>
+                    Er legte das Handy weg. Zu viel. Alles war zu viel. Er versuchte, seine eigene Nummer anzurufen. Er wählte die Ziffern mit zitternden Fingern. Es klingelte. Und klingelte. Und klingelte. Dann sprang die Mailbox an. Seine eigene Stimme, unbeholfen und leise, bat darum, eine Nachricht zu hinterlassen. Er legte auf. Hatte Sarah – in seinem Körper – das Handy ausgeschaltet? Oder war sein Körper... leer? Der Gedanke ließ ihn erschaudern.
+                 </p>
+             </div>
+
+            <!-- Seite 15: Kapitel 6 Forts. - Das Tagebuch -->
+            <div class="page-content" id="page15">
+                 <h3>Erneuter Blick ins Tagebuch</h3>
+                 <p>
+                    Er griff nach dem kleinen, ledergebundenen Tagebuch, das er am Morgen gefunden hatte. Er brauchte irgendeinen Anker, irgendeine Erklärung. Er blätterte weiter, las Einträge aus den letzten Wochen.
+                 </p>
+                 <p class="thought" style="font-style: normal; border-left: 2px solid #c8b09a; background-color: #f9f5f0; padding: 10px;">
+                    <em>"10. Oktober: Mutter hat wieder gesagt, ich muss abnehmen. Für die Gala. Ich esse doch kaum was! Manchmal fühle ich mich wie eine Puppe, die sie nach Belieben an- und auszieht und formt."</em><br><br>
+                    <em>"18. Oktober: Streit mit Dad. Er will, dass ich Wirtschaft studiere. Ich will aber Fotografie machen. Habe es ihm gesagt. Er hat nur gelacht. 'Kunst ist brotlos, Sarah. Du wirst einen Mann heiraten, der für dich sorgt. Aber ein gutes Studium macht sich gut im Lebenslauf.'"</em><br><br>
+                    <em>"25. Oktober: Habe diesen schüchternen Jungen, Erik, heute in der Bibliothek gesehen. Er sieht immer so traurig aus. Manchmal wünschte ich, ich könnte einfach unsichtbar sein wie er. Niemand erwartet was von ihm."</em>
+                 </p>
+                 <p>
+                    Erik stockte. Sie hatte ihn bemerkt? Sie hatte über ihn geschrieben? Und sie hatte sich gewünscht, unsichtbar zu sein – wie er? War das... war das der Auslöser? Ein unbedachter Wunsch von ihr, vielleicht ein unbewusster von ihm, am selben Abend geäußert? Hatte das Universum einen grausamen Scherz gespielt?
+                 </p>
+                 <p>
+                    Ein Kloß bildete sich in seinem Hals. Das war alles noch viel komplizierter und tragischer, als er gedacht hatte. Sie war nicht nur die oberflächliche Prinzessin. Sie war gefangen, genauso wie er es jetzt war. Nur ihr Käfig war aus Gold und Seide.
+                 </p>
+             </div>
+
+            <!-- Seite 16: Kapitel 6 Forts. - Das Dinner -->
+            <div class="page-content" id="page16">
+                 <h3>Das formelle Abendessen</h3>
+                 <p>
+                    Das Abendessen war noch formeller als das Frühstück. Drei Gänge, serviert von zwei Hausangestellten. Die Eltern sprachen über Geschäftliches, über eine bevorstehende Reise nach St. Moritz, über die "unmögliche" neue Kunstinstallation in der Stadt. Erik (Sarah) wurde kaum beachtet, außer wenn seine Mutter seine Haltung korrigierte ("Ellenbogen vom Tisch, Sarah!") oder sein Vater ihn aufforderte, seine Meinung zu einem Investmentfonds abzugeben (er stammelte etwas Unverständliches).
+                 </p>
+                 <p class="setting">Der große Speisesaal. Silberbesteck, Porzellanteller, Kristallgläser. Eine Atmosphäre von sterilem Reichtum.</p>
+                 <p>
+                    Das Essen war exquisit – irgendein Fisch mit kunstvoll drapiertem Gemüse –, aber Erik schmeckte nichts. Er fühlte sich wie ein Statist in einem Theaterstück, das er nicht verstand. Er beobachtete Sarahs Eltern. Die kühle Distanz zwischen ihnen, die Fassade der Perfektion, die sie aufrechterhielten. Keine Wärme, kein echtes Gespräch. Nur Status, Geld und Erwartungen.
+                 </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> "Sarah, du hast heute Nachmittag bei Dior angerufen und den Termin für die Anpassung des Gala-Kleides verschoben? Warum?"
+                </p>
+                 <p class="thought">
+                    <span class="emphasis">Ich habe was?! Ich habe nirgendwo angerufen!</span>
+                 </p>
+                <p class="dialogue">
+                    <strong>Erik (als Sarah):</strong> "Ich... äh... nein? Das muss ein Irrtum sein."
+                </p>
+                <p class="dialogue">
+                    <strong>Mutter:</strong> (Zieht eine Augenbraue hoch) "Seltsam. Die Dame klang sehr sicher. Nun gut. Vergiss nicht, morgen früh zurückzurufen."
+                </p>
+                 <p>
+                    Erik wurde eiskalt. Hatte die <span class="emphasis">echte</span> Sarah vielleicht doch irgendwie Zugriff auf... Dinge? Konnte sie aus seinem Körper heraus agieren? Der Gedanke war ebenso beängstigend wie hoffnungsvoll.
+                 </p>
+             </div>
+
+            <!-- Seite 17: Kapitel 6 Ende -->
+             <div class="page-content" id="page17">
+                 <h3>Erschöpfung und Ungewissheit</h3>
+                 <p>
+                    Endlich war der lange, quälende Tag vorbei. Erik zog sich eines der neuen, sündhaft teuren Seidennachthemden an (es fühlte sich immer noch falsch an) und kroch unter die Daunendecke des riesigen Himmelbetts. Er war ausgelaugt wie nie zuvor in seinem Leben.
+                 </p>
+                 <p>
+                    Er hatte einen Tag als Sarah Wagner überlebt. Einen Tag voller körperlicher Unannehmlichkeiten, sozialer Fettnäpfchen, emotionaler Achterbahnfahrten und dem erdrückenden Gewicht von Reichtum und Erwartungen. Er hatte einen Blick hinter die perfekte Fassade geworfen und eine Verletzlichkeit entdeckt, die ihn berührte, aber auch eine Kälte und Oberflächlichkeit, die ihn abstieß.
+                 </p>
+                 <p class="thought">
+                    Ich habe sie idealisiert. Ich habe sie gehasst. Und jetzt... jetzt tue ich beides irgendwie gleichzeitig. Und ich bemitleide sie. Und mich selbst. Was wird morgen sein? Wird dieser Albtraum weitergehen? Gibt es einen Weg zurück? Und wenn ja, wer werde ich sein, wenn ich zurück bin? Und wer wird sie sein?
+                 </p>
+                 <p>
+                    Die Ungewissheit war zermürbend. Er schloss die Augen, der Duft von Sarahs teurem Parfüm lag schwer in der Luft. Er dachte an sein eigenes, unordentliches Zimmer, seine alten Jeans, seine Anonymität. Es erschien ihm wie ein unendlich fernes, verlorenes Paradies. Mit einem letzten, verzweifelten Gedanken – <span class="emphasis">"Bitte lass es morgen vorbei sein"</span> – glitt er in einen tiefen, unruhigen Schlaf, gefangen im goldenen Käfig von Sarah Wagners Leben.
+                 </p>
+                 <p style="text-align:center; margin-top:50px; font-style:italic;">- Ende des ersten Tages -</p>
+             </div>
+
+
+            <!-- FÜGE HIER WEITERE SEITEN EIN, WENN NÖTIG -->
+
+
+            <!-- Navigation wird hier vom JS eingefügt -->
         </div>
         <div class="navigation">
-            <button class="nav-button" id="prevPage" onclick="changePage(-1)">‹ Vorherige</button>
-            <span class="page-number" id="pageIndicator">Seite 1 / 18</span>
-            <button class="nav-button" id="nextPage" onclick="changePage(1)">Nächste ›</button>
+            <button class="nav-button" id="prevPage" onclick="changePage(-1)">‹ Vorherige Seite</button>
+            <span class="page-number" id="pageIndicator">Seite 1 / X</span>
+            <button class="nav-button" id="nextPage" onclick="changePage(1)">Nächste Seite ›</button>
         </div>
     </div>
 
     <script>
         let currentPageIndex = 0;
-        const pages = document.querySelectorAll('.main-book-content .page-content');
-        const totalPages = pages.length; // Jetzt 18 Seiten
+        // WICHTIG: Sicherstellen, dass ALLE divs mit der Klasse 'page-content' korrekt ausgewählt werden.
+        const pages = document.querySelectorAll('.main-book-content > .page-content');
+        const totalPages = pages.length;
         const pageIndicator = document.getElementById('pageIndicator');
         const prevButton = document.getElementById('prevPage');
         const nextButton = document.getElementById('nextPage');
+        const bookContentArea = document.querySelector('.main-book-content');
 
         function showPage(index) {
-            pages.forEach((page, i) => {
-                page.classList.remove('active');
-                if (i === index) {
-                    page.classList.add('active');
-                }
-            });
-            document.querySelector('.main-book-content').scrollTop = 0;
+            if (index < 0 || index >= totalPages) {
+                console.error("Ungültiger Seitenindex:", index);
+                return; 
+            }
+            // Performance: Nur die notwendigen Klassen ändern
+            const activePage = document.querySelector('.page-content.active');
+            if(activePage) activePage.classList.remove('active');
+            
+            pages[index].classList.add('active');
+
+            // Scrollt den Inhalt der neuen Seite ganz nach oben
+            bookContentArea.scrollTop = 0; 
             updateNavigation();
         }
 
         function updateNavigation() {
+            if (!pageIndicator || !prevButton || !nextButton) return; // Sicherstellen, dass Elemente existieren
+            
             pageIndicator.textContent = `Seite ${currentPageIndex + 1} / ${totalPages}`;
             prevButton.disabled = currentPageIndex === 0;
             nextButton.disabled = currentPageIndex === totalPages - 1;
@@ -294,16 +667,26 @@
 
         function changePage(direction) {
             const newIndex = currentPageIndex + direction;
+            // Zusätzliche Prüfung, um sicherzustellen, dass der Index gültig bleibt
             if (newIndex >= 0 && newIndex < totalPages) {
                 currentPageIndex = newIndex;
                 showPage(currentPageIndex);
+            } else {
+                 console.warn("Versuch, über die Grenzen hinaus zu blättern:", newIndex);
             }
         }
 
-        // Initialanzeige
-        showPage(currentPageIndex);
-        // Update total pages display on load
-        updateNavigation();
+        // Initialanzeige beim Laden der Seite
+        document.addEventListener('DOMContentLoaded', () => {
+             if (pages.length > 0) {
+                 showPage(currentPageIndex);
+             } else {
+                 console.error("Keine Seiteninhalte (.page-content) gefunden!");
+                 if(pageIndicator) pageIndicator.textContent = "Fehler: Keine Seiten";
+                 if(prevButton) prevButton.disabled = true;
+                 if(nextButton) nextButton.disabled = true;
+             }
+        });
     </script>
 
 </body>
