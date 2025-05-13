@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Core Monitor - CerebraSim v2.1</title>
+    <style>
+        body { font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; margin: 0; padding: 0; background-color: #1e1e1e; color: #cccccc; font-size: 14px; }
+        .container { display: flex; flex-direction: column; height: 100vh; }
+        .header { padding: 10px; background-color: #2d2d2d; border-bottom: 1px solid #3c3c3c; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.5em; color: #61dafb; }
+        .header #aiStatus { font-size: 0.9em; color: #999999; }
+        .main-content { flex-grow: 1; display: flex; overflow: hidden; }
+        .sidebar { width: 250px; background-color: #252525; border-right: 1px solid #3c3c3c; padding: 15px; overflow-y: auto; }
+        .sidebar h3 { margin-top: 0; color: #80cbc4; }
+        .sidebar pre { white-space: pre-wrap; word-break: break-all; font-size: 0.9em; line-height: 1.6; }
+        .content-area { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        .content-area h3 { margin-top: 0; color: #82aaff; }
+        .log-display { flex-grow: 1; background-color: #1a1a1a; border: 1px solid #3c3c3c; padding: 10px; overflow-y: scroll; font-size: 0.85em; line-height: 1.5; white-space: pre-wrap;}
+        .log-entry { margin-bottom: 5px; }
+        .log-entry.system { color: #9effff; }
+        .log-entry.error { color: #ff8a80; }
+        .log-entry.warn { color: #ffd180; }
+        .log-entry.kb_learn { color: #c3e88d; }
+        .log-entry.strategy { color: #f78c6c; font-style: italic; }
+        .log-entry.candidate { color: #b2ccd6; padding-left: 15px; }
+        .log-entry.decision { color: #c3e88d; font-weight: bold; }
+        .log-entry.cycle { color: #80cbc4; border-top: 1px dashed #444; border-bottom: 1px dashed #444; margin: 8px 0; padding: 3px 0;}
+        .memory-section { margin-bottom: 15px; }
+        .memory-section pre { max-height: 150px; overflow-y: auto; background-color: #222; padding: 5px; border-radius: 3px;}
+        .tabs { display: flex; border-bottom: 1px solid #3c3c3c; margin-bottom:10px; }
+        .tab-button { padding: 8px 15px; cursor: pointer; background-color: #252525; border: none; border-bottom: 3px solid transparent; color: #aaa; }
+        .tab-button.active { border-bottom: 3px solid #61dafb; color: #61dafb; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Core Monitor</h1>
+            <div id="aiStatus">Status: Waiting for connection...</div>
+        </div>
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>AI Parameters</h3>
+                <pre id="aiParamsDisplay">Loading...</pre>
+                <hr>
+                <h3>Memory Stats</h3>
+                <pre id="memoryStatsDisplay">Vocab Size: 0</pre>
+            </div>
+            <div class="content-area">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="thoughts">Thought Process</button>
+                    <button class="tab-button" data-tab="kb">Knowledge Base</button>
+                    <button class="tab-button" data-tab="ngrams">N-Grams</button>
+                    <button class="tab-button" data-tab="history">Chat History</button>
+                </div>
+
+                <div id="thoughtsContent" class="tab-content active" style="display:flex; flex-direction: column; flex-grow: 1;">
+                    <h3>Live Thought Process</h3>
+                    <div id="thoughtLogDisplay" class="log-display">Awaiting AI activity...</div>
+                </div>
+                <div id="kbContent" class="tab-content" style="overflow-y: auto;">
+                    <h3>Knowledge Base (Sample)</h3>
+                    <pre id="kbDisplay">No KB data yet.</pre>
+                </div>
+                <div id="ngramsContent" class="tab-content" style="overflow-y: auto;">
+                    <h3>N-Gram Samples</h3>
+                    <h4>Bigrams:</h4>
+                    <pre id="bigramDisplay">No Bigrams yet.</pre>
+                    <h4>Trigrams:</h4>
+                    <pre id="trigramDisplay">No Trigrams yet.</pre>
+                </div>
+                 <div id="historyContent" class="tab-content" style="overflow-y: auto;">
+                    <h3>Conversation History (Last 10)</h3>
+                    <pre id="chatHistoryDisplay">No history yet.</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const aiStatusDisplay = document.getElementById('aiStatus');
+        const aiParamsDisplay = document.getElementById('aiParamsDisplay');
+        const memoryStatsDisplay = document.getElementById('memoryStatsDisplay');
+        const thoughtLogDisplay = document.getElementById('thoughtLogDisplay');
+        const kbDisplay = document.getElementById('kbDisplay');
+        const bigramDisplay = document.getElementById('bigramDisplay');
+        const trigramDisplay = document.getElementById('trigramDisplay');
+        const chatHistoryDisplay = document.getElementById('chatHistoryDisplay');
+        
+        const tabs = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const targetTab = tab.getAttribute('data-tab');
+                tabContents.forEach(content => {
+                    if (content.id === `${targetTab}Content`) {
+                        content.classList.add('active');
+                         content.style.display = content.id === 'thoughtsContent' ? 'flex' : 'block'; // Special for thoughts
+                    } else {
+                        content.classList.remove('active');
+                        content.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+
+        window.addEventListener('message', function(event) {
+            // For security, you might want to check event.origin in a real application
+            // if (event.origin !== 'http://your-chat-app-origin.com') return;
+
+            const message = event.data;
+            if (!message || !message.type) return;
+
+            switch (message.type) {
+                case 'INIT':
+                case 'FULL_STATE_UPDATE':
+                    updateFullDisplay(message.data);
+                    break;
+                case 'STATUS_UPDATE':
+                    aiStatusDisplay.textContent = `Status: ${message.data}`;
+                    break;
+                case 'LOG_UPDATE':
+                    addLogEntry(message.data.entry, message.data.logType);
+                    break;
+                case 'MEMORY_UPDATE': // More granular update for memory structures
+                    if (message.data.vocabularySize) memoryStatsDisplay.textContent = `Vocab Size: ${message.data.vocabularySize}`;
+                    if (message.data.knowledgeBase) updateKbDisplay(message.data.knowledgeBase);
+                    if (message.data.bigrams) updateNgramDisplay(message.data.bigrams, bigramDisplay, "Bigrams");
+                    if (message.data.trigrams) updateNgramDisplay(message.data.trigrams, trigramDisplay, "Trigrams");
+                    break;
+            }
+        });
+
+        function updateFullDisplay(aiState) {
+            aiStatusDisplay.textContent = `Status: ${aiState.status || 'Connected'}`;
+            
+            let paramsText = "";
+            for (const key in aiState.parameters) {
+                paramsText += `${key}: ${typeof aiState.parameters[key] === 'number' ? aiState.parameters[key].toFixed(3) : aiState.parameters[key]}\n`;
+            }
+            aiParamsDisplay.textContent = paramsText;
+
+            memoryStatsDisplay.textContent = `Vocab Size: ${aiState.memory.vocabulary.size || (Array.isArray(aiState.memory.vocabulary) ? aiState.memory.vocabulary.length : 0)}\n`;
+            // Could add more stats like KB entries, N-gram counts
+
+            updateKbDisplay(aiState.memory.knowledgeBase);
+            updateNgramDisplay(aiState.memory.bigrams, bigramDisplay, "Bigrams");
+            updateNgramDisplay(aiState.memory.trigrams, trigramDisplay, "Trigrams");
+            updateChatHistoryDisplay(aiState.memory.conversationHistory);
+
+            thoughtLogDisplay.innerHTML = ""; // Clear old logs on full update
+            if (aiState.lastThoughtProcess && Array.isArray(aiState.lastThoughtProcess)) {
+                aiState.lastThoughtProcess.slice().reverse().forEach(entry => addLogEntry(entry, guessLogType(entry))); // Display in chronological
+            }
+             // Ensure the 'thoughts' tab is active if it's a full refresh or init
+            document.querySelector('.tab-button[data-tab="thoughts"]').click();
+        }
+        
+        function guessLogType(entryText) {
+            if (entryText.includes("System") || entryText.includes("localStorage")) return "system";
+            if (entryText.includes("Error")) return "error";
+            if (entryText.includes("Warn") || entryText.includes("No saved state")) return "warn";
+            if (entryText.includes("Learned KB:")) return "kb_learn";
+            if (entryText.includes("Strategy:")) return "strategy";
+            if (entryText.includes("Candidate:")) return "candidate";
+            if (entryText.includes("Selected Best Candidate") || entryText.includes("Decision:")) return "decision";
+            if (entryText.includes("---")) return "cycle";
+            return "thought"; // default
+        }
+
+
+        function addLogEntry(text, type = "thought") {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = `log-entry ${type}`; // Apply type as class
+            entryDiv.textContent = text;
+            thoughtLogDisplay.appendChild(entryDiv); // Add to bottom for chronological
+            thoughtLogDisplay.scrollTop = thoughtLogDisplay.scrollHeight;
+        }
+
+        function updateKbDisplay(kb) {
+            let kbText = "{\n";
+            let count = 0;
+            for (const entity in kb) {
+                if (count >= 50) { kbText += "  ... (truncated)\n"; break; } // Limit display
+                kbText += `  "${entity}": {\n`;
+                for (const relation in kb[entity]) {
+                    const fact = kb[entity][relation];
+                    kbText += `    "${relation}": { "value": "${fact.value}", "confidence": ${fact.confidence.toFixed(2)} }\n`;
+                }
+                kbText += `  },\n`;
+                count++;
+            }
+            kbText += "}";
+            kbDisplay.textContent = kbText;
+        }
+        
+        function updateNgramDisplay(ngrams, displayElement, typeName) {
+            let ngramText = `Total ${typeName} Prefixes: ${Object.keys(ngrams).length}\n\n`;
+            let prefixCount = 0;
+            for (const prefix in ngrams) {
+                if (prefixCount >= 30) { ngramText += "... (truncated)\n"; break; } // Limit display
+                ngramText += `"${prefix}": {\n`;
+                let suffixCount = 0;
+                for (const suffix in ngrams[prefix]) {
+                    if (suffixCount >= 5) { ngramText += `  ... (${Object.keys(ngrams[prefix]).length - 5} more)\n`; break; }
+                    ngramText += `  "${suffix}": ${ngrams[prefix][suffix]},\n`;
+                    suffixCount++;
+                }
+                ngramText += "},\n";
+                prefixCount++;
+            }
+            displayElement.textContent = ngramText;
+        }
+        
+        function updateChatHistoryDisplay(history) {
+            let historyText = "";
+            const recentHistory = history.slice(-10); // Last 10 entries
+            recentHistory.forEach(entry => {
+                historyText += `[${entry.sender.toUpperCase()}] (${new Date(entry.timestamp).toLocaleTimeString()})\n  "${entry.text}"\n`;
+                if(entry.analysis && entry.analysis.intent) {
+                    historyText += `  Analysis: Intent: ${entry.analysis.intent}, Keywords: ${entry.analysis.keywords.join(', ') || 'N/A'}\n`;
+                }
+                historyText += "\n";
+            });
+            chatHistoryDisplay.textContent = historyText || "No conversation history yet.";
+        }
+
+
+        // Notify the main window that the monitor is ready
+        if (window.opener) {
+            // This message isn't strictly necessary if index.html just tries to post after timeout,
+            // but it's good practice for more robust communication.
+            // window.opener.postMessage({ type: 'MONITOR_READY' }, '*');
+        }
+        aiStatusDisplay.textContent = "Status: Connected. Waiting for AI data...";
+
+    </script>
+</body>
+</html>
