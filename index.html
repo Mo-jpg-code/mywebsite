@@ -1,584 +1,408 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fremd im Spiegel - Das erweiterte Buch (PC-Version)</title>
+    <title>AI Dialogue Interface - Model: CerebraSim v2.1</title>
     <style>
-        /* Globale Stile & Reset */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html, body {
-            height: 100%;
-            overflow: hidden; /* Verhindert Scrollen der Hauptseite */
-            background-color: #333; /* Dunkler Hintergrund außen */
-        }
-
-        body {
-            font-family: 'Times New Roman', Times, serif; /* Klassische Buch-Schriftart für PC */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px; /* Abstand zum Rand */
-        }
-
-        /* Buch-Container - Breiter für PC */
-        .book-wrapper {
-            width: 95vw; /* Größere Breite */
-            height: 90vh; /* Größere Höhe */
-            max-width: 900px; /* Maximale Breite für große Bildschirme */
-            max-height: 90%; 
-            background-color: #f5f1e9; /* Helleres, leicht gealtertes Papier */
-            box-shadow: 0 15px 40px rgba(0,0,0,0.5); 
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden; /* Wichtig für Seiten-Handling */
-            border: 1px solid #d1c7b8; /* Leichter Rand */
-        }
-        
-        .main-book-content {
-            flex-grow: 1;
-            padding: 40px 60px; /* Mehr Innenabstand für PC */
-            overflow-y: auto; /* Scrollen innerhalb der Seite */
-            position: relative;
-            scrollbar-width: thin; /* Schmalere Scrollbar */
-            scrollbar-color: #a09388 #f5f1e9; /* Angepasste Scrollbarfarben */
-        }
-        /* Für Webkit-Browser (Chrome, Safari) */
-        .main-book-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        .main-book-content::-webkit-scrollbar-track {
-            background: #f5f1e9;
-        }
-        .main-book-content::-webkit-scrollbar-thumb {
-            background-color: #a09388;
-            border-radius: 4px;
-            border: 2px solid #f5f1e9;
-        }
-
-
-        /* Seiten-Styling */
-        .page-content {
-            display: none; /* Alle Seiten standardmäßig ausblenden */
-            animation: contentFadeIn 0.6s ease-out;
-            min-height: 100%; 
-            color: #2c1f13; /* Sehr dunkles Braun für Text */
-        }
-
-        .page-content.active {
-            display: block;
-        }
-
-        @keyframes contentFadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .page-content h1 { /* Buchtitel auf der ersten Seite */
-            font-size: 2.8em;
-            text-align: center;
-            margin-bottom: 15px;
-            color: #5c3a21; /* Titel etwas dunkler */
-            font-weight: normal;
-            letter-spacing: 1px;
-        }
-        
-        .page-content h2 { /* Untertitel / Kapitel */
-            font-size: 1.8em;
-            text-align: center;
-            margin-bottom: 30px; /* Mehr Abstand */
-            margin-top: 20px;
-            color: #7a5c42;
-            font-style: italic;
-            font-weight: normal;
-            border-bottom: 1px solid #d1c7b8;
-            padding-bottom: 15px;
-        }
-        
-        .page-content h3 { /* Kleinere Überschriften innerhalb einer Seite */
-            font-size: 1.3em;
-            color: #5c3a21;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .page-content p {
-            margin-bottom: 1.3em; /* Etwas mehr Abstand */
-            line-height: 1.7; /* Gute Lesbarkeit */
-            font-size: 1.1em; /* Größere Schrift für PC */
-            text-align: justify;
-        }
-
-        .thought {
-            font-style: italic;
-            color: #554236;
-            margin: 1em 30px 1em 30px; /* Mehr Einzug */
-            padding: 10px 15px;
-            border-left: 3px solid #c8b9a9;
-            background-color: rgba(210, 199, 184, 0.1); /* Leichte Hintergrundtönung */
-        }
-        
-        .emphasis {
-            font-style: italic;
-            font-weight: bold;
-            color: #8c3b12; /* Auffälligere Farbe für Panik etc. */
-        }
-        
-        .sarah-trait { /* Neue Klasse für aufkommende Sarah-Gedanken/Verhalten */
-             font-style: italic;
-             color: #7c4d3a; /* Eigene Farbe dafür */
-             border-left: 3px solid #b58c7a;
-             margin: 1em 30px 1em 30px;
-             padding: 10px 15px;
-             background-color: rgba(181, 140, 122, 0.1);
-        }
-
-        .dialogue {
-            margin-left: 20px; /* Etwas mehr Einzug */
-            margin-bottom: 1em;
-            margin-top: 1em;
-        }
-        .dialogue strong { /* Sprecher */
-            font-weight: bold;
-            color: #5c3a21;
-            display: block; /* Sprecher in neue Zeile */
-            margin-bottom: 3px;
-        }
-        
-        .setting {
-            font-style: italic;
-            color: #777;
-            margin-bottom: 1.5em;
-            display: block;
-            text-align: center;
-            font-size: 0.95em;
-            border-top: 1px dashed #ccc;
-            border-bottom: 1px dashed #ccc;
-            padding: 8px 0;
-        }
-        
-        .action {
-             font-style: italic;
-             color: #666;
-             margin: 0.5em 0;
-        }
-
-        /* Navigation unverändert */
-        .navigation {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px 60px; 
-            background-color: #e8e2d9; 
-            border-top: 1px solid #d1c7b8; 
-            position: sticky; 
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10; 
-        }
-
-        .nav-button {
-            background-color: #8b7a6b; 
-            color: #f5f1e9;
-            border: none;
-            padding: 12px 25px; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 1em;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-        }
-
-        .nav-button:hover {
-            background-color: #6a5a4b; 
-        }
-        .nav-button:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
-        
-        .nav-button:disabled {
-            background-color: #b0a398; 
-            cursor: not-allowed;
-            box-shadow: none;
-            color: #d1c7b8;
-        }
-
-        .page-number {
-            font-size: 1em;
-            color: #7a6a5d;
-            align-self: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
+        /* Basic styling - you can expand this */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #2b2b2b; color: #dcdcdc; }
+        .header { padding: 15px; background-color: #3c3c3c; text-align: center; color: #61dafb; font-size: 1.5em; border-bottom: 1px solid #4a4a4a;}
+        .chat-container { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .message { margin-bottom: 10px; padding: 10px 15px; border-radius: 15px; max-width: 70%; line-height: 1.5; }
+        .user { background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
+        .ai { background-color: #4a4a4a; color: #dcdcdc; align-self: flex-start; border-bottom-left-radius: 5px;}
+        .input-area { display: flex; padding: 15px; border-top: 1px solid #4a4a4a; background-color: #3c3c3c; }
+        #userInput { flex-grow: 1; padding: 10px; border: 1px solid #555; border-radius: 5px; background-color: #252525; color: #dcdcdc; font-size: 1em;}
+        #sendButton, #openMonitorButton { padding: 10px 20px; margin-left: 10px; border: none; border-radius: 5px; cursor: pointer; background-color: #61dafb; color: #2b2b2b; font-weight: bold; }
+        #sendButton:hover, #openMonitorButton:hover { background-color: #52badd; }
+        .timestamp { font-size: 0.75em; opacity: 0.7; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
+    <div class="header">
+        CerebraSim v2.1 - Dialogue Interface
+        <button id="openMonitorButton" style="font-size: 0.6em; padding: 5px 10px; float: right;">Open AI Core Monitor</button>
+    </div>
 
-    <div class="book-wrapper">
-        <div class="main-book-content">
-            
-            <!-- Seiten 1-17 sind die vom Vortag -->
-            <!-- Hier starten wir mit Seite 18 für Tag 2 -->
+    <div class="chat-container" id="chatLog">
+        <!-- Messages will appear here -->
+    </div>
 
-            <!-- === KAPITEL 7: TAG ZWEI - DIE SCHLEICHENDE VERÄNDERUNG === -->
-
-            <!-- Seite 18: Kapitel 7 - Ein neuer Morgen, ein alter Albtraum -->
-            <div class="page-content" id="page18">
-                <h2>Kapitel 7: Tag Zwei - Die schleichende Veränderung</h2>
-                <p>
-                    Der gleiche sanfte Wecker, die gleiche luxuriöse Umgebung. Erik schlug die Augen auf. Ein kurzer Moment der Hoffnung zerschellte sofort an der Realität. Er war immer noch Sarah. Die Enttäuschung war wie ein körperlicher Schlag, aber die panische Hysterie vom Vortag war... gedämpfter. Ersetzt durch eine bleierne Müdigkeit und eine seltsame Form von Resignation.
-                </p>
-                <p class="setting">Sarahs Schlafzimmer. Mittwochmorgen, kurz nach sieben.</p>
-                <p>
-                    Er setzte sich auf. Die Bewegungen fühlten sich immer noch fremd an, aber nicht mehr ganz so katastrophal unkoordiniert. Fast so, als würde sich sein Gehirn langsam an die neue Hardware gewöhnen. Ein beunruhigender Gedanke.
-                </p>
-                <p class="thought">
-                    Okay, Tag zwei in der Hölle. Was steht heute an? Noch mehr Shopping? Noch mehr Erniedrigungen? Vielleicht gewöhne ich mich ja dran. <span class="emphasis">Oh Gott, nein, das darf nicht passieren!</span> Ich muss hier raus! Aber wie?
-                </p>
-                <p>
-                    Er schwang die Beine aus dem Bett. Der erste Gang führte ihn, wie gestern, ins Bad. Die morgendliche Routine mit der Periode war immer noch lästig und unangenehm, aber die Panik war einer genervten Akzeptanz gewichen. Er wusste jetzt zumindest, wo die Binden waren und wie man sie halbwegs korrekt platzierte. Ein kleiner, trauriger Sieg.
-                </p>
-            </div>
-
-            <!-- Seite 19: Kapitel 7 Forts. - Der Spiegel und die Schminke -->
-            <div class="page-content" id="page19">
-                <h3>Der Blick in den Spiegel</h3>
-                <p>
-                    Er trat vor den großen Spiegel im Bad. Sarahs Gesicht starrte zurück. Doch heute sah er nicht nur die fremde Schönheit und seine eigene Panik darin. Er bemerkte... Details. Einen winzigen Pickel am Kinn, der gestern noch nicht da war. Leichte Schatten unter den Augen. Sein Blick war kritischer, taxierender. Fast so, wie Sarahs Mutter ihn gestern gemustert hatte.
-                </p>
-                <p class="sarah-trait">
-                    Ugh, dieser Pickel ist ja widerlich. Den muss ich abdecken. Und die Augenringe... schrecklich. Ich sehe ja total fertig aus. Estelle hat gestern zwar gute Arbeit geleistet, aber heute...
-                </p>
-                 <p class="thought">
-                    <span class="emphasis">Moment mal!</span> Wo kam das denn her? Warum denke ich so? Ich bin Erik! Mich haben Pickel nie gestört! Und Augenringe sind mir egal! Was passiert hier mit mir?
-                 </p>
-                 <p>
-                    Fast gegen seinen Willen wanderte sein Blick zum Schminktisch im Schlafzimmer, beladen mit all den Tiegeln und Tuben. Gestern hatte er das Zeug gehasst. Heute spürte er einen seltsamen Impuls. Eine Neugier. Er erinnerte sich, wie Estelle gestern geschickt Concealer aufgetragen hatte.
-                 </p>
-                 <p class="action">
-                    Zögernd griff er nach einem kleinen Fläschchen mit der Aufschrift "Radiant Creamy Concealer". Er tupfte unbeholfen etwas davon auf den Pickel und unter die Augen. Blendete es mit den Fingern. Das Ergebnis war... überraschend gut. Der Pickel war fast unsichtbar, die Schatten gemildert. Ein kleines Gefühl der... Befriedigung durchzuckte ihn. Sofort gefolgt von Abscheu über sich selbst.
-                 </p>
-                 <p class="thought">
-                    Das ist falsch. Das ist so falsch! Ich fange an, wie sie zu werden! Dieses oberflächliche... Zeug! Ich muss widerstehen!
-                 </p>
-            </div>
-
-            <!-- Seite 20: Kapitel 7 Forts. - Kleidung und Frühstückskonflikt -->
-            <div class="page-content" id="page20">
-                <h3>Kleiderwahl mit innerem Widerstreit</h3>
-                <p>
-                    Vor dem Kleiderschrank tobte ein innerer Kampf. Ein Teil von ihm wollte wieder die unauffälligste Jeans und den weitesten Pullover greifen. Ein anderer Teil – ein neuer, fremder Teil – fühlte sich zu einem eng anliegenden Rollkragenpullover und einem schicken Rock hingezogen. Dinge, die er gestern noch verabscheut hätte.
-                </p>
-                 <p class="sarah-trait">
-                    Die Jeans von gestern... die saß irgendwie komisch. Und der Pullover war langweilig. Vielleicht doch der Rock? Der betont die Figur...
-                 </p>
-                 <p class="thought">
-                    <span class="emphasis">Nein!</span> Ich bin Erik! Ich trage keine Röcke! Ich will meine alten, ausgebeulten Hoodies zurück!
-                 </p>
-                 <p>
-                    Er entschied sich schließlich für einen Kompromiss: eine gut sitzende, aber nicht zu enge Hose und einen einfachen, aber eleganten Seidenpullover. Es fühlte sich immer noch wie eine Verkleidung an, aber der Widerstand war... schwächer.
-                 </p>
-                 <p>
-                    Beim Frühstück war die Stimmung so frostig wie am Vortag. Die Mutter musterte ihn erneut kritisch.
-                 </p>
-                <p class="dialogue">
-                    <strong>Mutter:</strong> "Immer noch keine Anstalten, dich angemessen zu kleiden? Was ist los mit dir in letzter Zeit, Sarah? Du wirkst so... gewöhnlich."
-                </p>
-                 <p>
-                    Statt zu stammeln oder zu schweigen, hörte Erik sich selbst antworten, mit einer Schärfe, die ihn erschreckte:
-                 </p>
-                <p class="dialogue">
-                    <strong>Erik (als Sarah, mit Sarahs Tonfall):</strong> "Vielleicht habe ich einfach keine Lust, mich jeden Morgen für eine Modenschau aufzubrezeln, Mutter. Nicht jeder Tag ist die Gala."
-                </p>
-                 <p>
-                    Die Mutter zog überrascht die Augenbrauen hoch. Ein Anflug von Respekt? Oder nur Irritation?
-                 </p>
-                <p class="dialogue">
-                    <strong>Mutter:</strong> "Diese Einstellung wird dich nicht weiterbringen. Und apropos Gala, hast du schon bei Dior angerufen?"
-                </p>
-                <p class="dialogue">
-                    <strong>Erik (als Sarah):</strong> "Werde ich nach der Schule erledigen." (Eine glatte Lüge, aber sie kam ihm erstaunlich leicht über die Lippen.)
-                </p>
-                 <p class="thought">
-                    Woher kam das? Diese schnippische Antwort? Diese Fähigkeit zu lügen? Das bin nicht ich... oder doch? Wird ein Teil von ihr... ich?
-                 </p>
-            </div>
-
-            <!-- === KAPITEL 8: VERHÄNGNISVOLLE NORMALITÄT === -->
-
-            <!-- Seite 21: Kapitel 8 - Schulflure und erste Urteile -->
-             <div class="page-content" id="page21">
-                 <h2>Kapitel 8: Verhängnisvolle Normalität</h2>
-                 <p>
-                    Die Ankunft in der Schule war weniger ein Spießrutenlauf als gestern. Die Blicke waren immer noch da, aber Erik fühlte sie nicht mehr ganz so intensiv. Fast so, als würde er einen Schutzschild entwickeln – oder vielmehr, als würde Sarahs gewohnheitsmäßige Ignoranz gegenüber der Meinung anderer durchsickern.
-                 </p>
-                 <p class="setting">Der Hauptflur der Northwood High. Laut, geschäftig.</p>
-                 <p>
-                    Jessica und Chloe schlossen sich ihm an, plapperten sofort über irgendein Drama auf Instagram. Erik hörte zu, nickte an den richtigen Stellen. Es fiel ihm leichter als gestern, ihre oberflächlichen Gespräche zu verfolgen. Zu leicht.
-                 </p>
-                 <p class="action">
-                    Da sah er ihn: Tim, den Jungen, dem er gestern geholfen hatte. Er kam mit einem Stapel Bücher auf sie zu, stolperte leicht und ließ ein Buch fallen. Gestern hätte Erik Mitleid empfunden. Heute schoss ihm ein anderer Gedanke durch den Kopf:
-                 </p>
-                 <p class="sarah-trait">
-                    Oh Mann, dieser Tollpatsch. Immer so ungeschickt. Und diese Brille... total uncool. Kein Wunder, dass er keine Freunde hat.
-                 </p>
-                 <p>
-                    Der Gedanke traf ihn wie ein Schlag. Er war entsetzt über sich selbst. Das war eine typische Sarah-Bewertung! Gemein, oberflächlich, urteilend. Er wollte etwas Nettes zu Tim sagen, ihm helfen, aber bevor er reagieren konnte, zogen Jessica und Chloe ihn schon weiter.
-                 </p>
-                 <p class="dialogue">
-                    <strong>Jessica:</strong> "Lass uns gehen, Sarah. Sonst kommen wir zu spät. Ignorier den Nerd einfach."
-                 </p>
-                 <p>
-                    Und zu seinem eigenen Entsetzen tat Erik genau das. Er ging weiter, ohne Tim eines weiteren Blickes zu würdigen. Ein furchtbares Gefühl der Schuld und der Verwirrung nagte an ihm.
-                 </p>
-                 <p class="thought">
-                    Ich habe ihn ignoriert. Ich habe gedacht wie... wie sie. Was passiert mit meinem Gehirn?!
-                 </p>
-             </div>
-
-            <!-- Seite 22: Kapitel 8 Forts. - Lästereien und der innere Kampf -->
-            <div class="page-content" id="page22">
-                <h3>Teilnahme am Lästern</h3>
-                <p>
-                    Im ersten Unterrichtsblock, Englisch, saßen sie wieder zusammen. Die Lehrerin sprach über Charakterentwicklung in Romanen. Ironisch, dachte Erik bitter. Währenddessen zogen Jessica und Chloe leise über eine Mitschülerin her, die ein offenbar unpassendes Outfit trug.
-                </p>
-                <p class="dialogue">
-                    <strong>Chloe:</strong> (Flüsternd) "Hast du Emmas Schuhe gesehen? Die sind ja wohl aus der letzten Saison. Total peinlich."
-                </p>
-                <p class="dialogue">
-                    <strong>Jessica:</strong> "Und das Top dazu... passt gar nicht. Wie kann man nur so rumlaufen?"
-                </p>
-                <p>
-                    Gestern hätte Erik das ignoriert oder sich unwohl gefühlt. Heute hörte er sich selbst flüstern:
-                </p>
-                <p class="dialogue">
-                    <strong>Erik (als Sarah, fast automatisch):</strong> "Echt jetzt. Und die Farbe beißt sich total mit ihrer Haarfarbe."
-                </p>
-                <p>
-                    Sobald die Worte gefallen waren, hätte er sie am liebsten zurückgenommen. Das war genau die Art von oberflächlichem Urteil, die er an Sarah und ihrer Clique immer gehasst hatte. Und jetzt machte er mit. Jessica und Chloe kicherten zustimmend. Er hatte dazugehört. Und es fühlte sich widerlich an.
-                </p>
-                 <p class="thought">
-                    Ich werde zu ihr. Langsam aber sicher. Dieses Leben, dieser Körper, diese Erwartungen... sie schleifen mich ab. Sie formen mich um. Ich muss dagegen ankämpfen! Aber wie, wenn meine eigenen Gedanken mich verraten? Wenn ihre Instinkte meine ersetzen?
-                 </p>
-                 <p>
-                    Er dachte an Sarahs Tagebuch. An ihre Unsicherheiten, ihren Wunsch, gesehen zu werden. War dieses Lästerverhalten nur eine Maske? Ein Weg, dazuzugehören, die eigene Unsicherheit zu überspielen? Jetzt, da er selbst solche Gedanken hatte, begann er es auf eine furchtbare Weise zu verstehen. Was es nicht besser machte.
-                 </p>
-            </div>
-
-            <!-- Seite 23: Kapitel 8 Forts. - Leichte Verbesserungen und Konfrontationen -->
-            <div class="page-content" id="page23">
-                 <h3>Akademische und soziale Anpassung</h3>
-                 <p>
-                    In Mathe war er immer noch verloren, aber er schaffte es, konzentrierter zu wirken, notierte sich Dinge, auch wenn er sie nicht verstand. Es war, als ob ein Teil von Sarahs Pflichtbewusstsein, ihr Ehrgeiz, sich bemerkbar machte. Eine marginale Verbesserung, aber sie war da.
-                 </p>
-                 <p>
-                    In der Mittagspause kam Mark, der Quarterback, auf ihren Tisch zu. Diesmal nicht flirtend, sondern immer noch sichtlich verärgert über den Vorfall vom Vortag.
-                 </p>
-                <p class="dialogue">
-                    <strong>Mark:</strong> "Wagner. Hast du gestern allen Ernstes geglaubt, du könntest mich so anmachen?"
-                </p>
-                 <p>
-                    Gestern wäre Erik eingeschüchtert gewesen. Heute reagierte ein anderer Instinkt. Ein kühler, defensiver Stolz. Sarahs Stolz.
-                 </p>
-                <p class="dialogue">
-                    <strong>Erik (als Sarah, mit hochgezogener Augenbraue):</strong> "Anmachen? Ich habe nur einem Idioten gesagt, dass er sich wie einer benimmt. Wenn du das als 'anmachen' bezeichnest, bestätigt das nur meine Aussage."
-                </p>
-                 <p>
-                    Marks Gesicht wurde rot vor Zorn, aber er schien nicht zu wissen, wie er kontern sollte. Jessica und Chloe kicherten hinter vorgehaltener Hand. Mark schnaubte und zog ab.
-                 </p>
-                 <p class="dialogue">
-                    <strong>Jessica:</strong> "Wow, Sarah! Das war ja mal 'ne Ansage!"
-                </p>
-                 <p>
-                    Erik fühlte einen flüchtigen Moment des Triumphs, sofort gefolgt von einem kalten Schauder. Diese schneidende Bemerkung, diese souveräne Arroganz – das war reine Sarah. Und es kam so... natürlich.
-                 </p>
-                 <p class="thought">
-                    Ich habe ihn fertiggemacht. Und es hat sich... gut angefühlt? Nein! Es hat sich <span class="emphasis">falsch</span> angefühlt! Aber auch irgendwie... mächtig. Das ist gefährlich. Ich verliere mich.
-                 </p>
-            </div>
-
-            <!-- === KAPITEL 9: VERLOREN IN DER REFLEXION === -->
-
-            <!-- Seite 24: Kapitel 9 - Das Handy und die Maske -->
-             <div class="page-content" id="page24">
-                 <h2>Kapitel 9: Verloren in der Reflexion</h2>
-                 <h3>Digitale Assimilation</h3>
-                 <p>
-                    Am Nachmittag, allein in Sarahs Zimmer, griff Erik erneut nach ihrem Handy. Die Flut an Nachrichten war immer noch da. Gestern hatte er sich nicht getraut, zu antworten. Heute war der Impuls stärker. Er musste die Fassade aufrechterhalten.
-                 </p>
-                 <p class="action">
-                    Er öffnete einen Chat mit Jessica. Sie fragte nach seiner Meinung zu einem neuen Paar Schuhe, das sie online gesehen hatte.
-                 </p>
-                 <p class="thought">
-                    Was würde Sarah sagen? Wahrscheinlich etwas Oberflächliches, aber mit einer klaren Meinung.
-                 </p>
-                 <p>
-                    Er tippte zögernd: <span style="font-family: monospace; font-style: normal; color: #444;">"Süß! <0xF0><0x9F><0x91><0x9F> Aber die Farbe ist ein bisschen last season, findest du nicht? Vielleicht eher in Nude? <0xF0><0x9F><0x98><0x98>"</span>
-                 </p>
-                 <p>
-                    Er starrte auf die Nachricht. Die Emojis. Der leicht herablassende Ton. Es klang authentisch. Erschreckend authentisch. Jessica antwortete sofort mit einem zustimmenden Emoji und einem "Du hast so recht!".
-                 </p>
-                 <p>
-                    Er beantwortete noch ein paar Nachrichten, versuchte, Sarahs knappen, oft sarkastischen Stil zu imitieren. Es fiel ihm leichter, als er erwartet hatte. Es war, als würde er eine Rolle spielen, aber die Rolle begann, sich wie eine zweite Haut anzufühlen.
-                 </p>
-                 <p class="sarah-trait">
-                    Das ist ja gar nicht so schwer. Man muss nur wissen, was die Leute hören wollen. Ein bisschen Bestätigung hier, ein kleiner Seitenhieb da... so funktioniert das Spiel wohl.
-                 </p>
-                 <p>
-                    Der Gedanke war zynisch. Und er kam von ihm. Erik. Dem Jungen, der soziale Interaktionen immer als Minenfeld empfunden hatte. Jetzt navigierte er scheinbar mühelos durch Sarahs oberflächliche Welt. Die Erkenntnis war niederschmetternd.
-                 </p>
-            </div>
-            
-            <!-- Seite 25: Kapitel 9 Forts. - Panik und Identitätsverlust -->
-             <div class="page-content" id="page25">
-                <h3>Momente der Klarheit und Panik</h3>
-                <p>
-                    Später, als er vor dem Spiegel stand, um das Make-up zu entfernen (eine weitere neue, seltsam befriedigende Routine), hielt er inne. Er betrachtete das Gesicht, das nicht seines war. Aber die Gedanken dahinter... waren sie noch seine?
-                </p>
-                 <p class="thought">
-                    Wer bin ich gerade? Denke ich das, weil <span class="emphasis">ich</span> es denke, oder weil Sarahs Gehirn es denkt? Wo hört Erik auf und wo fängt Sarah an? Gibt es überhaupt noch einen Erik?
-                 </p>
-                 <p>
-                    Eine Welle kalter Panik, intensiver als alles, was er bisher gefühlt hatte, überrollte ihn. Es war nicht mehr nur die Angst, gefangen zu sein. Es war die Angst, ausgelöscht zu werden. Seine Persönlichkeit, seine Werte, seine Erinnerungen – alles schien von dieser neuen, dominanten Identität überschrieben zu werden.
-                 </p>
-                 <p class="action">
-                    Er schloss die Augen, versuchte sich an sein altes Leben zu erinnern. An sein Zimmer, seine Freunde (die wenigen, die er hatte), seine Leidenschaft für Science-Fiction. Die Bilder waren da, aber sie fühlten sich... entfernt an. Wie eine alte Fernsehsendung. Die unmittelbare Realität – Sarahs Zimmer, Sarahs Körper, Sarahs Gedankenmuster – war viel präsenter, viel stärker.
-                 </p>
-                 <p>
-                    Er musste etwas tun. Irgendetwas, um sich selbst zu bewahren. Aber was? Er war allein in diesem luxuriösen Gefängnis, und sein eigener Verstand schien sich gegen ihn zu wenden.
-                 </p>
-            </div>
-
-            <!-- Seite 26: Kapitel 9 Forts. - Abendessen und die sich schließende Falle -->
-             <div class="page-content" id="page26">
-                <h3>Abendessen mit neuer Dynamik</h3>
-                <p>
-                    Beim Abendessen war Erik (oder wer auch immer er jetzt war) merklich ruhiger, aber auch präsenter als am Vortag. Er beteiligte sich sogar an dem Gespräch, als sein Vater über einen Geschäftsdeal sprach, und machte eine überraschend scharfsinnige Bemerkung, die auf Informationen basierte, die er Sarahs Vater am Vortag hatte sagen hören.
-                </p>
-                <p class="dialogue">
-                    <strong>Mr. Wagner:</strong> (Überrascht) "Hm. Nicht schlecht beobachtet, Sarah. Vielleicht hörst du ja doch manchmal zu."
-                </p>
-                <p class="dialogue">
-                    <strong>Mutter:</strong> "Immerhin etwas. Aber deine schulischen Leistungen müssen trotzdem besser werden. Und vergiss den Lunch mit den Vanderbilts nicht am Freitag."
-                </p>
-                <p class="dialogue">
-                    <strong>Erik (als Sarah, mit einem Anflug von Sarahs Berechnung):</strong> "Natürlich nicht, Mutter. Jonathan Vanderbilt ist ja... eine interessante Perspektive."
-                </p>
-                 <p>
-                    Die Worte kamen ihm über die Lippen, bevor er sie bewusst geformt hatte. Sie klangen falsch, manipulativ, aber sie schienen die Eltern zu besänftigen. Sie waren Teil des Spiels, das in dieser Familie gespielt wurde. Und er spielte mit.
-                 </p>
-                 <p class="thought">
-                    Ich passe mich an. Ich lerne die Regeln. Ich überlebe. Aber um welchen Preis? Verkaufe ich meine Seele, um in diesem goldenen Käfig zurechtzukommen? Ist das, was Sarah getan hat?
-                 </p>
-                 <p>
-                    Die Erkenntnis traf ihn hart: Vielleicht war Sarahs Verhalten nicht nur anerzogen, sondern eine notwendige Überlebensstrategie in dieser kalten, fordernden Umgebung. Und er war dabei, genau dieselbe Strategie zu übernehmen.
-                 </p>
-            </div>
-            
-            <!-- Seite 27: Kapitel 9 Ende - Die Angst vor dem Verschwinden -->
-             <div class="page-content" id="page27">
-                <h3>Die Angst vor dem Verschwinden</h3>
-                <p>
-                    Als er an diesem Abend im Bett lag, war die Verzweiflung tiefer, aber auch anders als am Vortag. Es war nicht mehr nur die Sehnsucht nach seinem alten Leben. Es war die aktive Angst vor dem Verlust seiner selbst.
-                </p>
-                 <p>
-                    Er hatte heute wie Sarah gedacht, geurteilt, gesprochen. Er hatte Make-up benutzt und eine seltsame Befriedigung darin gefunden. Er hatte soziale Spielchen mitgespielt. War das nur Anpassung, oder war es der Beginn einer permanenten Veränderung? Wenn er noch länger in diesem Körper blieb, würde von Erik überhaupt noch etwas übrig sein? Oder würde er vollständig zu Sarah Wagner werden, mit all ihren oberflächlichen Werten und ihrem kühlen Zynismus, den er nun zu verstehen begann?
-                 </p>
-                 <p class="thought">
-                    Gestern wollte ich nur zurück. Heute habe ich Angst, dass es bald nichts mehr gibt, wohin ich zurückkehren kann. Dass 'Erik' einfach... verschwindet. Aufgelöst in Seide, Make-up und den Erwartungen anderer.
-                 </p>
-                 <p>
-                    Er ballte die Fäuste unter der Decke. Er musste widerstehen. Er musste einen Weg finden, sich selbst zu bewahren, auch wenn er nicht wusste, wie. Er musste sich an Erik erinnern, an den Jungen, der er war, bevor er in den Spiegel blickte und ein fremdes Mädchen sah.
-                 </p>
-                 <p>
-                    Doch als er einschlief, waren die letzten Gedanken, die durch seinen Kopf huschten, irritierenderweise nicht von Panik geprägt, sondern von der Frage, ob der Rock, den er am Morgen im Schrank gesehen hatte, nicht doch besser zu dem Seidenpullover gepasst hätte. Die Assimilation schritt voran.
-                 </p>
-                 <p style="text-align:center; margin-top:50px; font-style:italic;">- Ende des zweiten Tages -</p>
-             </div>
-
-
-            <!-- FÜGE HIER WEITERE SEITEN EIN, WENN NÖTIG -->
-
-
-            <!-- Navigation wird hier vom JS eingefügt -->
-        </div>
-        <div class="navigation">
-            <!-- Die Buttons werden dynamisch aktiviert/deaktiviert, aber der Startzustand sollte hier korrekt sein, wenn die erste Seite angezeigt wird -->
-            <button class="nav-button" id="prevPage" onclick="changePage(-1)" disabled>‹ Vorherige Seite</button> 
-            <span class="page-number" id="pageIndicator">Seite 1 / 27</span> <!-- JS aktualisiert dies -->
-            <button class="nav-button" id="nextPage" onclick="changePage(1)">Nächste Seite ›</button>
-        </div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button id="sendButton">Send</button>
     </div>
 
     <script>
-        let currentPageIndex = 0; // Startet auf Seite 1 (Index 0)
-        const pages = document.querySelectorAll('.main-book-content > .page-content');
-        const totalPages = pages.length;
-        const pageIndicator = document.getElementById('pageIndicator');
-        const prevButton = document.getElementById('prevPage');
-        const nextButton = document.getElementById('nextPage');
-        const bookContentArea = document.querySelector('.main-book-content');
+        const chatLog = document.getElementById('chatLog');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const openMonitorButton = document.getElementById('openMonitorButton');
+        let monitorWindow = null;
 
-        function showPage(index) {
-            if (index < 0 || index >= totalPages) {
-                console.error("Ungültiger Seitenindex:", index);
-                return; 
-            }
-            // Aktive Seite entfernen
-            const activePage = document.querySelector('.page-content.active');
-            if(activePage) activePage.classList.remove('active');
-            
-            // Neue Seite aktivieren
-            pages[index].classList.add('active');
+        const START_TOKEN = "_START_";
+        const END_TOKEN = "_END_";
 
-            // Scrollt den Inhalt der neuen Seite ganz nach oben
-            bookContentArea.scrollTop = 0; 
-            currentPageIndex = index; // Index aktualisieren WICHTIG!
-            updateNavigation();
-        }
+        let aiState = {
+            parameters: {
+                learningRate: 0.05, // How quickly KB weights adapt
+                confidence: 0.6,    // General confidence, affects response directness
+                curiosity: 0.3,     // Bias towards asking questions or exploring new topics
+                verbosity: 0.7,     // Controls length of n-gram generated responses
+                ngramPreference: 0.7, // Likelihood to use n-grams vs KB
+                kbConfidenceThreshold: 0.5, // Min confidence for a KB fact to be used
+            },
+            memory: {
+                vocabulary: new Set([START_TOKEN, END_TOKEN]),
+                bigrams: {}, // { "word1": { "word2": count, ... } }
+                trigrams: {}, // { "word1 word2": { "word3": count, ... } }
+                knowledgeBase: {}, // { "entity": { "relation": "value" / {"value": X, "confidence": Y} } }
+                                   // e.g. {"sky": {"is": {"value": "blue", "confidence": 0.8}}}
+                conversationHistory: [], // {sender, text, tokens, timestamp, analysis: {intent, keywords}}
+            },
+            status: "Initializing...",
+            lastThoughtProcess: []
+        };
 
-        function updateNavigation() {
-            if (!pageIndicator || !prevButton || !nextButton) return; 
-            
-            pageIndicator.textContent = `Seite ${currentPageIndex + 1} / ${totalPages}`;
-            prevButton.disabled = currentPageIndex === 0;
-            nextButton.disabled = currentPageIndex === totalPages - 1;
-        }
-
-        function changePage(direction) {
-            const newIndex = currentPageIndex + direction;
-            if (newIndex >= 0 && newIndex < totalPages) {
-                // KEINE Aktualisierung von currentPageIndex hier, das macht showPage
-                showPage(newIndex);
+        function openOrFocusMonitor() {
+            if (monitorWindow && !monitorWindow.closed) {
+                monitorWindow.focus();
             } else {
-                 console.warn("Versuch, über die Grenzen hinaus zu blättern:", newIndex);
+                monitorWindow = window.open('monitor.html', 'AICoreMonitor', 'width=800,height=700,resizable=yes,scrollbars=yes');
+                // Give monitor time to load, then send initial state
+                setTimeout(() => {
+                    if (monitorWindow) {
+                         postToMonitor({ type: 'INIT', data: aiState });
+                    }
+                }, 1000);
+            }
+        }
+        openMonitorButton.addEventListener('click', openOrFocusMonitor);
+
+        function postToMonitor(message) {
+            if (monitorWindow && !monitorWindow.closed) {
+                monitorWindow.postMessage(message, '*'); // For simplicity, use '*' for origin. In production, specify origin.
             }
         }
 
-        // Initialanzeige beim Laden der Seite
-        document.addEventListener('DOMContentLoaded', () => {
-             if (pages.length > 0) {
-                 // Stelle sicher, dass wir bei Seite 1 (Index 0) starten,
-                 // es sei denn, wir wollen von einem anderen Punkt starten (z.B. durch URL-Parameter, hier nicht implementiert)
-                 showPage(0); // Startet immer auf der ersten Seite
-             } else {
-                 console.error("Keine Seiteninhalte (.page-content) gefunden!");
-                 if(pageIndicator) pageIndicator.textContent = "Fehler: Keine Seiten";
-                 if(prevButton) prevButton.disabled = true;
-                 if(nextButton) nextButton.disabled = true;
-             }
-        });
-    </script>
+        function logToMonitor(entry, type = "thought") {
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 2 });
+            const fullEntry = `[${timestamp}] ${entry}`;
+            aiState.lastThoughtProcess.unshift(fullEntry); // Add to front
+            if (aiState.lastThoughtProcess.length > 100) { // Keep log manageable
+                aiState.lastThoughtProcess.pop();
+            }
+            postToMonitor({ type: 'LOG_UPDATE', data: { entry: fullEntry, logType: type } });
+        }
 
+
+        function tokenize(text) {
+            return [START_TOKEN, ...text.toLowerCase().match(/\b[\w']+\b|[.,!?]/g) || [], END_TOKEN];
+        }
+
+        function loadState() {
+            logToMonitor("Attempting to load AI state from localStorage...", "system");
+            const savedState = localStorage.getItem('cerebraSimState_v2_1');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    // Restore Sets and potentially other non-JSON-native types
+                    parsed.memory.vocabulary = new Set(parsed.memory.vocabulary);
+                    // Basic merge: overwrite with saved state, but keep defaults if new params were added
+                    aiState.parameters = {...aiState.parameters, ...parsed.parameters};
+                    aiState.memory = {...aiState.memory, ...parsed.memory};
+                    aiState.memory.vocabulary = new Set(aiState.memory.vocabulary); // Ensure it's a set
+                    aiState.memory.knowledgeBase = aiState.memory.knowledgeBase || {};
+                    aiState.memory.conversationHistory = aiState.memory.conversationHistory || [];
+
+                    logToMonitor("AI state loaded successfully.", "system");
+                } catch (e) {
+                    logToMonitor(`Error loading state: ${e}. Initializing fresh state.`, "error");
+                    initializeNewState();
+                }
+            } else {
+                logToMonitor("No saved state found. Initializing fresh state.", "system");
+                initializeNewState();
+            }
+            aiState.status = "Idle";
+            postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState });
+        }
+        
+        function initializeNewState() {
+            // Already defined in aiState declaration, this is for explicit reset if needed
+            aiState.memory.vocabulary = new Set([START_TOKEN, END_TOKEN]);
+            aiState.memory.bigrams = {};
+            aiState.memory.trigrams = {};
+            aiState.memory.knowledgeBase = {};
+            aiState.memory.conversationHistory = [];
+            addMessageToChatLog("CerebraSim v2.1 initialized. I'm ready to learn.", 'ai');
+        }
+
+        function saveState() {
+            logToMonitor("Saving AI state to localStorage...", "system");
+            try {
+                // Convert Set to Array for JSON stringification
+                const serializableState = {
+                    ...aiState,
+                    memory: {
+                        ...aiState.memory,
+                        vocabulary: Array.from(aiState.memory.vocabulary)
+                    }
+                };
+                localStorage.setItem('cerebraSimState_v2_1', JSON.stringify(serializableState));
+            } catch (e) {
+                logToMonitor(`Error saving state: ${e}. Might be due to storage limits.`, "error");
+            }
+        }
+
+        function addMessageToChatLog(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            messageDiv.textContent = text;
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'});
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'timestamp';
+            timeSpan.textContent = time;
+            messageDiv.appendChild(timeSpan);
+
+            chatLog.appendChild(messageDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        // --- Core AI Learning Logic ---
+        function learnFromTokens(tokens) {
+            logToMonitor(`Learning from ${tokens.length - 2} tokens.`);
+            tokens.forEach(token => aiState.memory.vocabulary.add(token));
+
+            for (let i = 0; i < tokens.length - 1; i++) {
+                const w1 = tokens[i]; const w2 = tokens[i+1];
+                aiState.memory.bigrams[w1] = aiState.memory.bigrams[w1] || {};
+                aiState.memory.bigrams[w1][w2] = (aiState.memory.bigrams[w1][w2] || 0) + 1;
+
+                if (i < tokens.length - 2) {
+                    const w3 = tokens[i+2]; const trigramKey = `${w1} ${w2}`;
+                    aiState.memory.trigrams[trigramKey] = aiState.memory.trigrams[trigramKey] || {};
+                    aiState.memory.trigrams[trigramKey][w3] = (aiState.memory.trigrams[trigramKey][w3] || 0) + 1;
+                }
+            }
+            // Simple KB learning (example: "X is Y", "I like Z")
+            for (let i = 1; i < tokens.length - 2; i++) { // Skip START/END
+                if (tokens[i+1] === 'is' && tokens[i].length > 1 && tokens[i+2].length > 1 && tokens[i+2] !== END_TOKEN) {
+                    const entity = tokens[i];
+                    const value = tokens[i+2];
+                    aiState.memory.knowledgeBase[entity] = aiState.memory.knowledgeBase[entity] || {};
+                    const currentFact = aiState.memory.knowledgeBase[entity]['is'];
+                    let newConfidence = currentFact ? Math.min(1, currentFact.confidence + aiState.parameters.learningRate) : 0.5;
+                    
+                    aiState.memory.knowledgeBase[entity]['is'] = { value: value, confidence: newConfidence };
+                    logToMonitor(`Learned KB: ${entity} is ${value} (Confidence: ${newConfidence.toFixed(2)})`, "kb_learn");
+                }
+                // Add more patterns like "I like X", "X has Y", etc.
+            }
+            postToMonitor({ type: 'MEMORY_UPDATE', data: { vocabularySize: aiState.memory.vocabulary.size, bigrams: aiState.memory.bigrams, trigrams: aiState.memory.trigrams, knowledgeBase: aiState.memory.knowledgeBase } });
+        }
+
+        // --- Core AI "Thinking" Logic ---
+        async function generateResponse(userTokens, userInputAnalysis) {
+            aiState.status = "Thinking...";
+            postToMonitor({ type: 'STATUS_UPDATE', data: aiState.status });
+            logToMonitor("--- Initiating Response Generation Cycle ---", "cycle");
+
+            let candidates = []; // { text: "...", score: N, source: "description", tokens: [] }
+
+            // Strategy 1: Check Knowledge Base for direct answers or relevant facts
+            if (userInputAnalysis.keywords.length > 0) {
+                logToMonitor("Strategy: Knowledge Base Lookup", "strategy");
+                for (const keyword of userInputAnalysis.keywords) {
+                    if (aiState.memory.knowledgeBase[keyword]) {
+                        for (const relation in aiState.memory.knowledgeBase[keyword]) {
+                            const fact = aiState.memory.knowledgeBase[keyword][relation];
+                            if (fact.confidence >= aiState.parameters.kbConfidenceThreshold) {
+                                let responseText = "";
+                                if (userInputAnalysis.intent === "question_what" && relation === "is") {
+                                    responseText = `${keyword} ${relation} ${fact.value}.`;
+                                } else {
+                                    responseText = `Regarding ${keyword}, I know that ${keyword} ${relation} ${fact.value}.`;
+                                }
+                                candidates.push({ text: responseText, score: 70 + fact.confidence * 30, source: "KB Fact", tokens: tokenize(responseText) });
+                                logToMonitor(`  KB Candidate: "${responseText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Strategy 2: N-gram continuation from user's last words
+            logToMonitor("Strategy: N-gram Continuation", "strategy");
+            let ngramContext1 = START_TOKEN, ngramContext2 = START_TOKEN;
+            if (userTokens.length > 2) ngramContext2 = userTokens[userTokens.length - 2]; // word before END
+            if (userTokens.length > 3) ngramContext1 = userTokens[userTokens.length - 3]; // word before that
+
+            let ngramResponseTokens = [];
+            let tempContext1 = ngramContext1;
+            let tempContext2 = ngramContext2;
+            
+            for(let i=0; i < 5 + Math.floor(Math.random() * 10 * aiState.parameters.verbosity) ; i++) { // Generate a short phrase
+                let nextWord = null;
+                const trigramKey = `${tempContext1} ${tempContext2}`;
+                if (aiState.memory.trigrams[trigramKey] && Math.random() < 0.8) { // Prefer trigrams
+                    nextWord = getWeightedRandom(aiState.memory.trigrams[trigramKey]);
+                } else if (aiState.memory.bigrams[tempContext2]) {
+                    nextWord = getWeightedRandom(aiState.memory.bigrams[tempContext2]);
+                }
+                if (!nextWord || nextWord === END_TOKEN) break;
+                if (nextWord !== START_TOKEN) ngramResponseTokens.push(nextWord);
+                tempContext1 = tempContext2;
+                tempContext2 = nextWord;
+                if (ngramResponseTokens.length > 25) break; // Safety break for length
+            }
+            if (ngramResponseTokens.length > 0) {
+                const ngramText = formatResponseTokens(ngramResponseTokens);
+                candidates.push({ text: ngramText, score: 50 * aiState.parameters.ngramPreference, source: "N-gram Continuation", tokens: [START_TOKEN, ...ngramResponseTokens, END_TOKEN] });
+                logToMonitor(`  N-gram Candidate: "${ngramText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
+            }
+
+
+            // Strategy 3: Generic N-gram start if confidence is low or other strategies fail
+            if (candidates.length === 0 || aiState.parameters.confidence < 0.4) {
+                logToMonitor("Strategy: Generic N-gram Start", "strategy");
+                let genericNgramTokens = [];
+                tempContext1 = START_TOKEN; tempContext2 = START_TOKEN;
+                let initialWord = getWeightedRandom(aiState.memory.bigrams[START_TOKEN]);
+                if (initialWord && initialWord !== END_TOKEN) {
+                    genericNgramTokens.push(initialWord);
+                    tempContext2 = initialWord;
+                    for(let i=0; i < 3 + Math.floor(Math.random() * 7 * aiState.parameters.verbosity) ; i++) {
+                        let nextWord = null;
+                        const trigramKey = `${tempContext1} ${tempContext2}`;
+                         if (aiState.memory.trigrams[trigramKey] && Math.random() < 0.7) {
+                            nextWord = getWeightedRandom(aiState.memory.trigrams[trigramKey]);
+                        } else if (aiState.memory.bigrams[tempContext2]) {
+                            nextWord = getWeightedRandom(aiState.memory.bigrams[tempContext2]);
+                        }
+                        if (!nextWord || nextWord === END_TOKEN) break;
+                        genericNgramTokens.push(nextWord);
+                        tempContext1 = tempContext2;
+                        tempContext2 = nextWord;
+                        if (genericNgramTokens.length > 20) break;
+                    }
+                }
+                 if (genericNgramTokens.length > 0) {
+                    const genericText = formatResponseTokens(genericNgramTokens);
+                    candidates.push({ text: genericText, score: 30, source: "Generic N-gram", tokens: [START_TOKEN, ...genericNgramTokens, END_TOKEN] });
+                    logToMonitor(`  Generic N-gram Candidate: "${genericText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
+                }
+            }
+
+            // Fallback if no candidates
+            if (candidates.length === 0) {
+                 logToMonitor("No candidates generated, using fallback.", "warn");
+                const fallbackText = "I'm still processing that. Could you tell me more?";
+                candidates.push({ text: fallbackText, score: 10, source: "Fallback", tokens: tokenize(fallbackText)});
+            }
+
+            // Score and select best candidate
+            candidates.sort((a, b) => b.score - a.score); // Highest score first
+            const bestCandidate = candidates[0];
+            logToMonitor(`Selected Best Candidate (out of ${candidates.length}): "${bestCandidate.text.substring(0,50)}..." (Score: ${bestCandidate.score.toFixed(0)}, Source: ${bestCandidate.source})`, "decision");
+            
+            // Simulate parameter adjustment based on interaction (very simple)
+            if (bestCandidate.source === "KB Fact") aiState.parameters.confidence = Math.min(0.95, aiState.parameters.confidence + 0.02);
+            else aiState.parameters.confidence = Math.max(0.2, aiState.parameters.confidence - 0.01);
+            if (userInputAnalysis.intent === "question_what") aiState.parameters.curiosity = Math.max(0.1, aiState.parameters.curiosity - 0.05); // Less curious if it answered
+            else aiState.parameters.curiosity = Math.min(0.8, aiState.parameters.curiosity + 0.01);
+
+            aiState.status = "Idle";
+            postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState }); // Update monitor with new params etc.
+            logToMonitor("--- Response Generation Cycle Complete ---", "cycle");
+            return bestCandidate;
+        }
+
+        function getWeightedRandom(choices) { // { "word": count }
+            if (!choices || Object.keys(choices).length === 0) return null;
+            let total = 0;
+            for (const count of Object.values(choices)) total += count;
+            let rand = Math.random() * total;
+            for (const [word, count] of Object.entries(choices)) {
+                rand -= count;
+                if (rand <= 0) return word;
+            }
+            return Object.keys(choices)[0]; // Should not happen if counts are positive
+        }
+        
+        function formatResponseTokens(tokens) {
+            if (!tokens || tokens.length === 0) return "";
+            let text = tokens.join(' ').replace(/\s+([.,!?])/g, '$1');
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        function analyzeUserInput(text, tokens) {
+            logToMonitor(`Analyzing user input: "${text.substring(0,50)}..."`);
+            const analysis = {
+                intent: "statement", // default
+                keywords: [],
+                sentiment: "neutral" // very basic
+            };
+
+            const lowerText = text.toLowerCase();
+            if (lowerText.startsWith("what is") || lowerText.startsWith("what's")) analysis.intent = "question_what";
+            else if (lowerText.includes("?")) analysis.intent = "question_generic";
+            
+            // Simple keyword extraction (non-stopwords, longer words)
+            const stopwords = new Set(['_start_', '_end_', 'a', 'an', 'the', 'is', 'are', 'was', 'were', 'i', 'you', 'me', 'he', 'she', 'it', 'we', 'they', 'to', 'of', 'in', 'on', 'for', 'with']);
+            analysis.keywords = tokens.filter(t => !stopwords.has(t.toLowerCase()) && t.length > 2).slice(0, 5); // Max 5 keywords
+
+            logToMonitor(`  Analysis - Intent: ${analysis.intent}, Keywords: ${analysis.keywords.join(', ') || 'None'}`);
+            return analysis;
+        }
+
+        // --- Main Interaction Loop ---
+        async function handleUserInput() {
+            const text = userInput.value.trim();
+            if (text === '') return;
+
+            addMessageToChatLog(text, 'user');
+            const userTokens = tokenize(text);
+            const userInputAnalysis = analyzeUserInput(text, userTokens.slice(1,-1)); // Analyze without START/END
+
+            aiState.memory.conversationHistory.push({
+                sender: 'user', text, tokens: userTokens, timestamp: new Date().toISOString(), analysis: userInputAnalysis
+            });
+            if(aiState.memory.conversationHistory.length > 50) aiState.memory.conversationHistory.shift();
+
+
+            userInput.value = '';
+            userInput.disabled = true; sendButton.disabled = true;
+
+            learnFromTokens(userTokens); // AI learns from user input
+
+            const aiResponse = await generateResponse(userTokens, userInputAnalysis);
+            addMessageToChatLog(aiResponse.text, 'ai');
+            learnFromTokens(aiResponse.tokens); // AI learns from its own response
+
+            aiState.memory.conversationHistory.push({
+                sender: 'ai', text: aiResponse.text, tokens: aiResponse.tokens, timestamp: new Date().toISOString(), analysis: {intent: "response", keywords: []}
+            });
+
+            saveState();
+
+            userInput.disabled = false; sendButton.disabled = false;
+            userInput.focus();
+        }
+
+        sendButton.addEventListener('click', handleUserInput);
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') handleUserInput();
+        });
+
+        // --- Initialization ---
+        window.onload = () => {
+            loadState();
+            // Optionally open monitor on load: openOrFocusMonitor();
+            addMessageToChatLog("CerebraSim v2.1 online. Type 'Open AI Core Monitor' or click the button to view my internals.", 'ai');
+        };
+
+    </script>
 </body>
 </html>
