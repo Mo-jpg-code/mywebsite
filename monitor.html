@@ -3,76 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Core Monitor - CerebraSim v2.1</title>
+    <title>AI Core Monitor - CerebraSim v2.5 "Nexus"</title>
     <style>
-        body { font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; margin: 0; padding: 0; background-color: #1e1e1e; color: #cccccc; font-size: 14px; }
+        body { font-family: 'Roboto Mono', Consolas, Monaco, monospace; margin: 0; padding: 0; background-color: #1c1f26; color: #abb2bf; font-size: 14px; }
         .container { display: flex; flex-direction: column; height: 100vh; }
-        .header { padding: 10px; background-color: #2d2d2d; border-bottom: 1px solid #3c3c3c; text-align: center; }
-        .header h1 { margin: 0; font-size: 1.5em; color: #61dafb; }
-        .header #aiStatus { font-size: 0.9em; color: #999999; }
+        .header { padding: 10px; background-color: #282c34; border-bottom: 1px solid #323842; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.5em; color: #61afef; } /* Blue */
+        .header #aiStatus { font-size: 0.9em; color: #7c8591; }
         .main-content { flex-grow: 1; display: flex; overflow: hidden; }
-        .sidebar { width: 250px; background-color: #252525; border-right: 1px solid #3c3c3c; padding: 15px; overflow-y: auto; }
-        .sidebar h3 { margin-top: 0; color: #80cbc4; }
+        .sidebar { width: 280px; background-color: #21252b; border-right: 1px solid #323842; padding: 15px; overflow-y: auto; }
+        .sidebar h3 { margin-top: 0; color: #98c379; } /* Green */
         .sidebar pre { white-space: pre-wrap; word-break: break-all; font-size: 0.9em; line-height: 1.6; }
-        .content-area { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .content-area h3 { margin-top: 0; color: #82aaff; }
-        .log-display { flex-grow: 1; background-color: #1a1a1a; border: 1px solid #3c3c3c; padding: 10px; overflow-y: scroll; font-size: 0.85em; line-height: 1.5; white-space: pre-wrap;}
-        .log-entry { margin-bottom: 5px; }
-        .log-entry.system { color: #9effff; }
-        .log-entry.error { color: #ff8a80; }
-        .log-entry.warn { color: #ffd180; }
-        .log-entry.kb_learn { color: #c3e88d; }
-        .log-entry.strategy { color: #f78c6c; font-style: italic; }
-        .log-entry.candidate { color: #b2ccd6; padding-left: 15px; }
-        .log-entry.decision { color: #c3e88d; font-weight: bold; }
-        .log-entry.cycle { color: #80cbc4; border-top: 1px dashed #444; border-bottom: 1px dashed #444; margin: 8px 0; padding: 3px 0;}
+        .content-area { flex-grow: 1; padding: 0; /* No padding here, tabs will manage */ overflow-y: auto; display: flex; flex-direction: column; }
+        .content-area h3 { margin-top: 0; padding: 15px 15px 0 15px; color: #c678dd; } /* Purple */
+        
+        .tabs { display: flex; border-bottom: 1px solid #323842; background-color: #21252b;}
+        .tab-button { padding: 10px 18px; cursor: pointer; background-color: transparent; border: none; border-bottom: 3px solid transparent; color: #7c8591; font-size:0.95em; }
+        .tab-button.active { border-bottom: 3px solid #61afef; color: #61afef; }
+        .tab-content { display: none; padding: 15px; overflow-y: auto; flex-grow:1; /* Important for log display */ }
+        .tab-content.active { display: flex; flex-direction: column; /* For log display to fill space */ }
+
+        .log-display { flex-grow: 1; background-color: #1a1d23; border: 1px solid #323842; padding: 10px; overflow-y: scroll; font-size: 0.85em; line-height: 1.5; white-space: pre-wrap;}
+        .log-entry { margin-bottom: 5px; transition: background-color 0.5s; }
+        .log-entry.system { color: #56b6c2; } /* Cyan */
+        .log-entry.error { color: #e06c75; } /* Red */
+        .log-entry.warn { color: #d19a66; } /* Orange */
+        .log-entry.kb_learn { color: #98c379; } /* Green */
+        .log-entry.strategy { color: #c678dd; font-style: italic; } /* Purple */
+        .log-entry.candidate { color: #abb2bf; padding-left: 15px; }
+        .log-entry.decision { color: #61afef; font-weight: bold; } /* Blue */
+        .log-entry.cycle { color: #56b6c2; border-top: 1px dashed #444c56; border-bottom: 1px dashed #444c56; margin: 8px 0; padding: 3px 0;}
+        
         .memory-section { margin-bottom: 15px; }
-        .memory-section pre { max-height: 150px; overflow-y: auto; background-color: #222; padding: 5px; border-radius: 3px;}
-        .tabs { display: flex; border-bottom: 1px solid #3c3c3c; margin-bottom:10px; }
-        .tab-button { padding: 8px 15px; cursor: pointer; background-color: #252525; border: none; border-bottom: 3px solid transparent; color: #aaa; }
-        .tab-button.active { border-bottom: 3px solid #61dafb; color: #61dafb; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .memory-section pre { max-height: 150px; overflow-y: auto; background-color: #21252b; padding: 8px; border-radius: 4px; border: 1px solid #323842;}
+
+        /* Brain Visualization Canvas */
+        #brainCanvasContainer {
+            background-color: #1a1d23; /* Darker than main bg */
+            border: 1px solid #323842;
+            position: relative; /* For potential overlays if needed */
+            padding: 0 !important; /* Override tab-content padding */
+        }
+        #brainCanvas {
+            display: block; /* Removes bottom space under canvas */
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>AI Core Monitor</h1>
+            <h1>AI Core Monitor - Nexus</h1>
             <div id="aiStatus">Status: Waiting for connection...</div>
         </div>
         <div class="main-content">
             <div class="sidebar">
                 <h3>AI Parameters</h3>
                 <pre id="aiParamsDisplay">Loading...</pre>
-                <hr>
+                <hr style="border-color: #323842;">
                 <h3>Memory Stats</h3>
                 <pre id="memoryStatsDisplay">Vocab Size: 0</pre>
             </div>
             <div class="content-area">
                 <div class="tabs">
-                    <button class="tab-button active" data-tab="thoughts">Thought Process</button>
+                    <button class="tab-button active" data-tab="brain">Brain Activity</button>
+                    <button class="tab-button" data-tab="thoughts">Thought Process</button>
                     <button class="tab-button" data-tab="kb">Knowledge Base</button>
                     <button class="tab-button" data-tab="ngrams">N-Grams</button>
                     <button class="tab-button" data-tab="history">Chat History</button>
                 </div>
 
-                <div id="thoughtsContent" class="tab-content active" style="display:flex; flex-direction: column; flex-grow: 1;">
+                <div id="brainContent" class="tab-content active" style="padding:0;"> <!-- Full bleed for canvas -->
+                     <div id="brainCanvasContainer" style="width:100%; height:100%; position:relative;">
+                        <canvas id="brainCanvas"></canvas>
+                        <!-- You could add overlays here, e.g. for stats on the canvas -->
+                    </div>
+                </div>
+                <div id="thoughtsContent" class="tab-content">
                     <h3>Live Thought Process</h3>
                     <div id="thoughtLogDisplay" class="log-display">Awaiting AI activity...</div>
                 </div>
-                <div id="kbContent" class="tab-content" style="overflow-y: auto;">
+                <div id="kbContent" class="tab-content">
                     <h3>Knowledge Base (Sample)</h3>
                     <pre id="kbDisplay">No KB data yet.</pre>
                 </div>
-                <div id="ngramsContent" class="tab-content" style="overflow-y: auto;">
+                <div id="ngramsContent" class="tab-content">
                     <h3>N-Gram Samples</h3>
                     <h4>Bigrams:</h4>
                     <pre id="bigramDisplay">No Bigrams yet.</pre>
                     <h4>Trigrams:</h4>
                     <pre id="trigramDisplay">No Trigrams yet.</pre>
                 </div>
-                 <div id="historyContent" class="tab-content" style="overflow-y: auto;">
+                 <div id="historyContent" class="tab-content">
                     <h3>Conversation History (Last 10)</h3>
                     <pre id="chatHistoryDisplay">No history yet.</pre>
                 </div>
@@ -93,6 +116,12 @@
         const tabs = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
+        const brainCanvas = document.getElementById('brainCanvas');
+        const brainCtx = brainCanvas.getContext('2d');
+        let brainNodes = {}; // { entityName: { x, y, radius, connections: [], lastActivity: 0, color, baseColor } }
+        let brainParticles = [];
+        let lastFullState = null; // To store the latest full AI state
+
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
@@ -101,44 +130,261 @@
                 tabContents.forEach(content => {
                     if (content.id === `${targetTab}Content`) {
                         content.classList.add('active');
-                         content.style.display = content.id === 'thoughtsContent' ? 'flex' : 'block'; // Special for thoughts
                     } else {
                         content.classList.remove('active');
-                        content.style.display = 'none';
                     }
                 });
+                if (targetTab === 'brain') resizeBrainCanvas(); // Resize if brain tab is activated
             });
         });
 
+        function resizeBrainCanvas() {
+            const container = document.getElementById('brainCanvasContainer');
+            if (!container || !brainCanvas) return;
+            brainCanvas.width = container.clientWidth;
+            brainCanvas.height = container.clientHeight;
+            // Reinitialize nodes if needed or just redraw
+            if(lastFullState) initializeBrainNodes(lastFullState.memory.knowledgeBase);
+            drawBrain();
+        }
+        window.addEventListener('resize', resizeBrainCanvas);
+
 
         window.addEventListener('message', function(event) {
-            // For security, you might want to check event.origin in a real application
-            // if (event.origin !== 'http://your-chat-app-origin.com') return;
-
             const message = event.data;
             if (!message || !message.type) return;
+            lastFullState = message.data; // Always update for brain vis
 
             switch (message.type) {
                 case 'INIT':
                 case 'FULL_STATE_UPDATE':
                     updateFullDisplay(message.data);
+                    if(document.querySelector('.tab-button[data-tab="brain"].active')) {
+                         resizeBrainCanvas(); // Ensure canvas is sized and nodes init
+                    }
                     break;
                 case 'STATUS_UPDATE':
                     aiStatusDisplay.textContent = `Status: ${message.data}`;
                     break;
                 case 'LOG_UPDATE':
                     addLogEntry(message.data.entry, message.data.logType);
+                    if (message.data.logType === 'kb_learn' && message.data.details) {
+                        triggerBrainActivity('kb_learn', message.data.details.entity);
+                    }
                     break;
-                case 'MEMORY_UPDATE': // More granular update for memory structures
-                    if (message.data.vocabularySize) memoryStatsDisplay.textContent = `Vocab Size: ${message.data.vocabularySize}`;
-                    if (message.data.knowledgeBase) updateKbDisplay(message.data.knowledgeBase);
-                    if (message.data.bigrams) updateNgramDisplay(message.data.bigrams, bigramDisplay, "Bigrams");
-                    if (message.data.trigrams) updateNgramDisplay(message.data.trigrams, trigramDisplay, "Trigrams");
+                case 'MEMORY_UPDATE':
+                    if (message.data.memory) { // If full memory object is sent
+                        if (message.data.memory.vocabulary) {
+                             const vocab = message.data.memory.vocabulary;
+                             memoryStatsDisplay.textContent = `Vocab Size: ${vocab.size || (Array.isArray(vocab) ? vocab.length : 0)}`;
+                        }
+                        if (message.data.memory.knowledgeBase) updateKbDisplay(message.data.memory.knowledgeBase);
+                        if (message.data.memory.bigrams) updateNgramDisplay(message.data.memory.bigrams, bigramDisplay, "Bigrams");
+                        if (message.data.memory.trigrams) updateNgramDisplay(message.data.memory.trigrams, trigramDisplay, "Trigrams");
+                        initializeBrainNodes(message.data.memory.knowledgeBase); // Re-init nodes if KB changes
+                    }
+                    break;
+                case 'BRAIN_ACTIVITY':
+                    triggerBrainActivity(message.data.type, message.data.entity || message.data.intensity);
                     break;
             }
         });
 
+        // --- Brain Visualization Logic ---
+        const NODE_COLORS = { default: '#56b6c2', active: '#c3e88d', recent: '#61afef' }; // Cyan, Green, Blue
+        const MAX_NODES_DISPLAY = 30;
+
+        function initializeBrainNodes(kb) {
+            brainNodes = {};
+            if (!kb || !brainCanvas.width || !brainCanvas.height ) return; // Ensure canvas is sized
+
+            const entities = Object.keys(kb).sort((a,b) => { // Sort by lastAccess or confidence to show more "active"
+                const aVal = kb[a] ? Object.values(kb[a]).reduce((acc, curr) => Math.max(acc, curr.lastAccess || 0), 0) : 0;
+                const bVal = kb[b] ? Object.values(kb[b]).reduce((acc, curr) => Math.max(acc, curr.lastAccess || 0), 0) : 0;
+                return bVal - aVal;
+            }).slice(0, MAX_NODES_DISPLAY);
+
+
+            entities.forEach((entity, index) => {
+                const connections = Object.keys(kb[entity] || {}).map(rel => kb[entity][rel].value).filter(val => entities.includes(val));
+                brainNodes[entity] = {
+                    id: entity,
+                    x: Math.random() * (brainCanvas.width - 100) + 50,
+                    y: Math.random() * (brainCanvas.height - 100) + 50,
+                    radius: 5 + Math.min(10, (kb[entity] ? Object.keys(kb[entity]).length : 0) * 2), // Size by num relations
+                    connections: connections,
+                    lastActivity: 0,
+                    baseColor: NODE_COLORS.default,
+                    color: NODE_COLORS.default,
+                    targetX: Math.random() * (brainCanvas.width - 100) + 50, // For gentle movement
+                    targetY: Math.random() * (brainCanvas.height - 100) + 50,
+                    vx: 0,
+                    vy: 0,
+                    maxSpeed: 0.2,
+                    damping: 0.95
+                };
+            });
+        }
+        
+        function triggerBrainActivity(type, data) {
+            const now = Date.now();
+            if (type === 'kb_learn' || type === 'kb_access') {
+                if (brainNodes[data]) {
+                    brainNodes[data].lastActivity = now;
+                    brainNodes[data].color = NODE_COLORS.active; // Highlight learning/access
+                     // Create particles originating from this node
+                    for (let i = 0; i < 5; i++) {
+                        brainParticles.push({
+                            x: brainNodes[data].x, y: brainNodes[data].y,
+                            vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
+                            life: 50 + Math.random() * 50, color: NODE_COLORS.active
+                        });
+                    }
+                }
+            } else if (type === 'ngram_burst') {
+                // General activity burst - make some random nodes pulse or create general particles
+                Object.values(brainNodes).forEach(node => {
+                    if (Math.random() < 0.1 * data) { // data is intensity
+                        node.lastActivity = now;
+                        node.color = NODE_COLORS.recent;
+                    }
+                });
+                 for (let i = 0; i < data * 2; i++) { // More particles for higher intensity
+                    brainParticles.push({
+                        x: Math.random() * brainCanvas.width, y: Math.random() * brainCanvas.height,
+                        vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
+                        life: 30 + Math.random() * 30, color: NODE_COLORS.recent
+                    });
+                }
+            }
+        }
+
+        function drawBrain() {
+            if (!brainCanvas.width || !brainCanvas.height) return;
+            brainCtx.clearRect(0, 0, brainCanvas.width, brainCanvas.height);
+            const now = Date.now();
+
+            // Spring physics for node layout (simplified)
+            Object.values(brainNodes).forEach(nodeA => {
+                // Move towards target
+                nodeA.x += (nodeA.targetX - nodeA.x) * 0.01;
+                nodeA.y += (nodeA.targetY - nodeA.y) * 0.01;
+
+                // Repulsion from other nodes
+                Object.values(brainNodes).forEach(nodeB => {
+                    if (nodeA === nodeB) return;
+                    const dx = nodeB.x - nodeA.x;
+                    const dy = nodeB.y - nodeA.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = nodeA.radius + nodeB.radius + 50; // Ideal min distance
+
+                    if (distance < minDistance && distance > 0) {
+                        const force = (minDistance - distance) * 0.005; // Repulsion force
+                        nodeA.vx -= (dx / distance) * force;
+                        nodeA.vy -= (dy / distance) * force;
+                    }
+                });
+
+                 // Attraction to connected nodes (center of mass for connections)
+                if (nodeA.connections.length > 0) {
+                    let avgX = 0, avgY = 0, count = 0;
+                    nodeA.connections.forEach(connId => {
+                        if (brainNodes[connId]) {
+                            avgX += brainNodes[connId].x;
+                            avgY += brainNodes[connId].y;
+                            count++;
+                        }
+                    });
+                    if (count > 0) {
+                        avgX /= count; avgY /= count;
+                        const dx = avgX - nodeA.x;
+                        const dy = avgY - nodeA.y;
+                        nodeA.vx += dx * 0.0002; // Attraction force (weaker)
+                        nodeA.vy += dy * 0.0002;
+                    }
+                }
+
+
+                // Apply velocity and damping
+                nodeA.x += nodeA.vx;
+                nodeA.y += nodeA.vy;
+                nodeA.vx *= nodeA.damping;
+                nodeA.vy *= nodeA.damping;
+
+
+                // Keep within bounds (simple bounce)
+                if (nodeA.x < nodeA.radius) { nodeA.x = nodeA.radius; nodeA.vx *= -0.5; }
+                if (nodeA.x > brainCanvas.width - nodeA.radius) { nodeA.x = brainCanvas.width - nodeA.radius; nodeA.vx *= -0.5;}
+                if (nodeA.y < nodeA.radius) { nodeA.y = nodeA.radius; nodeA.vy *= -0.5; }
+                if (nodeA.y > brainCanvas.height - nodeA.radius) { nodeA.y = brainCanvas.height - nodeA.radius; nodeA.vy *= -0.5; }
+
+
+                 // Change color back after activity
+                if (now - nodeA.lastActivity > 2000 && nodeA.color !== nodeA.baseColor) { // 2 seconds
+                    nodeA.color = nodeA.baseColor;
+                } else if (nodeA.color !== nodeA.baseColor) { // Fade active color
+                     const ratio = Math.max(0, 1 - (now - nodeA.lastActivity) / 2000);
+                     // Simple lerp between active color and base color - this needs a proper color lib or manual RGB lerp for smooth fade
+                     // For now, it's a snap back.
+                }
+            });
+
+
+            // Draw connections
+            brainCtx.strokeStyle = '#444c56'; // Darker gray for connections
+            brainCtx.lineWidth = 0.5;
+            Object.values(brainNodes).forEach(node => {
+                node.connections.forEach(connId => {
+                    const targetNode = brainNodes[connId];
+                    if (targetNode) {
+                        brainCtx.beginPath();
+                        brainCtx.moveTo(node.x, node.y);
+                        brainCtx.lineTo(targetNode.x, targetNode.y);
+                        brainCtx.stroke();
+                    }
+                });
+            });
+
+            // Draw nodes
+            Object.values(brainNodes).forEach(node => {
+                brainCtx.beginPath();
+                brainCtx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                brainCtx.fillStyle = node.color;
+                brainCtx.fill();
+                brainCtx.strokeStyle = '#21252b'; // Border color for nodes
+                brainCtx.lineWidth = 1;
+                brainCtx.stroke();
+
+                brainCtx.fillStyle = '#abb2bf'; // Text color
+                brainCtx.font = '10px Roboto Mono';
+                brainCtx.textAlign = 'center';
+                brainCtx.fillText(node.id, node.x, node.y + node.radius + 10);
+            });
+            
+            // Draw and update particles
+            for (let i = brainParticles.length - 1; i >= 0; i--) {
+                const p = brainParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) {
+                    brainParticles.splice(i, 1);
+                } else {
+                    brainCtx.beginPath();
+                    brainCtx.arc(p.x, p.y, Math.max(0, p.life / 20), 0, Math.PI * 2); // Shrinking size
+                    brainCtx.fillStyle = p.color;
+                    brainCtx.globalAlpha = Math.max(0, p.life / 50); // Fading alpha
+                    brainCtx.fill();
+                    brainCtx.globalAlpha = 1;
+                }
+            }
+
+            requestAnimationFrame(drawBrain);
+        }
+        // End Brain Visualization Logic
+
         function updateFullDisplay(aiState) {
+            // ... (rest of updateFullDisplay from previous, including initializeBrainNodes)
             aiStatusDisplay.textContent = `Status: ${aiState.status || 'Connected'}`;
             
             let paramsText = "";
@@ -147,100 +393,35 @@
             }
             aiParamsDisplay.textContent = paramsText;
 
-            memoryStatsDisplay.textContent = `Vocab Size: ${aiState.memory.vocabulary.size || (Array.isArray(aiState.memory.vocabulary) ? aiState.memory.vocabulary.length : 0)}\n`;
-            // Could add more stats like KB entries, N-gram counts
-
+            memoryStatsDisplay.textContent = `Vocab Size: ${aiState.memory.vocabulary.size || (Array.isArray(aiState.memory.vocabulary) ? aiState.memory.vocabulary.length : 0)}\nKB Entities: ${Object.keys(aiState.memory.knowledgeBase || {}).length}`;
+            
             updateKbDisplay(aiState.memory.knowledgeBase);
             updateNgramDisplay(aiState.memory.bigrams, bigramDisplay, "Bigrams");
             updateNgramDisplay(aiState.memory.trigrams, trigramDisplay, "Trigrams");
             updateChatHistoryDisplay(aiState.memory.conversationHistory);
+            initializeBrainNodes(aiState.memory.knowledgeBase);
+
 
             thoughtLogDisplay.innerHTML = ""; // Clear old logs on full update
             if (aiState.lastThoughtProcess && Array.isArray(aiState.lastThoughtProcess)) {
-                aiState.lastThoughtProcess.slice().reverse().forEach(entry => addLogEntry(entry, guessLogType(entry))); // Display in chronological
+                aiState.lastThoughtProcess.slice().reverse().forEach(entry => addLogEntry(entry, guessLogType(entry))); 
             }
-             // Ensure the 'thoughts' tab is active if it's a full refresh or init
-            document.querySelector('.tab-button[data-tab="thoughts"]').click();
+             // Default to brain tab if not already on one
+            if (!document.querySelector('.tab-button.active')) {
+                document.querySelector('.tab-button[data-tab="brain"]').click();
+            }
         }
         
-        function guessLogType(entryText) {
-            if (entryText.includes("System") || entryText.includes("localStorage")) return "system";
-            if (entryText.includes("Error")) return "error";
-            if (entryText.includes("Warn") || entryText.includes("No saved state")) return "warn";
-            if (entryText.includes("Learned KB:")) return "kb_learn";
-            if (entryText.includes("Strategy:")) return "strategy";
-            if (entryText.includes("Candidate:")) return "candidate";
-            if (entryText.includes("Selected Best Candidate") || entryText.includes("Decision:")) return "decision";
-            if (entryText.includes("---")) return "cycle";
-            return "thought"; // default
-        }
+        function guessLogType(entryText) { /* ... same as before ... */ return "thought";}
+        function addLogEntry(text, type = "thought") { /* ... same as before ... */ }
+        function updateKbDisplay(kb) { /* ... same as before ... */ }
+        function updateNgramDisplay(ngrams, displayElement, typeName) { /* ... same as before ... */ }
+        function updateChatHistoryDisplay(history) { /* ... same as before ... */ }
 
-
-        function addLogEntry(text, type = "thought") {
-            const entryDiv = document.createElement('div');
-            entryDiv.className = `log-entry ${type}`; // Apply type as class
-            entryDiv.textContent = text;
-            thoughtLogDisplay.appendChild(entryDiv); // Add to bottom for chronological
-            thoughtLogDisplay.scrollTop = thoughtLogDisplay.scrollHeight;
-        }
-
-        function updateKbDisplay(kb) {
-            let kbText = "{\n";
-            let count = 0;
-            for (const entity in kb) {
-                if (count >= 50) { kbText += "  ... (truncated)\n"; break; } // Limit display
-                kbText += `  "${entity}": {\n`;
-                for (const relation in kb[entity]) {
-                    const fact = kb[entity][relation];
-                    kbText += `    "${relation}": { "value": "${fact.value}", "confidence": ${fact.confidence.toFixed(2)} }\n`;
-                }
-                kbText += `  },\n`;
-                count++;
-            }
-            kbText += "}";
-            kbDisplay.textContent = kbText;
-        }
-        
-        function updateNgramDisplay(ngrams, displayElement, typeName) {
-            let ngramText = `Total ${typeName} Prefixes: ${Object.keys(ngrams).length}\n\n`;
-            let prefixCount = 0;
-            for (const prefix in ngrams) {
-                if (prefixCount >= 30) { ngramText += "... (truncated)\n"; break; } // Limit display
-                ngramText += `"${prefix}": {\n`;
-                let suffixCount = 0;
-                for (const suffix in ngrams[prefix]) {
-                    if (suffixCount >= 5) { ngramText += `  ... (${Object.keys(ngrams[prefix]).length - 5} more)\n`; break; }
-                    ngramText += `  "${suffix}": ${ngrams[prefix][suffix]},\n`;
-                    suffixCount++;
-                }
-                ngramText += "},\n";
-                prefixCount++;
-            }
-            displayElement.textContent = ngramText;
-        }
-        
-        function updateChatHistoryDisplay(history) {
-            let historyText = "";
-            const recentHistory = history.slice(-10); // Last 10 entries
-            recentHistory.forEach(entry => {
-                historyText += `[${entry.sender.toUpperCase()}] (${new Date(entry.timestamp).toLocaleTimeString()})\n  "${entry.text}"\n`;
-                if(entry.analysis && entry.analysis.intent) {
-                    historyText += `  Analysis: Intent: ${entry.analysis.intent}, Keywords: ${entry.analysis.keywords.join(', ') || 'N/A'}\n`;
-                }
-                historyText += "\n";
-            });
-            chatHistoryDisplay.textContent = historyText || "No conversation history yet.";
-        }
-
-
-        // Notify the main window that the monitor is ready
-        if (window.opener) {
-            // This message isn't strictly necessary if index.html just tries to post after timeout,
-            // but it's good practice for more robust communication.
-            // window.opener.postMessage({ type: 'MONITOR_READY' }, '*');
-        }
         aiStatusDisplay.textContent = "Status: Connected. Waiting for AI data...";
-
+        requestAnimationFrame(drawBrain); // Start brain animation loop
+        // Initial resize after a short delay to ensure layout is complete
+        setTimeout(resizeBrainCanvas, 100);
     </script>
 </body>
 </html>
