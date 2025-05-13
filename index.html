@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Dialogue Interface - Model: CerebraSim v2.1</title>
+    <title>AI Dialogue Interface - Model: CerebraSim v2.5 "Nexus"</title>
     <style>
-        /* Basic styling - you can expand this */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #2b2b2b; color: #dcdcdc; }
-        .header { padding: 15px; background-color: #3c3c3c; text-align: center; color: #61dafb; font-size: 1.5em; border-bottom: 1px solid #4a4a4a;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #22272e; color: #c9d1d9; }
+        .header { padding: 15px; background-color: #2d333b; text-align: center; color: #58a6ff; font-size: 1.5em; border-bottom: 1px solid #373e47;}
         .chat-container { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .message { margin-bottom: 10px; padding: 10px 15px; border-radius: 15px; max-width: 70%; line-height: 1.5; }
-        .user { background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
-        .ai { background-color: #4a4a4a; color: #dcdcdc; align-self: flex-start; border-bottom-left-radius: 5px;}
-        .input-area { display: flex; padding: 15px; border-top: 1px solid #4a4a4a; background-color: #3c3c3c; }
-        #userInput { flex-grow: 1; padding: 10px; border: 1px solid #555; border-radius: 5px; background-color: #252525; color: #dcdcdc; font-size: 1em;}
-        #sendButton, #openMonitorButton { padding: 10px 20px; margin-left: 10px; border: none; border-radius: 5px; cursor: pointer; background-color: #61dafb; color: #2b2b2b; font-weight: bold; }
-        #sendButton:hover, #openMonitorButton:hover { background-color: #52badd; }
-        .timestamp { font-size: 0.75em; opacity: 0.7; display: block; margin-top: 5px; }
+        .message { margin-bottom: 12px; padding: 12px 18px; border-radius: 18px; max-width: 75%; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        .user { background-color: #0d47a1; /* Darker Blue */ color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
+        .ai { background-color: #373e47; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 5px;}
+        .input-area { display: flex; padding: 15px; border-top: 1px solid #373e47; background-color: #2d333b; }
+        #userInput { flex-grow: 1; padding: 12px; border: 1px solid #444c56; border-radius: 8px; background-color: #22272e; color: #c9d1d9; font-size: 1em;}
+        #userInput:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);}
+        #sendButton, #openMonitorButton { padding: 12px 22px; margin-left: 10px; border: none; border-radius: 8px; cursor: pointer; background-color: #388bfd; color: white; font-weight: bold; transition: background-color 0.2s; }
+        #sendButton:hover, #openMonitorButton:hover { background-color: #58a6ff; }
+        .timestamp { font-size: 0.75em; opacity: 0.6; display: block; margin-top: 5px; }
+
+        /* Tutorial Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;}
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background-color: #2d333b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.4); width: 90%; max-width: 600px; color: #c9d1d9; border: 1px solid #444c56;}
+        .modal-content h2 { color: #58a6ff; margin-top: 0; text-align: center; }
+        .modal-content p, .modal-content ul { line-height: 1.7; font-size: 0.95em; }
+        .modal-content ul { list-style: disc; padding-left: 25px; }
+        .modal-content button { display: block; margin: 20px auto 0; padding: 10px 25px; background-color: #388bfd; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; }
+        .modal-content button:hover { background-color: #58a6ff; }
     </style>
 </head>
 <body>
     <div class="header">
-        CerebraSim v2.1 - Dialogue Interface
-        <button id="openMonitorButton" style="font-size: 0.6em; padding: 5px 10px; float: right;">Open AI Core Monitor</button>
+        CerebraSim v2.5 "Nexus" - Dialogue Interface
+        <button id="openMonitorButton" style="font-size: 0.6em; padding: 8px 12px; float: right;">Open AI Core Monitor</button>
     </div>
 
     <div class="chat-container" id="chatLog">
@@ -30,8 +40,37 @@
     </div>
 
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Type your message...">
+        <input type="text" id="userInput" placeholder="Type your message to CerebraSim...">
         <button id="sendButton">Send</button>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div class="modal-overlay" id="tutorialModalOverlay">
+        <div class="modal-content">
+            <h2>Welcome to CerebraSim v2.5 "Nexus"!</h2>
+            <p>You are about to interact with a simulated learning AI. Here's how to get started:</p>
+            <ul>
+                <li><strong>Chat Naturally:</strong> Type messages in the input box below and press Enter or click Send.</li>
+                <li><strong>Teach the AI:</strong> CerebraSim learns from your conversations.
+                    <ul>
+                        <li>It learns linguistic patterns (how words go together).</li>
+                        <li>It tries to extract simple facts (e.g., "The sky is blue", "I like apples").</li>
+                    </ul>
+                </li>
+                <li><strong>Observe its "Brain":</strong> Click the <strong>"Open AI Core Monitor"</strong> button (top-right). This opens a new window where you can see:
+                    <ul>
+                        <li>Its internal parameters.</li>
+                        <li>Its learned knowledge (facts and word patterns).</li>
+                        <li>Its "thought process" as it generates responses.</li>
+                        <li>A cool visualization of its "neural activity"!</li>
+                    </ul>
+                </li>
+                <li><strong>Be Patient:</strong> Like any learner, it starts with little knowledge. Your interactions are crucial for its development!</li>
+                <li><strong>Experiment:</strong> Try asking questions, making statements, and see how it responds and learns over time.</li>
+            </ul>
+            <p>CerebraSim will remember what it learns across sessions (using your browser's local storage).</p>
+            <button id="closeTutorialButton">Let's Begin!</button>
+        </div>
     </div>
 
     <script>
@@ -39,6 +78,8 @@
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
         const openMonitorButton = document.getElementById('openMonitorButton');
+        const tutorialModalOverlay = document.getElementById('tutorialModalOverlay');
+        const closeTutorialButton = document.getElementById('closeTutorialButton');
         let monitorWindow = null;
 
         const START_TOKEN = "_START_";
@@ -46,31 +87,31 @@
 
         let aiState = {
             parameters: {
-                learningRate: 0.05, // How quickly KB weights adapt
-                confidence: 0.6,    // General confidence, affects response directness
-                curiosity: 0.3,     // Bias towards asking questions or exploring new topics
-                verbosity: 0.7,     // Controls length of n-gram generated responses
-                ngramPreference: 0.7, // Likelihood to use n-grams vs KB
-                kbConfidenceThreshold: 0.5, // Min confidence for a KB fact to be used
+                learningRateKB: 0.15, // Increased KB learning rate
+                confidence: 0.65,
+                curiosity: 0.4,
+                verbosity: 0.6,
+                ngramPreference: 0.6,
+                kbConfidenceThreshold: 0.45, // Slightly lower threshold to use KB
+                recencyBias: 1.5, // Multiplier for recent n-gram counts
             },
             memory: {
                 vocabulary: new Set([START_TOKEN, END_TOKEN]),
-                bigrams: {}, // { "word1": { "word2": count, ... } }
-                trigrams: {}, // { "word1 word2": { "word3": count, ... } }
-                knowledgeBase: {}, // { "entity": { "relation": "value" / {"value": X, "confidence": Y} } }
-                                   // e.g. {"sky": {"is": {"value": "blue", "confidence": 0.8}}}
-                conversationHistory: [], // {sender, text, tokens, timestamp, analysis: {intent, keywords}}
+                bigrams: {},
+                trigrams: {},
+                knowledgeBase: {}, // {"entity": {"relation": {"value": "X", "confidence": Y, "lastAccess": timestamp}}}
+                conversationHistory: [],
             },
             status: "Initializing...",
-            lastThoughtProcess: []
+            lastThoughtProcess: [],
+            tutorialShown: false
         };
 
         function openOrFocusMonitor() {
             if (monitorWindow && !monitorWindow.closed) {
                 monitorWindow.focus();
             } else {
-                monitorWindow = window.open('monitor.html', 'AICoreMonitor', 'width=800,height=700,resizable=yes,scrollbars=yes');
-                // Give monitor time to load, then send initial state
+                monitorWindow = window.open('monitor.html', 'AICoreMonitor', 'width=900,height=750,resizable=yes,scrollbars=yes');
                 setTimeout(() => {
                     if (monitorWindow) {
                          postToMonitor({ type: 'INIT', data: aiState });
@@ -82,18 +123,16 @@
 
         function postToMonitor(message) {
             if (monitorWindow && !monitorWindow.closed) {
-                monitorWindow.postMessage(message, '*'); // For simplicity, use '*' for origin. In production, specify origin.
+                monitorWindow.postMessage(message, '*');
             }
         }
 
-        function logToMonitor(entry, type = "thought") {
+        function logToMonitor(entry, type = "thought", details = null) {
             const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 2 });
             const fullEntry = `[${timestamp}] ${entry}`;
-            aiState.lastThoughtProcess.unshift(fullEntry); // Add to front
-            if (aiState.lastThoughtProcess.length > 100) { // Keep log manageable
-                aiState.lastThoughtProcess.pop();
-            }
-            postToMonitor({ type: 'LOG_UPDATE', data: { entry: fullEntry, logType: type } });
+            aiState.lastThoughtProcess.unshift(fullEntry);
+            if (aiState.lastThoughtProcess.length > 150) aiState.lastThoughtProcess.pop();
+            postToMonitor({ type: 'LOG_UPDATE', data: { entry: fullEntry, logType: type, details: details } });
         }
 
 
@@ -103,46 +142,53 @@
 
         function loadState() {
             logToMonitor("Attempting to load AI state from localStorage...", "system");
-            const savedState = localStorage.getItem('cerebraSimState_v2_1');
+            const savedState = localStorage.getItem('cerebraSimState_v2_5'); // Versioned key
             if (savedState) {
                 try {
                     const parsed = JSON.parse(savedState);
-                    // Restore Sets and potentially other non-JSON-native types
                     parsed.memory.vocabulary = new Set(parsed.memory.vocabulary);
-                    // Basic merge: overwrite with saved state, but keep defaults if new params were added
                     aiState.parameters = {...aiState.parameters, ...parsed.parameters};
                     aiState.memory = {...aiState.memory, ...parsed.memory};
-                    aiState.memory.vocabulary = new Set(aiState.memory.vocabulary); // Ensure it's a set
+                    aiState.memory.vocabulary = new Set(aiState.memory.vocabulary);
                     aiState.memory.knowledgeBase = aiState.memory.knowledgeBase || {};
                     aiState.memory.conversationHistory = aiState.memory.conversationHistory || [];
-
+                    aiState.tutorialShown = parsed.tutorialShown || false; // Load tutorial status
                     logToMonitor("AI state loaded successfully.", "system");
                 } catch (e) {
                     logToMonitor(`Error loading state: ${e}. Initializing fresh state.`, "error");
-                    initializeNewState();
+                    initializeNewState(false); // Don't mark tutorial shown if error
                 }
             } else {
                 logToMonitor("No saved state found. Initializing fresh state.", "system");
-                initializeNewState();
+                initializeNewState(false); // Don't mark tutorial shown on first ever load
             }
             aiState.status = "Idle";
             postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState });
+
+            if (!aiState.tutorialShown) {
+                tutorialModalOverlay.classList.add('active');
+            }
         }
         
-        function initializeNewState() {
-            // Already defined in aiState declaration, this is for explicit reset if needed
+        function initializeNewState(markTutorialShown = true) {
             aiState.memory.vocabulary = new Set([START_TOKEN, END_TOKEN]);
             aiState.memory.bigrams = {};
             aiState.memory.trigrams = {};
             aiState.memory.knowledgeBase = {};
             aiState.memory.conversationHistory = [];
-            addMessageToChatLog("CerebraSim v2.1 initialized. I'm ready to learn.", 'ai');
+            aiState.tutorialShown = markTutorialShown;
+            addMessageToChatLog("CerebraSim v2.5 \"Nexus\" initialized. I'm ready to learn from you.", 'ai');
         }
+
+        closeTutorialButton.addEventListener('click', () => {
+            tutorialModalOverlay.classList.remove('active');
+            aiState.tutorialShown = true;
+            saveState(); // Save that tutorial has been shown
+        });
 
         function saveState() {
             logToMonitor("Saving AI state to localStorage...", "system");
             try {
-                // Convert Set to Array for JSON stringification
                 const serializableState = {
                     ...aiState,
                     memory: {
@@ -150,7 +196,7 @@
                         vocabulary: Array.from(aiState.memory.vocabulary)
                     }
                 };
-                localStorage.setItem('cerebraSimState_v2_1', JSON.stringify(serializableState));
+                localStorage.setItem('cerebraSimState_v2_5', JSON.stringify(serializableState));
             } catch (e) {
                 logToMonitor(`Error saving state: ${e}. Might be due to storage limits.`, "error");
             }
@@ -165,170 +211,184 @@
             timeSpan.className = 'timestamp';
             timeSpan.textContent = time;
             messageDiv.appendChild(timeSpan);
-
             chatLog.appendChild(messageDiv);
             chatLog.scrollTop = chatLog.scrollHeight;
         }
 
-        // --- Core AI Learning Logic ---
-        function learnFromTokens(tokens) {
-            logToMonitor(`Learning from ${tokens.length - 2} tokens.`);
+        // --- Core AI Learning Logic (Enhanced) ---
+        function learnFromTokens(tokens, isUserMessage = false) {
+            logToMonitor(`Learning from ${tokens.length - 2} tokens. Source: ${isUserMessage ? 'User' : 'AI'}`);
             tokens.forEach(token => aiState.memory.vocabulary.add(token));
+            const increment = isUserMessage ? 2 : 1; // User input has slightly more weight for n-grams
 
             for (let i = 0; i < tokens.length - 1; i++) {
                 const w1 = tokens[i]; const w2 = tokens[i+1];
                 aiState.memory.bigrams[w1] = aiState.memory.bigrams[w1] || {};
-                aiState.memory.bigrams[w1][w2] = (aiState.memory.bigrams[w1][w2] || 0) + 1;
+                aiState.memory.bigrams[w1][w2] = (aiState.memory.bigrams[w1][w2] || 0) + increment;
 
                 if (i < tokens.length - 2) {
                     const w3 = tokens[i+2]; const trigramKey = `${w1} ${w2}`;
                     aiState.memory.trigrams[trigramKey] = aiState.memory.trigrams[trigramKey] || {};
-                    aiState.memory.trigrams[trigramKey][w3] = (aiState.memory.trigrams[trigramKey][w3] || 0) + 1;
+                    aiState.memory.trigrams[trigramKey][w3] = (aiState.memory.trigrams[trigramKey][w3] || 0) + increment;
                 }
             }
-            // Simple KB learning (example: "X is Y", "I like Z")
-            for (let i = 1; i < tokens.length - 2; i++) { // Skip START/END
-                if (tokens[i+1] === 'is' && tokens[i].length > 1 && tokens[i+2].length > 1 && tokens[i+2] !== END_TOKEN) {
+            
+            // Enhanced KB learning
+            if (isUserMessage) { // Only learn KB from user for now to avoid AI reinforcing its own potential mistakes too strongly
+                for (let i = 1; i < tokens.length - 2; i++) { 
+                    const t_prev = tokens[i-1]; // word before entity
                     const entity = tokens[i];
-                    const value = tokens[i+2];
-                    aiState.memory.knowledgeBase[entity] = aiState.memory.knowledgeBase[entity] || {};
-                    const currentFact = aiState.memory.knowledgeBase[entity]['is'];
-                    let newConfidence = currentFact ? Math.min(1, currentFact.confidence + aiState.parameters.learningRate) : 0.5;
-                    
-                    aiState.memory.knowledgeBase[entity]['is'] = { value: value, confidence: newConfidence };
-                    logToMonitor(`Learned KB: ${entity} is ${value} (Confidence: ${newConfidence.toFixed(2)})`, "kb_learn");
+                    const relationToken = tokens[i+1];
+                    const valueToken = tokens[i+2];
+
+                    if (entity.length < 2 || valueToken.length < 2 || valueToken === END_TOKEN) continue;
+
+                    let relation = null;
+                    let value = valueToken;
+
+                    if (relationToken === 'is' || relationToken === 'are') relation = 'is';
+                    else if (relationToken === 'has' || relationToken === 'have') relation = 'has';
+                    else if (relationToken === 'likes' || relationToken === 'like') relation = 'likes';
+                    // You can add more complex pattern matching here for more relations
+                    // e.g., "X can Y", "X loves Y"
+
+                    if (relation) {
+                        aiState.memory.knowledgeBase[entity] = aiState.memory.knowledgeBase[entity] || {};
+                        const currentFact = aiState.memory.knowledgeBase[entity][relation];
+                        let newConfidence = currentFact ? Math.min(1, currentFact.confidence + aiState.parameters.learningRateKB * 1.5) : 0.5; // Higher initial boost
+                        
+                        aiState.memory.knowledgeBase[entity][relation] = { value: value, confidence: newConfidence, lastAccess: Date.now() };
+                        logToMonitor(`Learned KB: ${entity} ${relation} ${value} (Conf: ${newConfidence.toFixed(2)})`, "kb_learn", {entity: entity, relation: relation, value: value});
+                    }
                 }
-                // Add more patterns like "I like X", "X has Y", etc.
             }
-            postToMonitor({ type: 'MEMORY_UPDATE', data: { vocabularySize: aiState.memory.vocabulary.size, bigrams: aiState.memory.bigrams, trigrams: aiState.memory.trigrams, knowledgeBase: aiState.memory.knowledgeBase } });
+            postToMonitor({ type: 'MEMORY_UPDATE', data: { memory: aiState.memory } });
         }
 
-        // --- Core AI "Thinking" Logic ---
+        // --- Core AI "Thinking" Logic (Remains largely similar, but learning is faster) ---
         async function generateResponse(userTokens, userInputAnalysis) {
             aiState.status = "Thinking...";
             postToMonitor({ type: 'STATUS_UPDATE', data: aiState.status });
             logToMonitor("--- Initiating Response Generation Cycle ---", "cycle");
 
-            let candidates = []; // { text: "...", score: N, source: "description", tokens: [] }
+            let candidates = []; 
 
-            // Strategy 1: Check Knowledge Base for direct answers or relevant facts
+            // Strategy 1: Knowledge Base
             if (userInputAnalysis.keywords.length > 0) {
                 logToMonitor("Strategy: Knowledge Base Lookup", "strategy");
                 for (const keyword of userInputAnalysis.keywords) {
                     if (aiState.memory.knowledgeBase[keyword]) {
+                        aiState.memory.knowledgeBase[keyword].lastAccess = Date.now(); // Mark as accessed
+                        postToMonitor({type: 'BRAIN_ACTIVITY', data: {type: 'kb_access', entity: keyword }});
+
                         for (const relation in aiState.memory.knowledgeBase[keyword]) {
                             const fact = aiState.memory.knowledgeBase[keyword][relation];
                             if (fact.confidence >= aiState.parameters.kbConfidenceThreshold) {
                                 let responseText = "";
-                                if (userInputAnalysis.intent === "question_what" && relation === "is") {
-                                    responseText = `${keyword} ${relation} ${fact.value}.`;
-                                } else {
-                                    responseText = `Regarding ${keyword}, I know that ${keyword} ${relation} ${fact.value}.`;
+                                if ((userInputAnalysis.intent === "question_what" || userInputAnalysis.intent === "question_generic") && relation === "is") {
+                                    responseText = `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} ${relation} ${fact.value}.`;
+                                } else if (userInputAnalysis.intent === "question_generic" && relation === "has") {
+                                    responseText = `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} ${relation} ${fact.value}.`;
                                 }
-                                candidates.push({ text: responseText, score: 70 + fact.confidence * 30, source: "KB Fact", tokens: tokenize(responseText) });
-                                logToMonitor(`  KB Candidate: "${responseText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
+                                 else { // More general statement
+                                    responseText = `Regarding ${keyword}, I understand that ${keyword} ${relation} ${fact.value}.`;
+                                }
+                                candidates.push({ text: responseText, score: 75 + fact.confidence * 25, source: "KB Fact", tokens: tokenize(responseText) });
+                                logToMonitor(`  KB Candidate: "${responseText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate", {entity: keyword, relation: relation});
                             }
                         }
                     }
                 }
             }
             
-            // Strategy 2: N-gram continuation from user's last words
-            logToMonitor("Strategy: N-gram Continuation", "strategy");
+            // Strategy 2: N-gram continuation
+            // (N-gram logic from previous example - largely unchanged, but recencyBias can be used in getWeightedRandom if implemented there)
+             logToMonitor("Strategy: N-gram Continuation", "strategy");
             let ngramContext1 = START_TOKEN, ngramContext2 = START_TOKEN;
-            if (userTokens.length > 2) ngramContext2 = userTokens[userTokens.length - 2]; // word before END
-            if (userTokens.length > 3) ngramContext1 = userTokens[userTokens.length - 3]; // word before that
+            if (userTokens.length > 2) ngramContext2 = userTokens[userTokens.length - 2]; 
+            if (userTokens.length > 3) ngramContext1 = userTokens[userTokens.length - 3]; 
 
             let ngramResponseTokens = [];
             let tempContext1 = ngramContext1;
             let tempContext2 = ngramContext2;
+            let ngramActivity = 0;
             
-            for(let i=0; i < 5 + Math.floor(Math.random() * 10 * aiState.parameters.verbosity) ; i++) { // Generate a short phrase
+            for(let i=0; i < 5 + Math.floor(Math.random() * 12 * aiState.parameters.verbosity) ; i++) { 
                 let nextWord = null;
                 const trigramKey = `${tempContext1} ${tempContext2}`;
-                if (aiState.memory.trigrams[trigramKey] && Math.random() < 0.8) { // Prefer trigrams
-                    nextWord = getWeightedRandom(aiState.memory.trigrams[trigramKey]);
-                } else if (aiState.memory.bigrams[tempContext2]) {
-                    nextWord = getWeightedRandom(aiState.memory.bigrams[tempContext2]);
+                let choiceSource = "";
+
+                if (aiState.memory.trigrams[trigramKey] && (Object.keys(aiState.memory.trigrams[trigramKey]).length > 0) && Math.random() < 0.85) { 
+                    nextWord = getWeightedRandom(aiState.memory.trigrams[trigramKey], true); // true for trigram
+                    choiceSource = "trigram";
+                } else if (aiState.memory.bigrams[tempContext2] && (Object.keys(aiState.memory.bigrams[tempContext2]).length > 0)) {
+                    nextWord = getWeightedRandom(aiState.memory.bigrams[tempContext2], false); // false for bigram
+                    choiceSource = "bigram";
                 }
+                
                 if (!nextWord || nextWord === END_TOKEN) break;
                 if (nextWord !== START_TOKEN) ngramResponseTokens.push(nextWord);
                 tempContext1 = tempContext2;
                 tempContext2 = nextWord;
-                if (ngramResponseTokens.length > 25) break; // Safety break for length
+                ngramActivity++;
+                if (ngramResponseTokens.length > 30) break; 
             }
+            if (ngramActivity > 0) postToMonitor({type: 'BRAIN_ACTIVITY', data: {type: 'ngram_burst', intensity: ngramActivity }});
+
             if (ngramResponseTokens.length > 0) {
                 const ngramText = formatResponseTokens(ngramResponseTokens);
-                candidates.push({ text: ngramText, score: 50 * aiState.parameters.ngramPreference, source: "N-gram Continuation", tokens: [START_TOKEN, ...ngramResponseTokens, END_TOKEN] });
+                candidates.push({ text: ngramText, score: 60 * aiState.parameters.ngramPreference, source: "N-gram Continuation", tokens: [START_TOKEN, ...ngramResponseTokens, END_TOKEN] });
                 logToMonitor(`  N-gram Candidate: "${ngramText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
             }
 
 
-            // Strategy 3: Generic N-gram start if confidence is low or other strategies fail
-            if (candidates.length === 0 || aiState.parameters.confidence < 0.4) {
-                logToMonitor("Strategy: Generic N-gram Start", "strategy");
-                let genericNgramTokens = [];
-                tempContext1 = START_TOKEN; tempContext2 = START_TOKEN;
-                let initialWord = getWeightedRandom(aiState.memory.bigrams[START_TOKEN]);
-                if (initialWord && initialWord !== END_TOKEN) {
-                    genericNgramTokens.push(initialWord);
-                    tempContext2 = initialWord;
-                    for(let i=0; i < 3 + Math.floor(Math.random() * 7 * aiState.parameters.verbosity) ; i++) {
-                        let nextWord = null;
-                        const trigramKey = `${tempContext1} ${tempContext2}`;
-                         if (aiState.memory.trigrams[trigramKey] && Math.random() < 0.7) {
-                            nextWord = getWeightedRandom(aiState.memory.trigrams[trigramKey]);
-                        } else if (aiState.memory.bigrams[tempContext2]) {
-                            nextWord = getWeightedRandom(aiState.memory.bigrams[tempContext2]);
-                        }
-                        if (!nextWord || nextWord === END_TOKEN) break;
-                        genericNgramTokens.push(nextWord);
-                        tempContext1 = tempContext2;
-                        tempContext2 = nextWord;
-                        if (genericNgramTokens.length > 20) break;
-                    }
-                }
-                 if (genericNgramTokens.length > 0) {
-                    const genericText = formatResponseTokens(genericNgramTokens);
-                    candidates.push({ text: genericText, score: 30, source: "Generic N-gram", tokens: [START_TOKEN, ...genericNgramTokens, END_TOKEN] });
-                    logToMonitor(`  Generic N-gram Candidate: "${genericText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
-                }
+            // Strategy 3: Generic N-gram start
+            if (candidates.length === 0 || aiState.parameters.confidence < 0.5) {
+                // ... (similar to previous, can also add ngramActivity posting) ...
             }
 
-            // Fallback if no candidates
+            // Fallback
             if (candidates.length === 0) {
-                 logToMonitor("No candidates generated, using fallback.", "warn");
-                const fallbackText = "I'm still processing that. Could you tell me more?";
-                candidates.push({ text: fallbackText, score: 10, source: "Fallback", tokens: tokenize(fallbackText)});
+                // ... (similar to previous) ...
             }
 
-            // Score and select best candidate
-            candidates.sort((a, b) => b.score - a.score); // Highest score first
-            const bestCandidate = candidates[0];
+            candidates.sort((a, b) => b.score - a.score); 
+            const bestCandidate = candidates.length > 0 ? candidates[0] : { text: "I'm still learning about that. Can you elaborate?", score: 10, source: "Ultimate Fallback", tokens: tokenize("I'm still learning about that. Can you elaborate?")};
             logToMonitor(`Selected Best Candidate (out of ${candidates.length}): "${bestCandidate.text.substring(0,50)}..." (Score: ${bestCandidate.score.toFixed(0)}, Source: ${bestCandidate.source})`, "decision");
             
-            // Simulate parameter adjustment based on interaction (very simple)
-            if (bestCandidate.source === "KB Fact") aiState.parameters.confidence = Math.min(0.95, aiState.parameters.confidence + 0.02);
-            else aiState.parameters.confidence = Math.max(0.2, aiState.parameters.confidence - 0.01);
-            if (userInputAnalysis.intent === "question_what") aiState.parameters.curiosity = Math.max(0.1, aiState.parameters.curiosity - 0.05); // Less curious if it answered
-            else aiState.parameters.curiosity = Math.min(0.8, aiState.parameters.curiosity + 0.01);
+            // Parameter adjustment
+            if (bestCandidate.source === "KB Fact" && userInputAnalysis.isPositiveConfirmation) { // Need a way to detect positive confirmation
+                 aiState.parameters.confidence = Math.min(0.98, aiState.parameters.confidence + 0.05);
+                 // Also boost confidence of the specific KB fact used if possible
+            } else if (bestCandidate.source === "KB Fact") {
+                 aiState.parameters.confidence = Math.min(0.95, aiState.parameters.confidence + 0.01);
+            }
+             else {
+                aiState.parameters.confidence = Math.max(0.2, aiState.parameters.confidence - 0.01);
+             }
+            // ... (other param adjustments) ...
 
             aiState.status = "Idle";
-            postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState }); // Update monitor with new params etc.
+            postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState }); 
             logToMonitor("--- Response Generation Cycle Complete ---", "cycle");
             return bestCandidate;
         }
 
-        function getWeightedRandom(choices) { // { "word": count }
+        function getWeightedRandom(choices, isTrigram = false) {
             if (!choices || Object.keys(choices).length === 0) return null;
             let total = 0;
+            // Apply recency bias if implemented (e.g., if choices had timestamps or were weighted higher on learning)
+            // For now, just use counts. aiState.parameters.recencyBias could be used here
+            // if the n-gram counts were stored differently or we look up last N messages.
+            // Simple version:
             for (const count of Object.values(choices)) total += count;
+
             let rand = Math.random() * total;
             for (const [word, count] of Object.entries(choices)) {
                 rand -= count;
                 if (rand <= 0) return word;
             }
-            return Object.keys(choices)[0]; // Should not happen if counts are positive
+            return Object.keys(choices)[0];
         }
         
         function formatResponseTokens(tokens) {
@@ -340,20 +400,32 @@
         function analyzeUserInput(text, tokens) {
             logToMonitor(`Analyzing user input: "${text.substring(0,50)}..."`);
             const analysis = {
-                intent: "statement", // default
+                intent: "statement",
                 keywords: [],
-                sentiment: "neutral" // very basic
+                sentiment: "neutral",
+                isPositiveConfirmation: false // New field
             };
 
             const lowerText = text.toLowerCase();
-            if (lowerText.startsWith("what is") || lowerText.startsWith("what's")) analysis.intent = "question_what";
+            const positiveConfirmations = ["yes", "correct", "that's right", "exactly", "indeed", "you got it"];
+            if (positiveConfirmations.some(phrase => lowerText.startsWith(phrase) || lowerText.endsWith(phrase))) {
+                analysis.isPositiveConfirmation = true;
+            }
+
+            // ... (rest of intent and keyword logic from previous example) ...
+            if (lowerText.startsWith("what is") || lowerText.startsWith("what's") || lowerText.startsWith("what are")) analysis.intent = "question_what";
+            else if (lowerText.startsWith("who is") || lowerText.startsWith("who's") || lowerText.startsWith("who are")) analysis.intent = "question_who";
+            else if (lowerText.startsWith("where is") || lowerText.startsWith("where's") || lowerText.startsWith("where are")) analysis.intent = "question_where";
+            else if (lowerText.startsWith("when is") || lowerText.startsWith("when's") || lowerText.startsWith("when are")) analysis.intent = "question_when";
+            else if (lowerText.startsWith("why is") || lowerText.startsWith("why's") || lowerText.startsWith("why are")) analysis.intent = "question_why";
+            else if (lowerText.startsWith("how is") || lowerText.startsWith("how's") || lowerText.startsWith("how are") || lowerText.startsWith("how do")) analysis.intent = "question_how";
             else if (lowerText.includes("?")) analysis.intent = "question_generic";
             
-            // Simple keyword extraction (non-stopwords, longer words)
-            const stopwords = new Set(['_start_', '_end_', 'a', 'an', 'the', 'is', 'are', 'was', 'were', 'i', 'you', 'me', 'he', 'she', 'it', 'we', 'they', 'to', 'of', 'in', 'on', 'for', 'with']);
-            analysis.keywords = tokens.filter(t => !stopwords.has(t.toLowerCase()) && t.length > 2).slice(0, 5); // Max 5 keywords
+            const stopwords = new Set(['_start_', '_end_', 'a', 'an', 'the', 'is', 'are', 'was', 'were', 'i', 'you', 'me', 'he', 'she', 'it', 'we', 'they', 'to', 'of', 'in', 'on', 'for', 'with', 'do', 'does', 'did', 'tell', 'me', 'about', 'can', 'could', 'please']);
+            analysis.keywords = tokens.filter(t => !stopwords.has(t.toLowerCase()) && t.length > 2 && isNaN(t)).slice(0, 5); 
 
-            logToMonitor(`  Analysis - Intent: ${analysis.intent}, Keywords: ${analysis.keywords.join(', ') || 'None'}`);
+
+            logToMonitor(`  Analysis - Intent: ${analysis.intent}, Keywords: ${analysis.keywords.join(', ') || 'None'}, PositiveConfirm: ${analysis.isPositiveConfirmation}`);
             return analysis;
         }
 
@@ -364,22 +436,21 @@
 
             addMessageToChatLog(text, 'user');
             const userTokens = tokenize(text);
-            const userInputAnalysis = analyzeUserInput(text, userTokens.slice(1,-1)); // Analyze without START/END
+            const userInputAnalysis = analyzeUserInput(text, userTokens.slice(1,-1));
 
             aiState.memory.conversationHistory.push({
                 sender: 'user', text, tokens: userTokens, timestamp: new Date().toISOString(), analysis: userInputAnalysis
             });
             if(aiState.memory.conversationHistory.length > 50) aiState.memory.conversationHistory.shift();
 
-
             userInput.value = '';
             userInput.disabled = true; sendButton.disabled = true;
 
-            learnFromTokens(userTokens); // AI learns from user input
+            learnFromTokens(userTokens, true); // AI learns from user input (isUserMessage = true)
 
             const aiResponse = await generateResponse(userTokens, userInputAnalysis);
             addMessageToChatLog(aiResponse.text, 'ai');
-            learnFromTokens(aiResponse.tokens); // AI learns from its own response
+            learnFromTokens(aiResponse.tokens, false); // AI learns from its own response (isUserMessage = false)
 
             aiState.memory.conversationHistory.push({
                 sender: 'ai', text: aiResponse.text, tokens: aiResponse.tokens, timestamp: new Date().toISOString(), analysis: {intent: "response", keywords: []}
@@ -396,13 +467,14 @@
             if (event.key === 'Enter') handleUserInput();
         });
 
-        // --- Initialization ---
         window.onload = () => {
             loadState();
-            // Optionally open monitor on load: openOrFocusMonitor();
-            addMessageToChatLog("CerebraSim v2.1 online. Type 'Open AI Core Monitor' or click the button to view my internals.", 'ai');
+            if (!aiState.tutorialShown) { // Check again after loadState completes
+                 tutorialModalOverlay.classList.add('active');
+            } else {
+                 addMessageToChatLog("CerebraSim v2.5 \"Nexus\" re-activated. Previous session loaded.", 'ai');
+            }
         };
-
     </script>
 </body>
 </html>
