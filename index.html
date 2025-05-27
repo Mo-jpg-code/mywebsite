@@ -1,480 +1,334 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Dialogue Interface - Model: CerebraSim v2.5 "Nexus"</title>
+    <title>Account Management Demo</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #22272e; color: #c9d1d9; }
-        .header { padding: 15px; background-color: #2d333b; text-align: center; color: #58a6ff; font-size: 1.5em; border-bottom: 1px solid #373e47;}
-        .chat-container { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .message { margin-bottom: 12px; padding: 12px 18px; border-radius: 18px; max-width: 75%; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
-        .user { background-color: #0d47a1; /* Darker Blue */ color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
-        .ai { background-color: #373e47; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 5px;}
-        .input-area { display: flex; padding: 15px; border-top: 1px solid #373e47; background-color: #2d333b; }
-        #userInput { flex-grow: 1; padding: 12px; border: 1px solid #444c56; border-radius: 8px; background-color: #22272e; color: #c9d1d9; font-size: 1em;}
-        #userInput:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);}
-        #sendButton, #openMonitorButton { padding: 12px 22px; margin-left: 10px; border: none; border-radius: 8px; cursor: pointer; background-color: #388bfd; color: white; font-weight: bold; transition: background-color 0.2s; }
-        #sendButton:hover, #openMonitorButton:hover { background-color: #58a6ff; }
-        .timestamp { font-size: 0.75em; opacity: 0.6; display: block; margin-top: 5px; }
-
-        /* Tutorial Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;}
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background-color: #2d333b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.4); width: 90%; max-width: 600px; color: #c9d1d9; border: 1px solid #444c56;}
-        .modal-content h2 { color: #58a6ff; margin-top: 0; text-align: center; }
-        .modal-content p, .modal-content ul { line-height: 1.7; font-size: 0.95em; }
-        .modal-content ul { list-style: disc; padding-left: 25px; }
-        .modal-content button { display: block; margin: 20px auto 0; padding: 10px 25px; background-color: #388bfd; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; }
-        .modal-content button:hover { background-color: #58a6ff; }
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 350px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="text"], input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.secondary {
+            background-color: #6c757d;
+            margin-top: 10px;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+        .message {
+            text-align: center;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        CerebraSim v2.5 "Nexus" - Dialogue Interface
-        <button id="openMonitorButton" style="font-size: 0.6em; padding: 8px 12px; float: right;">Open AI Core Monitor</button>
-    </div>
 
-    <div class="chat-container" id="chatLog">
-        <!-- Messages will appear here -->
-    </div>
+    <div id="auth-container" class="container">
+        <div id="register-form">
+            <h2>Account erstellen</h2>
+            <label for="reg-username">Benutzername:</label>
+            <input type="text" id="reg-username" required>
+            <label for="reg-password">Passwort:</label>
+            <input type="password" id="reg-password" required>
+            <label for="reg-password-confirm">Passwort bestätigen:</label>
+            <input type="password" id="reg-password-confirm" required>
+            <button id="register-button">Registrieren</button>
+            <p style="text-align:center; margin-top:10px;">
+                Schon einen Account? <a href="#" id="show-login">Hier einloggen</a>
+            </p>
+        </div>
 
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Type your message to CerebraSim...">
-        <button id="sendButton">Send</button>
-    </div>
-
-    <!-- Tutorial Modal -->
-    <div class="modal-overlay" id="tutorialModalOverlay">
-        <div class="modal-content">
-            <h2>Welcome to CerebraSim v2.5 "Nexus"!</h2>
-            <p>You are about to interact with a simulated learning AI. Here's how to get started:</p>
-            <ul>
-                <li><strong>Chat Naturally:</strong> Type messages in the input box below and press Enter or click Send.</li>
-                <li><strong>Teach the AI:</strong> CerebraSim learns from your conversations.
-                    <ul>
-                        <li>It learns linguistic patterns (how words go together).</li>
-                        <li>It tries to extract simple facts (e.g., "The sky is blue", "I like apples").</li>
-                    </ul>
-                </li>
-                <li><strong>Observe its "Brain":</strong> Click the <strong>"Open AI Core Monitor"</strong> button (top-right). This opens a new window where you can see:
-                    <ul>
-                        <li>Its internal parameters.</li>
-                        <li>Its learned knowledge (facts and word patterns).</li>
-                        <li>Its "thought process" as it generates responses.</li>
-                        <li>A cool visualization of its "neural activity"!</li>
-                    </ul>
-                </li>
-                <li><strong>Be Patient:</strong> Like any learner, it starts with little knowledge. Your interactions are crucial for its development!</li>
-                <li><strong>Experiment:</strong> Try asking questions, making statements, and see how it responds and learns over time.</li>
-            </ul>
-            <p>CerebraSim will remember what it learns across sessions (using your browser's local storage).</p>
-            <button id="closeTutorialButton">Let's Begin!</button>
+        <div id="login-form" class="hidden">
+            <h2>Login</h2>
+            <label for="login-username">Benutzername:</label>
+            <input type="text" id="login-username" required>
+            <label for="login-password">Passwort:</label>
+            <input type="password" id="login-password" required>
+            <button id="login-button">Einloggen</button>
+            <p style="text-align:center; margin-top:10px;">
+                Noch keinen Account? <a href="#" id="show-register">Hier registrieren</a>
+            </p>
         </div>
     </div>
 
+    <div id="user-dashboard" class="container hidden">
+        <h2>Willkommen, <span id="dashboard-username"></span>!</h2>
+        <p>Du bist erfolgreich eingeloggt.</p>
+        <button id="logout-button">Ausloggen</button>
+    </div>
+
+    <div id="message-area" class="message hidden"></div>
+
     <script>
-        const chatLog = document.getElementById('chatLog');
-        const userInput = document.getElementById('userInput');
-        const sendButton = document.getElementById('sendButton');
-        const openMonitorButton = document.getElementById('openMonitorButton');
-        const tutorialModalOverlay = document.getElementById('tutorialModalOverlay');
-        const closeTutorialButton = document.getElementById('closeTutorialButton');
-        let monitorWindow = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            const USERS_DB_KEY = 'myAppUsersDB';
+            const LOGGED_IN_USER_KEY = 'myAppLoggedInUser';
 
-        const START_TOKEN = "_START_";
-        const END_TOKEN = "_END_";
+            // DOM Elements
+            const registerForm = document.getElementById('register-form');
+            const loginForm = document.getElementById('login-form');
+            const authContainer = document.getElementById('auth-container');
+            const userDashboard = document.getElementById('user-dashboard');
+            const dashboardUsername = document.getElementById('dashboard-username');
+            const messageArea = document.getElementById('message-area');
 
-        let aiState = {
-            parameters: {
-                learningRateKB: 0.15, // Increased KB learning rate
-                confidence: 0.65,
-                curiosity: 0.4,
-                verbosity: 0.6,
-                ngramPreference: 0.6,
-                kbConfidenceThreshold: 0.45, // Slightly lower threshold to use KB
-                recencyBias: 1.5, // Multiplier for recent n-gram counts
-            },
-            memory: {
-                vocabulary: new Set([START_TOKEN, END_TOKEN]),
-                bigrams: {},
-                trigrams: {},
-                knowledgeBase: {}, // {"entity": {"relation": {"value": "X", "confidence": Y, "lastAccess": timestamp}}}
-                conversationHistory: [],
-            },
-            status: "Initializing...",
-            lastThoughtProcess: [],
-            tutorialShown: false
-        };
+            const regUsernameInput = document.getElementById('reg-username');
+            const regPasswordInput = document.getElementById('reg-password');
+            const regPasswordConfirmInput = document.getElementById('reg-password-confirm');
+            const registerButton = document.getElementById('register-button');
 
-        function openOrFocusMonitor() {
-            if (monitorWindow && !monitorWindow.closed) {
-                monitorWindow.focus();
-            } else {
-                monitorWindow = window.open('monitor.html', 'AICoreMonitor', 'width=900,height=750,resizable=yes,scrollbars=yes');
+            const loginUsernameInput = document.getElementById('login-username');
+            const loginPasswordInput = document.getElementById('login-password');
+            const loginButton = document.getElementById('login-button');
+            const logoutButton = document.getElementById('logout-button');
+
+            const showLoginLink = document.getElementById('show-login');
+            const showRegisterLink = document.getElementById('show-register');
+
+            // --- Helper Funktionen ---
+
+            // Nachricht anzeigen
+            function showMessage(text, type = 'success') {
+                messageArea.textContent = text;
+                messageArea.className = `message ${type}`; // Reset classes and add new
+                messageArea.classList.remove('hidden');
                 setTimeout(() => {
-                    if (monitorWindow) {
-                         postToMonitor({ type: 'INIT', data: aiState });
+                    messageArea.classList.add('hidden');
+                }, 5000);
+            }
+
+            // ArrayBuffer zu Hex String konvertieren (für Hash-Anzeige/Speicherung)
+            function buf2hex(buffer) {
+                return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+            }
+
+            // Passwort hashen mit Salt
+            async function hashPassword(password, salt) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password + salt); // Kombiniere Passwort und Salt
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                return buf2hex(hashBuffer);
+            }
+
+            // Zufälligen Salt generieren
+            function generateSalt(length = 16) {
+                const array = new Uint8Array(length);
+                crypto.getRandomValues(array);
+                return buf2hex(array);
+            }
+
+            // Benutzerdaten laden
+            function getUsers() {
+                const usersJson = localStorage.getItem(USERS_DB_KEY);
+                return usersJson ? JSON.parse(usersJson) : {};
+            }
+
+            // Benutzerdaten speichern
+            function saveUsers(users) {
+                localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
+            }
+
+            // UI aktualisieren basierend auf Login-Status
+            function updateUI(loggedInUser) {
+                if (loggedInUser) {
+                    authContainer.classList.add('hidden');
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.add('hidden');
+                    userDashboard.classList.remove('hidden');
+                    dashboardUsername.textContent = loggedInUser;
+                } else {
+                    authContainer.classList.remove('hidden');
+                    // Standardmäßig Login-Formular anzeigen, wenn nicht explizit Register gewählt
+                    if (registerForm.classList.contains('hidden')) {
+                         loginForm.classList.remove('hidden');
+                    } else {
+                        registerForm.classList.remove('hidden');
                     }
-                }, 1000);
+                    userDashboard.classList.add('hidden');
+                }
             }
-        }
-        openMonitorButton.addEventListener('click', openOrFocusMonitor);
 
-        function postToMonitor(message) {
-            if (monitorWindow && !monitorWindow.closed) {
-                monitorWindow.postMessage(message, '*');
-            }
-        }
+            // --- Event Listener ---
+            showLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                messageArea.classList.add('hidden');
+            });
 
-        function logToMonitor(entry, type = "thought", details = null) {
-            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 2 });
-            const fullEntry = `[${timestamp}] ${entry}`;
-            aiState.lastThoughtProcess.unshift(fullEntry);
-            if (aiState.lastThoughtProcess.length > 150) aiState.lastThoughtProcess.pop();
-            postToMonitor({ type: 'LOG_UPDATE', data: { entry: fullEntry, logType: type, details: details } });
-        }
+            showRegisterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                messageArea.classList.add('hidden');
+            });
 
+            registerButton.addEventListener('click', async () => {
+                const username = regUsernameInput.value.trim();
+                const password = regPasswordInput.value;
+                const passwordConfirm = regPasswordConfirmInput.value;
 
-        function tokenize(text) {
-            return [START_TOKEN, ...text.toLowerCase().match(/\b[\w']+\b|[.,!?]/g) || [], END_TOKEN];
-        }
+                if (!username || !password || !passwordConfirm) {
+                    showMessage('Bitte alle Felder ausfüllen.', 'error');
+                    return;
+                }
+                if (password !== passwordConfirm) {
+                    showMessage('Passwörter stimmen nicht überein.', 'error');
+                    return;
+                }
+                if (password.length < 6) {
+                    showMessage('Passwort muss mindestens 6 Zeichen lang sein.', 'error');
+                    return;
+                }
 
-        function loadState() {
-            logToMonitor("Attempting to load AI state from localStorage...", "system");
-            const savedState = localStorage.getItem('cerebraSimState_v2_5'); // Versioned key
-            if (savedState) {
+                const users = getUsers();
+                if (users[username]) {
+                    showMessage('Benutzername existiert bereits.', 'error');
+                    return;
+                }
+
                 try {
-                    const parsed = JSON.parse(savedState);
-                    parsed.memory.vocabulary = new Set(parsed.memory.vocabulary);
-                    aiState.parameters = {...aiState.parameters, ...parsed.parameters};
-                    aiState.memory = {...aiState.memory, ...parsed.memory};
-                    aiState.memory.vocabulary = new Set(aiState.memory.vocabulary);
-                    aiState.memory.knowledgeBase = aiState.memory.knowledgeBase || {};
-                    aiState.memory.conversationHistory = aiState.memory.conversationHistory || [];
-                    aiState.tutorialShown = parsed.tutorialShown || false; // Load tutorial status
-                    logToMonitor("AI state loaded successfully.", "system");
-                } catch (e) {
-                    logToMonitor(`Error loading state: ${e}. Initializing fresh state.`, "error");
-                    initializeNewState(false); // Don't mark tutorial shown if error
+                    const salt = generateSalt();
+                    const hashedPassword = await hashPassword(password, salt);
+                    users[username] = { salt: salt, hash: hashedPassword };
+                    saveUsers(users);
+                    showMessage('Registrierung erfolgreich! Du kannst dich jetzt einloggen.', 'success');
+                    regUsernameInput.value = '';
+                    regPasswordInput.value = '';
+                    regPasswordConfirmInput.value = '';
+                    // Zum Login-Formular wechseln
+                    registerForm.classList.add('hidden');
+                    loginForm.classList.remove('hidden');
+                } catch (error) {
+                    console.error("Fehler beim Hashen:", error);
+                    showMessage('Ein Fehler ist bei der Registrierung aufgetreten.', 'error');
                 }
-            } else {
-                logToMonitor("No saved state found. Initializing fresh state.", "system");
-                initializeNewState(false); // Don't mark tutorial shown on first ever load
-            }
-            aiState.status = "Idle";
-            postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState });
-
-            if (!aiState.tutorialShown) {
-                tutorialModalOverlay.classList.add('active');
-            }
-        }
-        
-        function initializeNewState(markTutorialShown = true) {
-            aiState.memory.vocabulary = new Set([START_TOKEN, END_TOKEN]);
-            aiState.memory.bigrams = {};
-            aiState.memory.trigrams = {};
-            aiState.memory.knowledgeBase = {};
-            aiState.memory.conversationHistory = [];
-            aiState.tutorialShown = markTutorialShown;
-            addMessageToChatLog("CerebraSim v2.5 \"Nexus\" initialized. I'm ready to learn from you.", 'ai');
-        }
-
-        closeTutorialButton.addEventListener('click', () => {
-            tutorialModalOverlay.classList.remove('active');
-            aiState.tutorialShown = true;
-            saveState(); // Save that tutorial has been shown
-        });
-
-        function saveState() {
-            logToMonitor("Saving AI state to localStorage...", "system");
-            try {
-                const serializableState = {
-                    ...aiState,
-                    memory: {
-                        ...aiState.memory,
-                        vocabulary: Array.from(aiState.memory.vocabulary)
-                    }
-                };
-                localStorage.setItem('cerebraSimState_v2_5', JSON.stringify(serializableState));
-            } catch (e) {
-                logToMonitor(`Error saving state: ${e}. Might be due to storage limits.`, "error");
-            }
-        }
-
-        function addMessageToChatLog(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', sender);
-            messageDiv.textContent = text;
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'});
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'timestamp';
-            timeSpan.textContent = time;
-            messageDiv.appendChild(timeSpan);
-            chatLog.appendChild(messageDiv);
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
-
-        // --- Core AI Learning Logic (Enhanced) ---
-        function learnFromTokens(tokens, isUserMessage = false) {
-            logToMonitor(`Learning from ${tokens.length - 2} tokens. Source: ${isUserMessage ? 'User' : 'AI'}`);
-            tokens.forEach(token => aiState.memory.vocabulary.add(token));
-            const increment = isUserMessage ? 2 : 1; // User input has slightly more weight for n-grams
-
-            for (let i = 0; i < tokens.length - 1; i++) {
-                const w1 = tokens[i]; const w2 = tokens[i+1];
-                aiState.memory.bigrams[w1] = aiState.memory.bigrams[w1] || {};
-                aiState.memory.bigrams[w1][w2] = (aiState.memory.bigrams[w1][w2] || 0) + increment;
-
-                if (i < tokens.length - 2) {
-                    const w3 = tokens[i+2]; const trigramKey = `${w1} ${w2}`;
-                    aiState.memory.trigrams[trigramKey] = aiState.memory.trigrams[trigramKey] || {};
-                    aiState.memory.trigrams[trigramKey][w3] = (aiState.memory.trigrams[trigramKey][w3] || 0) + increment;
-                }
-            }
-            
-            // Enhanced KB learning
-            if (isUserMessage) { // Only learn KB from user for now to avoid AI reinforcing its own potential mistakes too strongly
-                for (let i = 1; i < tokens.length - 2; i++) { 
-                    const t_prev = tokens[i-1]; // word before entity
-                    const entity = tokens[i];
-                    const relationToken = tokens[i+1];
-                    const valueToken = tokens[i+2];
-
-                    if (entity.length < 2 || valueToken.length < 2 || valueToken === END_TOKEN) continue;
-
-                    let relation = null;
-                    let value = valueToken;
-
-                    if (relationToken === 'is' || relationToken === 'are') relation = 'is';
-                    else if (relationToken === 'has' || relationToken === 'have') relation = 'has';
-                    else if (relationToken === 'likes' || relationToken === 'like') relation = 'likes';
-                    // You can add more complex pattern matching here for more relations
-                    // e.g., "X can Y", "X loves Y"
-
-                    if (relation) {
-                        aiState.memory.knowledgeBase[entity] = aiState.memory.knowledgeBase[entity] || {};
-                        const currentFact = aiState.memory.knowledgeBase[entity][relation];
-                        let newConfidence = currentFact ? Math.min(1, currentFact.confidence + aiState.parameters.learningRateKB * 1.5) : 0.5; // Higher initial boost
-                        
-                        aiState.memory.knowledgeBase[entity][relation] = { value: value, confidence: newConfidence, lastAccess: Date.now() };
-                        logToMonitor(`Learned KB: ${entity} ${relation} ${value} (Conf: ${newConfidence.toFixed(2)})`, "kb_learn", {entity: entity, relation: relation, value: value});
-                    }
-                }
-            }
-            postToMonitor({ type: 'MEMORY_UPDATE', data: { memory: aiState.memory } });
-        }
-
-        // --- Core AI "Thinking" Logic (Remains largely similar, but learning is faster) ---
-        async function generateResponse(userTokens, userInputAnalysis) {
-            aiState.status = "Thinking...";
-            postToMonitor({ type: 'STATUS_UPDATE', data: aiState.status });
-            logToMonitor("--- Initiating Response Generation Cycle ---", "cycle");
-
-            let candidates = []; 
-
-            // Strategy 1: Knowledge Base
-            if (userInputAnalysis.keywords.length > 0) {
-                logToMonitor("Strategy: Knowledge Base Lookup", "strategy");
-                for (const keyword of userInputAnalysis.keywords) {
-                    if (aiState.memory.knowledgeBase[keyword]) {
-                        aiState.memory.knowledgeBase[keyword].lastAccess = Date.now(); // Mark as accessed
-                        postToMonitor({type: 'BRAIN_ACTIVITY', data: {type: 'kb_access', entity: keyword }});
-
-                        for (const relation in aiState.memory.knowledgeBase[keyword]) {
-                            const fact = aiState.memory.knowledgeBase[keyword][relation];
-                            if (fact.confidence >= aiState.parameters.kbConfidenceThreshold) {
-                                let responseText = "";
-                                if ((userInputAnalysis.intent === "question_what" || userInputAnalysis.intent === "question_generic") && relation === "is") {
-                                    responseText = `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} ${relation} ${fact.value}.`;
-                                } else if (userInputAnalysis.intent === "question_generic" && relation === "has") {
-                                    responseText = `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} ${relation} ${fact.value}.`;
-                                }
-                                 else { // More general statement
-                                    responseText = `Regarding ${keyword}, I understand that ${keyword} ${relation} ${fact.value}.`;
-                                }
-                                candidates.push({ text: responseText, score: 75 + fact.confidence * 25, source: "KB Fact", tokens: tokenize(responseText) });
-                                logToMonitor(`  KB Candidate: "${responseText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate", {entity: keyword, relation: relation});
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Strategy 2: N-gram continuation
-            // (N-gram logic from previous example - largely unchanged, but recencyBias can be used in getWeightedRandom if implemented there)
-             logToMonitor("Strategy: N-gram Continuation", "strategy");
-            let ngramContext1 = START_TOKEN, ngramContext2 = START_TOKEN;
-            if (userTokens.length > 2) ngramContext2 = userTokens[userTokens.length - 2]; 
-            if (userTokens.length > 3) ngramContext1 = userTokens[userTokens.length - 3]; 
-
-            let ngramResponseTokens = [];
-            let tempContext1 = ngramContext1;
-            let tempContext2 = ngramContext2;
-            let ngramActivity = 0;
-            
-            for(let i=0; i < 5 + Math.floor(Math.random() * 12 * aiState.parameters.verbosity) ; i++) { 
-                let nextWord = null;
-                const trigramKey = `${tempContext1} ${tempContext2}`;
-                let choiceSource = "";
-
-                if (aiState.memory.trigrams[trigramKey] && (Object.keys(aiState.memory.trigrams[trigramKey]).length > 0) && Math.random() < 0.85) { 
-                    nextWord = getWeightedRandom(aiState.memory.trigrams[trigramKey], true); // true for trigram
-                    choiceSource = "trigram";
-                } else if (aiState.memory.bigrams[tempContext2] && (Object.keys(aiState.memory.bigrams[tempContext2]).length > 0)) {
-                    nextWord = getWeightedRandom(aiState.memory.bigrams[tempContext2], false); // false for bigram
-                    choiceSource = "bigram";
-                }
-                
-                if (!nextWord || nextWord === END_TOKEN) break;
-                if (nextWord !== START_TOKEN) ngramResponseTokens.push(nextWord);
-                tempContext1 = tempContext2;
-                tempContext2 = nextWord;
-                ngramActivity++;
-                if (ngramResponseTokens.length > 30) break; 
-            }
-            if (ngramActivity > 0) postToMonitor({type: 'BRAIN_ACTIVITY', data: {type: 'ngram_burst', intensity: ngramActivity }});
-
-            if (ngramResponseTokens.length > 0) {
-                const ngramText = formatResponseTokens(ngramResponseTokens);
-                candidates.push({ text: ngramText, score: 60 * aiState.parameters.ngramPreference, source: "N-gram Continuation", tokens: [START_TOKEN, ...ngramResponseTokens, END_TOKEN] });
-                logToMonitor(`  N-gram Candidate: "${ngramText.substring(0,50)}..." (Score: ${candidates[candidates.length-1].score.toFixed(0)})`, "candidate");
-            }
-
-
-            // Strategy 3: Generic N-gram start
-            if (candidates.length === 0 || aiState.parameters.confidence < 0.5) {
-                // ... (similar to previous, can also add ngramActivity posting) ...
-            }
-
-            // Fallback
-            if (candidates.length === 0) {
-                // ... (similar to previous) ...
-            }
-
-            candidates.sort((a, b) => b.score - a.score); 
-            const bestCandidate = candidates.length > 0 ? candidates[0] : { text: "I'm still learning about that. Can you elaborate?", score: 10, source: "Ultimate Fallback", tokens: tokenize("I'm still learning about that. Can you elaborate?")};
-            logToMonitor(`Selected Best Candidate (out of ${candidates.length}): "${bestCandidate.text.substring(0,50)}..." (Score: ${bestCandidate.score.toFixed(0)}, Source: ${bestCandidate.source})`, "decision");
-            
-            // Parameter adjustment
-            if (bestCandidate.source === "KB Fact" && userInputAnalysis.isPositiveConfirmation) { // Need a way to detect positive confirmation
-                 aiState.parameters.confidence = Math.min(0.98, aiState.parameters.confidence + 0.05);
-                 // Also boost confidence of the specific KB fact used if possible
-            } else if (bestCandidate.source === "KB Fact") {
-                 aiState.parameters.confidence = Math.min(0.95, aiState.parameters.confidence + 0.01);
-            }
-             else {
-                aiState.parameters.confidence = Math.max(0.2, aiState.parameters.confidence - 0.01);
-             }
-            // ... (other param adjustments) ...
-
-            aiState.status = "Idle";
-            postToMonitor({ type: 'FULL_STATE_UPDATE', data: aiState }); 
-            logToMonitor("--- Response Generation Cycle Complete ---", "cycle");
-            return bestCandidate;
-        }
-
-        function getWeightedRandom(choices, isTrigram = false) {
-            if (!choices || Object.keys(choices).length === 0) return null;
-            let total = 0;
-            // Apply recency bias if implemented (e.g., if choices had timestamps or were weighted higher on learning)
-            // For now, just use counts. aiState.parameters.recencyBias could be used here
-            // if the n-gram counts were stored differently or we look up last N messages.
-            // Simple version:
-            for (const count of Object.values(choices)) total += count;
-
-            let rand = Math.random() * total;
-            for (const [word, count] of Object.entries(choices)) {
-                rand -= count;
-                if (rand <= 0) return word;
-            }
-            return Object.keys(choices)[0];
-        }
-        
-        function formatResponseTokens(tokens) {
-            if (!tokens || tokens.length === 0) return "";
-            let text = tokens.join(' ').replace(/\s+([.,!?])/g, '$1');
-            return text.charAt(0).toUpperCase() + text.slice(1);
-        }
-
-        function analyzeUserInput(text, tokens) {
-            logToMonitor(`Analyzing user input: "${text.substring(0,50)}..."`);
-            const analysis = {
-                intent: "statement",
-                keywords: [],
-                sentiment: "neutral",
-                isPositiveConfirmation: false // New field
-            };
-
-            const lowerText = text.toLowerCase();
-            const positiveConfirmations = ["yes", "correct", "that's right", "exactly", "indeed", "you got it"];
-            if (positiveConfirmations.some(phrase => lowerText.startsWith(phrase) || lowerText.endsWith(phrase))) {
-                analysis.isPositiveConfirmation = true;
-            }
-
-            // ... (rest of intent and keyword logic from previous example) ...
-            if (lowerText.startsWith("what is") || lowerText.startsWith("what's") || lowerText.startsWith("what are")) analysis.intent = "question_what";
-            else if (lowerText.startsWith("who is") || lowerText.startsWith("who's") || lowerText.startsWith("who are")) analysis.intent = "question_who";
-            else if (lowerText.startsWith("where is") || lowerText.startsWith("where's") || lowerText.startsWith("where are")) analysis.intent = "question_where";
-            else if (lowerText.startsWith("when is") || lowerText.startsWith("when's") || lowerText.startsWith("when are")) analysis.intent = "question_when";
-            else if (lowerText.startsWith("why is") || lowerText.startsWith("why's") || lowerText.startsWith("why are")) analysis.intent = "question_why";
-            else if (lowerText.startsWith("how is") || lowerText.startsWith("how's") || lowerText.startsWith("how are") || lowerText.startsWith("how do")) analysis.intent = "question_how";
-            else if (lowerText.includes("?")) analysis.intent = "question_generic";
-            
-            const stopwords = new Set(['_start_', '_end_', 'a', 'an', 'the', 'is', 'are', 'was', 'were', 'i', 'you', 'me', 'he', 'she', 'it', 'we', 'they', 'to', 'of', 'in', 'on', 'for', 'with', 'do', 'does', 'did', 'tell', 'me', 'about', 'can', 'could', 'please']);
-            analysis.keywords = tokens.filter(t => !stopwords.has(t.toLowerCase()) && t.length > 2 && isNaN(t)).slice(0, 5); 
-
-
-            logToMonitor(`  Analysis - Intent: ${analysis.intent}, Keywords: ${analysis.keywords.join(', ') || 'None'}, PositiveConfirm: ${analysis.isPositiveConfirmation}`);
-            return analysis;
-        }
-
-        // --- Main Interaction Loop ---
-        async function handleUserInput() {
-            const text = userInput.value.trim();
-            if (text === '') return;
-
-            addMessageToChatLog(text, 'user');
-            const userTokens = tokenize(text);
-            const userInputAnalysis = analyzeUserInput(text, userTokens.slice(1,-1));
-
-            aiState.memory.conversationHistory.push({
-                sender: 'user', text, tokens: userTokens, timestamp: new Date().toISOString(), analysis: userInputAnalysis
-            });
-            if(aiState.memory.conversationHistory.length > 50) aiState.memory.conversationHistory.shift();
-
-            userInput.value = '';
-            userInput.disabled = true; sendButton.disabled = true;
-
-            learnFromTokens(userTokens, true); // AI learns from user input (isUserMessage = true)
-
-            const aiResponse = await generateResponse(userTokens, userInputAnalysis);
-            addMessageToChatLog(aiResponse.text, 'ai');
-            learnFromTokens(aiResponse.tokens, false); // AI learns from its own response (isUserMessage = false)
-
-            aiState.memory.conversationHistory.push({
-                sender: 'ai', text: aiResponse.text, tokens: aiResponse.tokens, timestamp: new Date().toISOString(), analysis: {intent: "response", keywords: []}
             });
 
-            saveState();
+            loginButton.addEventListener('click', async () => {
+                const username = loginUsernameInput.value.trim();
+                const password = loginPasswordInput.value;
 
-            userInput.disabled = false; sendButton.disabled = false;
-            userInput.focus();
-        }
+                if (!username || !password) {
+                    showMessage('Bitte Benutzernamen und Passwort eingeben.', 'error');
+                    return;
+                }
 
-        sendButton.addEventListener('click', handleUserInput);
-        userInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') handleUserInput();
-        });
+                const users = getUsers();
+                const userData = users[username];
 
-        window.onload = () => {
-            loadState();
-            if (!aiState.tutorialShown) { // Check again after loadState completes
-                 tutorialModalOverlay.classList.add('active');
-            } else {
-                 addMessageToChatLog("CerebraSim v2.5 \"Nexus\" re-activated. Previous session loaded.", 'ai');
+                if (!userData) {
+                    showMessage('Benutzername nicht gefunden.', 'error');
+                    return;
+                }
+
+                try {
+                    const hashedPasswordAttempt = await hashPassword(password, userData.salt);
+                    if (hashedPasswordAttempt === userData.hash) {
+                        sessionStorage.setItem(LOGGED_IN_USER_KEY, username);
+                        updateUI(username);
+                        showMessage(`Willkommen zurück, ${username}!`, 'success');
+                        loginUsernameInput.value = '';
+                        loginPasswordInput.value = '';
+                    } else {
+                        showMessage('Falsches Passwort.', 'error');
+                    }
+                } catch (error) {
+                    console.error("Fehler beim Passwortvergleich:", error);
+                    showMessage('Ein Fehler ist beim Login aufgetreten.', 'error');
+                }
+            });
+
+            logoutButton.addEventListener('click', () => {
+                sessionStorage.removeItem(LOGGED_IN_USER_KEY);
+                updateUI(null);
+                // Standardmäßig Login-Formular anzeigen nach Logout
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                showMessage('Du wurdest erfolgreich ausgeloggt.', 'success');
+            });
+
+            // --- Initialisierung ---
+            function init() {
+                const loggedInUser = sessionStorage.getItem(LOGGED_IN_USER_KEY);
+                if (loggedInUser) {
+                    // Überprüfen, ob der User noch in der DB ist (falls localStorage gelöscht wurde)
+                    const users = getUsers();
+                    if (users[loggedInUser]) {
+                        updateUI(loggedInUser);
+                    } else {
+                        // User nicht mehr in DB, also Session löschen
+                        sessionStorage.removeItem(LOGGED_IN_USER_KEY);
+                        updateUI(null);
+                        loginForm.classList.remove('hidden'); // Zeige Login Form an
+                    }
+                } else {
+                    updateUI(null);
+                    loginForm.classList.remove('hidden'); // Zeige standardmäßig Login Form an
+                }
+                console.warn("SICHERHEITSHINWEIS: Diese Demo speichert Benutzerdaten (gehashte Passwörter und Salts) im localStorage des Browsers. Dies ist NICHT für Produktionsumgebungen oder sensible Daten geeignet!");
             }
-        };
+
+            init();
+        });
     </script>
+
 </body>
 </html>
