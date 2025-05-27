@@ -2,333 +2,163 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Management Demo</title>
+    <title>Meine Smarte App</title>
+    <meta name="google-signin-client_id" content="DEINE_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            width: 350px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        input[type="text"], input[type="password"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button.secondary {
-            background-color: #6c757d;
-            margin-top: 10px;
-        }
-        button.secondary:hover {
-            background-color: #545b62;
-        }
-        .message {
-            text-align: center;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .hidden {
-            display: none;
-        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 50px; }
+        #user-info { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
+    <h1>Willkommen!</h1>
 
-    <div id="auth-container" class="container">
-        <div id="register-form">
-            <h2>Account erstellen</h2>
-            <label for="reg-username">Benutzername:</label>
-            <input type="text" id="reg-username" required>
-            <label for="reg-password">Passwort:</label>
-            <input type="password" id="reg-password" required>
-            <label for="reg-password-confirm">Passwort bestätigen:</label>
-            <input type="password" id="reg-password-confirm" required>
-            <button id="register-button">Registrieren</button>
-            <p style="text-align:center; margin-top:10px;">
-                Schon einen Account? <a href="#" id="show-login">Hier einloggen</a>
-            </p>
-        </div>
+    <div id="gsi-button-container">
+      <div id="g_id_onload"
+           data-client_id="DEINE_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleGoogleSignIn"
+           data-auto_prompt="false">
+      </div>
 
-        <div id="login-form" class="hidden">
-            <h2>Login</h2>
-            <label for="login-username">Benutzername:</label>
-            <input type="text" id="login-username" required>
-            <label for="login-password">Passwort:</label>
-            <input type="password" id="login-password" required>
-            <button id="login-button">Einloggen</button>
-            <p style="text-align:center; margin-top:10px;">
-                Noch keinen Account? <a href="#" id="show-register">Hier registrieren</a>
-            </p>
-        </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
     </div>
 
-    <div id="user-dashboard" class="container hidden">
-        <h2>Willkommen, <span id="dashboard-username"></span>!</h2>
-        <p>Du bist erfolgreich eingeloggt.</p>
-        <button id="logout-button">Ausloggen</button>
+    <div id="user-info" class="hidden">
+        <p>Angemeldet als: <span id="user-name"></span> (<span id="user-email"></span>)</p>
+        <button id="logout-button">Ausloggen (App-Session)</button>
     </div>
 
-    <div id="message-area" class="message hidden"></div>
+    <div id="message-area"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const USERS_DB_KEY = 'myAppUsersDB';
-            const LOGGED_IN_USER_KEY = 'myAppLoggedInUser';
+        // WICHTIG: Ersetze DEINE_GOOGLE_CLIENT_ID.apps.googleusercontent.com mit deiner echten Client-ID
+        // Diese bekommst du von der Google Cloud Console bei der Einrichtung von OAuth 2.0 Credentials.
 
-            // DOM Elements
-            const registerForm = document.getElementById('register-form');
-            const loginForm = document.getElementById('login-form');
-            const authContainer = document.getElementById('auth-container');
-            const userDashboard = document.getElementById('user-dashboard');
-            const dashboardUsername = document.getElementById('dashboard-username');
-            const messageArea = document.getElementById('message-area');
+        const messageArea = document.getElementById('message-area');
+        const userInfoDiv = document.getElementById('user-info');
+        const userNameSpan = document.getElementById('user-name');
+        const userEmailSpan = document.getElementById('user-email');
+        const gsiButtonContainer = document.getElementById('gsi-button-container');
+        const logoutButton = document.getElementById('logout-button');
 
-            const regUsernameInput = document.getElementById('reg-username');
-            const regPasswordInput = document.getElementById('reg-password');
-            const regPasswordConfirmInput = document.getElementById('reg-password-confirm');
-            const registerButton = document.getElementById('register-button');
+        // Diese Funktion wird von der Google Identity Services Library aufgerufen
+        async function handleGoogleSignIn(response) {
+            console.log("Google Sign-In Response:", response);
+            const idToken = response.credential;
 
-            const loginUsernameInput = document.getElementById('login-username');
-            const loginPasswordInput = document.getElementById('login-password');
-            const loginButton = document.getElementById('login-button');
-            const logoutButton = document.getElementById('logout-button');
+            // Sende das ID-Token an dein Backend zur Verifizierung und Session-Erstellung
+            try {
+                // ANNAHME: Dein Backend läuft auf localhost:3000 und hat einen /auth/google Endpoint
+                const backendResponse = await fetch('/auth/google', { // BACKEND URL ANPASSEN
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: idToken }),
+                });
 
-            const showLoginLink = document.getElementById('show-login');
-            const showRegisterLink = document.getElementById('show-register');
-
-            // --- Helper Funktionen ---
-
-            // Nachricht anzeigen
-            function showMessage(text, type = 'success') {
-                messageArea.textContent = text;
-                messageArea.className = `message ${type}`; // Reset classes and add new
-                messageArea.classList.remove('hidden');
-                setTimeout(() => {
-                    messageArea.classList.add('hidden');
-                }, 5000);
-            }
-
-            // ArrayBuffer zu Hex String konvertieren (für Hash-Anzeige/Speicherung)
-            function buf2hex(buffer) {
-                return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
-            }
-
-            // Passwort hashen mit Salt
-            async function hashPassword(password, salt) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(password + salt); // Kombiniere Passwort und Salt
-                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                return buf2hex(hashBuffer);
-            }
-
-            // Zufälligen Salt generieren
-            function generateSalt(length = 16) {
-                const array = new Uint8Array(length);
-                crypto.getRandomValues(array);
-                return buf2hex(array);
-            }
-
-            // Benutzerdaten laden
-            function getUsers() {
-                const usersJson = localStorage.getItem(USERS_DB_KEY);
-                return usersJson ? JSON.parse(usersJson) : {};
-            }
-
-            // Benutzerdaten speichern
-            function saveUsers(users) {
-                localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
-            }
-
-            // UI aktualisieren basierend auf Login-Status
-            function updateUI(loggedInUser) {
-                if (loggedInUser) {
-                    authContainer.classList.add('hidden');
-                    loginForm.classList.add('hidden');
-                    registerForm.classList.add('hidden');
-                    userDashboard.classList.remove('hidden');
-                    dashboardUsername.textContent = loggedInUser;
-                } else {
-                    authContainer.classList.remove('hidden');
-                    // Standardmäßig Login-Formular anzeigen, wenn nicht explizit Register gewählt
-                    if (registerForm.classList.contains('hidden')) {
-                         loginForm.classList.remove('hidden');
-                    } else {
-                        registerForm.classList.remove('hidden');
-                    }
-                    userDashboard.classList.add('hidden');
-                }
-            }
-
-            // --- Event Listener ---
-            showLoginLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                registerForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                messageArea.classList.add('hidden');
-            });
-
-            showRegisterLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
-                messageArea.classList.add('hidden');
-            });
-
-            registerButton.addEventListener('click', async () => {
-                const username = regUsernameInput.value.trim();
-                const password = regPasswordInput.value;
-                const passwordConfirm = regPasswordConfirmInput.value;
-
-                if (!username || !password || !passwordConfirm) {
-                    showMessage('Bitte alle Felder ausfüllen.', 'error');
-                    return;
-                }
-                if (password !== passwordConfirm) {
-                    showMessage('Passwörter stimmen nicht überein.', 'error');
-                    return;
-                }
-                if (password.length < 6) {
-                    showMessage('Passwort muss mindestens 6 Zeichen lang sein.', 'error');
-                    return;
-                }
-
-                const users = getUsers();
-                if (users[username]) {
-                    showMessage('Benutzername existiert bereits.', 'error');
-                    return;
-                }
-
-                try {
-                    const salt = generateSalt();
-                    const hashedPassword = await hashPassword(password, salt);
-                    users[username] = { salt: salt, hash: hashedPassword };
-                    saveUsers(users);
-                    showMessage('Registrierung erfolgreich! Du kannst dich jetzt einloggen.', 'success');
-                    regUsernameInput.value = '';
-                    regPasswordInput.value = '';
-                    regPasswordConfirmInput.value = '';
-                    // Zum Login-Formular wechseln
-                    registerForm.classList.add('hidden');
-                    loginForm.classList.remove('hidden');
-                } catch (error) {
-                    console.error("Fehler beim Hashen:", error);
-                    showMessage('Ein Fehler ist bei der Registrierung aufgetreten.', 'error');
-                }
-            });
-
-            loginButton.addEventListener('click', async () => {
-                const username = loginUsernameInput.value.trim();
-                const password = loginPasswordInput.value;
-
-                if (!username || !password) {
-                    showMessage('Bitte Benutzernamen und Passwort eingeben.', 'error');
-                    return;
-                }
-
-                const users = getUsers();
-                const userData = users[username];
-
-                if (!userData) {
-                    showMessage('Benutzername nicht gefunden.', 'error');
-                    return;
-                }
-
-                try {
-                    const hashedPasswordAttempt = await hashPassword(password, userData.salt);
-                    if (hashedPasswordAttempt === userData.hash) {
-                        sessionStorage.setItem(LOGGED_IN_USER_KEY, username);
-                        updateUI(username);
-                        showMessage(`Willkommen zurück, ${username}!`, 'success');
-                        loginUsernameInput.value = '';
-                        loginPasswordInput.value = '';
-                    } else {
-                        showMessage('Falsches Passwort.', 'error');
-                    }
-                } catch (error) {
-                    console.error("Fehler beim Passwortvergleich:", error);
-                    showMessage('Ein Fehler ist beim Login aufgetreten.', 'error');
-                }
-            });
-
-            logoutButton.addEventListener('click', () => {
-                sessionStorage.removeItem(LOGGED_IN_USER_KEY);
-                updateUI(null);
-                // Standardmäßig Login-Formular anzeigen nach Logout
-                loginForm.classList.remove('hidden');
-                registerForm.classList.add('hidden');
-                showMessage('Du wurdest erfolgreich ausgeloggt.', 'success');
-            });
-
-            // --- Initialisierung ---
-            function init() {
-                const loggedInUser = sessionStorage.getItem(LOGGED_IN_USER_KEY);
-                if (loggedInUser) {
-                    // Überprüfen, ob der User noch in der DB ist (falls localStorage gelöscht wurde)
-                    const users = getUsers();
-                    if (users[loggedInUser]) {
-                        updateUI(loggedInUser);
-                    } else {
-                        // User nicht mehr in DB, also Session löschen
-                        sessionStorage.removeItem(LOGGED_IN_USER_KEY);
-                        updateUI(null);
-                        loginForm.classList.remove('hidden'); // Zeige Login Form an
+                if (backendResponse.ok) {
+                    const data = await backendResponse.json();
+                    console.log("Backend response:", data);
+                    showMessage(`Erfolgreich bei der App angemeldet als ${data.name || data.email}!`);
+                    // UI aktualisieren, um eingeloggten Zustand zu zeigen
+                    gsiButtonContainer.classList.add('hidden');
+                    userInfoDiv.classList.remove('hidden');
+                    userNameSpan.textContent = data.name || 'N/A';
+                    userEmailSpan.textContent = data.email;
+                    // Speichere den App-Session-Token (z.B. JWT vom Backend)
+                    if (data.appToken) {
+                        localStorage.setItem('app_session_token', data.appToken);
                     }
                 } else {
-                    updateUI(null);
-                    loginForm.classList.remove('hidden'); // Zeige standardmäßig Login Form an
+                    const errorData = await backendResponse.json();
+                    showMessage(`Fehler bei der App-Anmeldung: ${errorData.message || backendResponse.statusText}`, 'error');
                 }
-                console.warn("SICHERHEITSHINWEIS: Diese Demo speichert Benutzerdaten (gehashte Passwörter und Salts) im localStorage des Browsers. Dies ist NICHT für Produktionsumgebungen oder sensible Daten geeignet!");
+            } catch (error) {
+                console.error('Fehler beim Senden des Tokens ans Backend:', error);
+                showMessage('Kommunikationsfehler mit dem Server.', 'error');
             }
+        }
 
-            init();
+        logoutButton.addEventListener('click', async () => {
+            // Hier würdest du idealerweise auch einen Backend-Call machen, um die serverseitige Session zu invalidieren
+            // Für diese Demo löschen wir nur den lokalen Token
+            localStorage.removeItem('app_session_token');
+            // Google Sign-Out (optional, entfernt Google-Session für diese App)
+            // google.accounts.id.disableAutoSelect(); // Verhindert automatisches Anmelden
+            // google.accounts.id.revoke(localStorage.getItem('google_user_email_for_revoke'), done => {
+            //    console.log('Google Account revoked: ' + done.error);
+            // });
+            
+            // UI zurücksetzen
+            gsiButtonContainer.classList.remove('hidden');
+            userInfoDiv.classList.add('hidden');
+            showMessage('Erfolgreich abgemeldet.');
+            // TODO: Seite neu laden oder UI entsprechend anpassen
+            // window.location.reload(); // Einfachste Methode
         });
-    </script>
+        
+        function showMessage(text, type = 'success') {
+            messageArea.textContent = text;
+            messageArea.style.color = type === 'error' ? 'red' : 'green';
+        }
 
+        // Prüfen, ob ein App-Token vorhanden ist (vereinfachte Session-Prüfung)
+        function checkAppLoginStatus() {
+            const appToken = localStorage.getItem('app_session_token');
+            if (appToken) {
+                // Ideal: Token validieren oder Nutzerinfos vom Backend holen
+                // Für diese Demo: Annahme, der Token ist noch gültig
+                // Du müsstest hier die Nutzerinfos, die du beim Login gespeichert hast, wiederherstellen
+                // oder einen Backend-Call machen, um sie zu holen.
+                // Beispiel:
+                // fetch('/api/me', { headers: {'Authorization': `Bearer ${appToken}`} })
+                //  .then(res => res.json())
+                //  .then(data => {
+                //     gsiButtonContainer.classList.add('hidden');
+                //     userInfoDiv.classList.remove('hidden');
+                //     userNameSpan.textContent = data.name || 'N/A';
+                //     userEmailSpan.textContent = data.email;
+                //   });
+                showMessage('Du bist bereits in der App angemeldet (Session gefunden).');
+                // Für diese Demo: Zeige einfach Logout Button, wenn Token da ist
+                // In einer echten App würdest du Nutzerdaten vom Backend holen.
+                gsiButtonContainer.classList.add('hidden');
+                userInfoDiv.classList.remove('hidden');
+                // Dummy-Daten, da wir sie nicht ohne Backend-Call haben
+                userNameSpan.textContent = "Gespeicherter Nutzer";
+                userEmailSpan.textContent = "info@example.com";
+
+            }
+        }
+        // Beim Laden der Seite den Login-Status prüfen
+        // window.onload = () => {
+        //    google.accounts.id.initialize({
+        //      client_id: "DEINE_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+        //      callback: handleGoogleSignIn
+        //    });
+        //    google.accounts.id.renderButton(
+        //      document.getElementById("gsi-button-container"), // Muss ein Element sein, kein Container-ID-String
+        //      { theme: "outline", size: "large" }  // customization attributes
+        //    );
+        //    // google.accounts.id.prompt(); // Optional: Zeigt One Tap Prompt an
+        //    checkAppLoginStatus();
+        // };
+        // Korrigierte Initialisierung, da Google GSI sich geändert hat:
+        // Die Initialisierung erfolgt jetzt meist durch die data-* Attribute im HTML
+        // Die checkAppLoginStatus() kann man am Ende des Scripts oder in DOMContentLoaded aufrufen.
+        document.addEventListener('DOMContentLoaded', checkAppLoginStatus);
+
+    </script>
 </body>
 </html>
